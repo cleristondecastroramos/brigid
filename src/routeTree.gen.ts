@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TerritorioRouteImport } from './routes/territorio'
 import { Route as RiscoRouteImport } from './routes/risco'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as PesosRouteImport } from './routes/pesos'
 import { Route as PainelRouteImport } from './routes/painel'
 import { Route as OpmRouteImport } from './routes/opm'
 import { Route as GestaoRouteImport } from './routes/gestao'
@@ -33,6 +34,11 @@ const RiscoRoute = RiscoRouteImport.update({
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PesosRoute = PesosRouteImport.update({
+  id: '/pesos',
+  path: '/pesos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PainelRoute = PainelRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
   '/painel': typeof PainelRoute
+  '/pesos': typeof PesosRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
   '/territorio': typeof TerritorioRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
   '/painel': typeof PainelRoute
+  '/pesos': typeof PesosRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
   '/territorio': typeof TerritorioRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
   '/painel': typeof PainelRoute
+  '/pesos': typeof PesosRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
   '/territorio': typeof TerritorioRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/opm'
     | '/painel'
+    | '/pesos'
     | '/relatorios'
     | '/risco'
     | '/territorio'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/opm'
     | '/painel'
+    | '/pesos'
     | '/relatorios'
     | '/risco'
     | '/territorio'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/opm'
     | '/painel'
+    | '/pesos'
     | '/relatorios'
     | '/risco'
     | '/territorio'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   GestaoRoute: typeof GestaoRoute
   OpmRoute: typeof OpmRoute
   PainelRoute: typeof PainelRoute
+  PesosRoute: typeof PesosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   RiscoRoute: typeof RiscoRoute
   TerritorioRoute: typeof TerritorioRoute
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pesos': {
+      id: '/pesos'
+      path: '/pesos'
+      fullPath: '/pesos'
+      preLoaderRoute: typeof PesosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/painel': {
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   GestaoRoute: GestaoRoute,
   OpmRoute: OpmRoute,
   PainelRoute: PainelRoute,
+  PesosRoute: PesosRoute,
   RelatoriosRoute: RelatoriosRoute,
   RiscoRoute: RiscoRoute,
   TerritorioRoute: TerritorioRoute,

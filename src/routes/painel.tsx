@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Building2, HeartHandshake, AlertTriangle, MapPin, ShieldAlert, TrendingUp,
 } from "lucide-react";
-import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { pct } from "@/lib/csv-data";
+import { municipiosQueryOptions } from "@/lib/csv-data";
+import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
 import { PiauiMap } from "@/components/piaui-map";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,7 @@ const RISK_COLORS: Record<string, string> = {
 };
 
 function Dashboard() {
-  const { data: municipios } = useSuspenseQuery(municipiosQueryOptions);
+  const { data: municipios } = useMunicipios();
 
   const total = municipios.length;
   const comOPM = municipios.filter((m) => m.opm_possui === "SIM").length;

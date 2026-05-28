@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Download, HeartHandshake } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
 import { PiauiMap } from "@/components/piaui-map";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ const COLOR_WITHOUT = "oklch(0.65 0.2 27)";
 const COLOR_NA = "oklch(0.92 0.01 230)";
 
 function CreasPanel() {
-  const { data: municipios } = useSuspenseQuery(municipiosQueryOptions);
+  const { data: municipios } = useMunicipios();
   const [q, setQ] = useState("");
   const [polo, setPolo] = useState("__all");
   const [status, setStatus] = useState("__all");

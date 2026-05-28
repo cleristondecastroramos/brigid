@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Building2, HeartHandshake, AlertTriangle, MapPin, ShieldAlert, Search, X,
   Download, FileSpreadsheet, FileText, Eraser, ArrowRight, Layers,
 } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { useMunicipios } from "@/lib/useMunicipios";
 import type { Municipio } from "@/lib/types";
 import { KpiCard } from "@/components/kpi-card";
 import { TerritorialMap } from "@/components/territorial-map";
@@ -123,7 +123,7 @@ function colorByLayer(layer: Layer, m: Municipio | undefined): string {
 }
 
 function TerritorialIntelligence() {
-  const { data: municipios } = useSuspenseQuery(municipiosQueryOptions);
+  const { data: municipios } = useMunicipios();
 
   const [layer, setLayer] = useState<Layer>("consolidada");
   const [q, setQ] = useState("");

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, createRootRouteWithContext, HeadContent, Scripts, useRouterState, Link,
+  Outlet, createRootRouteWithContext, HeadContent, Scripts, useRouterState, Link, useNavigate,
 } from "@tanstack/react-router";
 import { Suspense, useState, useEffect } from "react";
 import { Sun, Moon, ShieldCheck } from "lucide-react";
@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 import logo from "@/assets/logo-mppi.png";
+import { AppProvider, useApp } from "@/context/AppContext";
 
 function NotFoundComponent() {
   return (
@@ -77,6 +78,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/municipios": "Base Territorial",
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
+  "/pesos": "Ponderação e Simulação de Pesos",
 };
 
 function PageHeader() {
@@ -126,53 +128,70 @@ function PageHeader() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <RootInner />
+      </AppProvider>
+    </QueryClientProvider>
+  );
+}
+
+function RootInner() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { userRole } = useApp();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (pathname === "/pesos" && userRole !== "admin") {
+      navigate({ to: "/" });
+    }
+  }, [pathname, userRole, navigate]);
   
   const isLandingPage = pathname === "/";
 
   if (isLandingPage) {
     return (
-      <QueryClientProvider client={queryClient}>
+      <>
         <Suspense fallback={<div className="min-h-dvh bg-[#F8FAFC]" />}>
           <Outlet />
         </Suspense>
         <Toaster />
-      </QueryClientProvider>
+      </>
     );
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <div className="flex min-h-dvh w-full bg-background">
-          <AppSidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <PageHeader />
-            <main className="flex-1 p-4 md:p-6">
-              <Suspense fallback={
-                <div className="flex h-[60vh] items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Carregando base territorial…</p>
-                  </div>
+    <SidebarProvider>
+      <div className="flex min-h-dvh w-full bg-background">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <PageHeader />
+          <main className="flex-1 p-4 md:p-6">
+            <Suspense fallback={
+              <div className="flex h-[60vh] items-center justify-center">
+                <div className="text-center">
+                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Carregando base territorial…</p>
                 </div>
-              }>
-                <Outlet />
-              </Suspense>
-              <footer className="mt-10 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
-                <p>
-                  <span className="font-semibold tracking-[0.18em] text-foreground">BRIGID</span>
-                  {" — "}Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
-                </p>
-                <p className="mt-1 text-muted-foreground/80">
-                  Ministério Público do Estado do Piauí · CAOCRIM · Plataforma institucional de monitoramento, análise territorial e gestão estratégica baseada em evidências.
-                </p>
-              </footer>
-            </main>
-          </div>
+              </div>
+            }>
+              <Outlet />
+            </Suspense>
+            <footer className="mt-10 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
+              <p>
+                <span className="font-semibold tracking-[0.18em] text-foreground">BRIGID</span>
+                {" — "}Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
+              </p>
+              <p className="mt-1 text-muted-foreground/80">
+                Ministério Público do Estado do Piauí · CAOCRIM · Plataforma institucional de monitoramento, análise territorial e gestão estratégica baseada em evidências.
+              </p>
+            </footer>
+          </main>
         </div>
-        <Toaster />
-      </SidebarProvider>
-    </QueryClientProvider>
+      </div>
+      <Toaster />
+    </SidebarProvider>
   );
 }

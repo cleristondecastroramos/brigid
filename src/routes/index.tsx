@@ -28,7 +28,7 @@ function LandingPage() {
             <img src={logo} alt="MPPI" className="h-9 w-auto mix-blend-multiply" />
             <div className="h-5 w-[1px] bg-slate-300" />
             <span className="text-xs font-semibold tracking-widest text-slate-600 uppercase">
-              Projeto Feminicídio Zero
+              Projeto Feminicídio Zero - CAOCRIM/MPPI
             </span>
           </header>
 

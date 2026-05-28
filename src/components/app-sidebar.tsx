@@ -1,13 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, HeartHandshake, AlertTriangle,
-  MapPin, ListChecks, FileText, Map as MapIcon, LogOut,
+  MapPin, ListChecks, FileText, Map as MapIcon, LogOut, Sliders
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
 import { BrigidMark } from "@/components/brigid-mark";
+import { useApp } from "@/context/AppContext";
 
 const groups = [
   {
@@ -38,6 +39,20 @@ const groups = [
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isActive = (url: string) => (pathname.startsWith(url) && (url !== "/" || pathname === "/"));
+  const { userRole, logout } = useApp();
+
+  const sidebarGroups = groups.map((g) => {
+    if (g.label === "Gestão" && userRole === "admin") {
+      return {
+        ...g,
+        items: [
+          ...g.items,
+          { title: "Ponderação de Pesos", url: "/pesos", icon: Sliders },
+        ],
+      };
+    }
+    return g;
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -49,13 +64,13 @@ export function AppSidebar() {
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
             <span className="text-base font-semibold tracking-[0.18em] text-sidebar-foreground">BRIGID</span>
             <span className="text-[10px] tracking-wider text-sidebar-foreground/60 leading-tight">
-              Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
+              Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero - CAOCRIM/MPPI.
             </span>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {groups.map((g) => (
+        {sidebarGroups.map((g) => (
           <SidebarGroup key={g.label}>
             <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -80,7 +95,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild className="justify-center bg-sidebar-accent/50 text-sidebar-accent-foreground hover:bg-sidebar-accent" tooltip="Sair do sistema">
-                <Link to="/">
+                <Link to="/" onClick={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4 opacity-70" />
                   <span>Sair do sistema</span>
                 </Link>

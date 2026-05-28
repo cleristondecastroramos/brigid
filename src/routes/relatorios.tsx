@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Download, FileText } from "lucide-react";
 import { municipiosQueryOptions } from "@/lib/csv-data";
+import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { exportCsv } from "@/lib/export";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/relatorios")({
 });
 
 function Relatorios() {
-  const { data: m } = useSuspenseQuery(municipiosQueryOptions);
+  const { data: m } = useMunicipios();
 
   const reports: Array<{ titulo: string; descricao: string; rows: Record<string, any>[]; file: string }> = [
     {

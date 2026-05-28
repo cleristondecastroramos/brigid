@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { municipiosQueryOptions } from "@/lib/csv-data";
+import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/municipios/")({
 });
 
 function MunicipiosList() {
-  const { data: municipios } = useSuspenseQuery(municipiosQueryOptions);
+  const { data: municipios } = useMunicipios();
   const [q, setQ] = useState("");
   const [polo, setPolo] = useState("__all");
   const [risco, setRisco] = useState("__all");

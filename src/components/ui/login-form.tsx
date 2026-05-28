@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { User, Lock, ArrowRight } from 'lucide-react';
+import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
 
 // Vertex shader source code
 const vertexSmokeySource = `
@@ -83,7 +85,7 @@ export function SmokeyBackground({
   backdropBlurAmount = "sm",
   color = "#1E40AF", // Default dark blue
   className = "",
-}: SmokeyBackgroundProps): JSX.Element {
+}: SmokeyBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
@@ -208,6 +210,22 @@ export function SmokeyBackground({
  */
 export function LoginForm() {
   const [showLogin, setShowLogin] = useState(false);
+  const { login } = useApp();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      toast.error("Por favor, preencha todos os campos.");
+      return;
+    }
+    // Permite login administrativo simulado
+    login("admin");
+    toast.success("Acesso de Administrador autorizado com sucesso!");
+    navigate({ to: "/painel" });
+  };
 
   if (!showLogin) {
     return (
@@ -220,6 +238,10 @@ export function LoginForm() {
         <div className="flex flex-col gap-4 mt-8">
           <Link
             to="/painel"
+            onClick={() => {
+              login("public");
+              toast.success("Acesso ao painel público carregado.");
+            }}
             className="group w-full flex items-center justify-center py-3.5 px-4 bg-white text-[#195e6b] hover:bg-slate-50 rounded-lg font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5"
           >
             Acessar painel público
@@ -228,7 +250,7 @@ export function LoginForm() {
           
           <button
             onClick={() => setShowLogin(true)}
-            className="group w-full flex items-center justify-center py-3.5 px-4 bg-transparent border border-white/30 hover:bg-white/10 rounded-lg text-white font-medium transition-all duration-300"
+            className="group w-full flex items-center justify-center py-3.5 px-4 bg-transparent border border-white/30 hover:bg-white/10 rounded-lg text-white font-medium transition-all duration-300 cursor-pointer animate-none"
           >
             <Lock className="mr-2 h-4 w-4 text-white/70 group-hover:text-white" />
             Acesso restrito
@@ -241,7 +263,7 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm p-8 space-y-6 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
       <div className="flex items-center gap-2 mb-6">
-        <button onClick={() => setShowLogin(false)} className="text-white/70 hover:text-white transition-colors" title="Voltar">
+        <button type="button" onClick={() => setShowLogin(false)} className="text-white/70 hover:text-white transition-colors cursor-pointer" title="Voltar">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div className="flex-1 text-center pr-6">
@@ -249,12 +271,14 @@ export function LoginForm() {
         </div>
       </div>
       <p className="text-center text-sm text-gray-300 -mt-4">Entre com suas credenciais institucionais</p>
-      <form className="space-y-8">
+      <form onSubmit={handleAdminLogin} className="space-y-8">
         {/* Email Input with Animated Label */}
         <div className="relative z-0">
           <input
             type="email"
             id="floating_email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-500 peer"
             placeholder=" " 
             required
@@ -272,6 +296,8 @@ export function LoginForm() {
           <input
             type="password"
             id="floating_password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-500 peer"
             placeholder=" "
             required
@@ -290,8 +316,8 @@ export function LoginForm() {
         </div>
         
         <button
-          type="button"
-          className="group w-full flex items-center justify-center py-3 px-4 bg-[#195e6b] hover:bg-[#154d58] rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#195e6b] transition-all duration-300"
+          type="submit"
+          className="group w-full flex items-center justify-center py-3 px-4 bg-[#195e6b] hover:bg-[#154d58] rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#195e6b] transition-all duration-300 cursor-pointer"
         >
           Entrar
           <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />

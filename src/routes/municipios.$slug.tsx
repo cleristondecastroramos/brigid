@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft, MapPin, Users, Building2, HeartHandshake } from "lucide-react";
 import { municipiosQueryOptions } from "@/lib/csv-data";
+import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge, AlertBadge, YesNoBadge } from "@/components/risk-badge";
 import { KpiCard } from "@/components/kpi-card";
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/municipios/$slug")({
 
 function MunicipioDetail() {
   const { slug } = Route.useParams();
-  const { data: all } = useSuspenseQuery(municipiosQueryOptions);
+  const { data: all } = useMunicipios();
   const m = all.find((x) => x.municipio_slug === slug)!;
 
   return (
