@@ -1,20 +1,19 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, HeartHandshake, AlertTriangle,
-  MapPin, ListChecks, FileText, Map as MapIcon,
+  MapPin, ListChecks, FileText, Map as MapIcon, LogOut,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
 import { BrigidMark } from "@/components/brigid-mark";
-import logo from "@/assets/logo-mppi.png";
 
 const groups = [
   {
     label: "Monitoramento",
     items: [
-      { title: "Painel Estratégico", url: "/", icon: LayoutDashboard },
+      { title: "Painel Estratégico", url: "/painel", icon: LayoutDashboard },
       { title: "Cobertura OPM", url: "/opm", icon: Building2 },
       { title: "Cobertura CREAS", url: "/creas", icon: HeartHandshake },
       { title: "Risco de Feminicídio", url: "/risco", icon: AlertTriangle },
@@ -38,17 +37,19 @@ const groups = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
+  const isActive = (url: string) => (pathname.startsWith(url) && (url !== "/" || pathname === "/"));
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-3 px-2 py-3 text-sidebar-primary">
-          <BrigidMark size={36} />
+        <div className="flex items-center px-2 py-3 text-sidebar-primary">
+          <div className="hidden w-full items-center justify-center group-data-[collapsible=icon]:flex">
+            <BrigidMark size={36} />
+          </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
             <span className="text-base font-semibold tracking-[0.18em] text-sidebar-foreground">BRIGID</span>
-            <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">
-              Projeto Feminicídio Zero · MPPI
+            <span className="text-[10px] tracking-wider text-sidebar-foreground/60 leading-tight">
+              Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
             </span>
           </div>
         </div>
@@ -75,11 +76,18 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex flex-col gap-2 px-2 py-3 group-data-[collapsible=icon]:hidden">
-          <p className="text-[10px] leading-relaxed text-sidebar-foreground/55">
-            Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
-          </p>
-          <img src={logo} alt="Ministério Público do Estado do Piauí" className="h-7 w-auto self-start rounded bg-white px-1 py-0.5" />
+        <div className="flex flex-col gap-2 px-2 py-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild className="justify-center bg-sidebar-accent/50 text-sidebar-accent-foreground hover:bg-sidebar-accent" tooltip="Sair do sistema">
+                <Link to="/">
+                  <LogOut className="mr-2 h-4 w-4 opacity-70" />
+                  <span>Sair do sistema</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+
         </div>
       </SidebarFooter>
     </Sidebar>

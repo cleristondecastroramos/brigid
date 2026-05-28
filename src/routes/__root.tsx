@@ -2,11 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet, createRootRouteWithContext, HeadContent, Scripts, useRouterState, Link,
 } from "@tanstack/react-router";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { Sun, Moon, ShieldCheck } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
+import logo from "@/assets/logo-mppi.png";
 
 function NotFoundComponent() {
   return (
@@ -84,20 +86,39 @@ function PageHeader() {
     if (pathname.startsWith("/municipios/")) title = "Ficha Territorial";
     else title = "BRIGID";
   }
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur transition-colors">
       <SidebarTrigger className="-ml-1" />
-      <div className="flex flex-col">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          BRIGID · MPPI · Projeto Feminicídio Zero
-        </p>
-        <h1 className="text-sm font-semibold text-foreground leading-tight">{title}</h1>
+      <div className="flex items-center gap-3">
+        <img src={logo} alt="MPPI" className="h-7 w-auto rounded bg-white px-1 py-0.5" />
       </div>
-      <div className="ml-auto hidden items-center gap-2 text-xs text-muted-foreground md:flex">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-success)]" />
-          Base oficial · 224 municípios
-        </span>
+      
+      <div className="ml-auto flex items-center gap-3 text-xs">
+        <div className="hidden md:flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 shadow-sm transition-all hover:bg-muted/50">
+          <ShieldCheck className="h-3.5 w-3.5 text-[color:var(--color-success)]" />
+          <span className="font-medium text-foreground tracking-wide uppercase text-[10px]">Acesso Oficial</span>
+        </div>
+        
+        <button
+          onClick={toggleTheme}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:bg-muted hover:scale-105 active:scale-95"
+          title={theme === "light" ? "Mudar para modo escuro" : "Mudar para modo claro"}
+        >
+          {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+        </button>
       </div>
     </header>
   );
@@ -105,6 +126,21 @@ function PageHeader() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  
+  const isLandingPage = pathname === "/";
+
+  if (isLandingPage) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Suspense fallback={<div className="min-h-dvh bg-[#F8FAFC]" />}>
+          <Outlet />
+        </Suspense>
+        <Toaster />
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <SidebarProvider>

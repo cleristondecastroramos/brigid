@@ -2,7 +2,7 @@ import Papa from "papaparse";
 import { queryOptions } from "@tanstack/react-query";
 import type { Municipio } from "./types";
 import csvText from "@/data/base_mppi_caocrim.csv?raw";
-import geoJson from "@/data/piaui-map.json";
+import geoJson from "@/data/piaui-map-fixed.json";
 
 const NUMERIC_FIELDS: Array<keyof Municipio> = [
   "populacao", "consumado", "tentado",
@@ -47,7 +47,7 @@ async function fetchGeo(): Promise<PiauiGeoJSON> {
 }
 
 export const geoQueryOptions = queryOptions({
-  queryKey: ["piaui-geo"],
+  queryKey: ["piaui-geo-fixed"],
   queryFn: fetchGeo,
   staleTime: Infinity,
 });

@@ -31,22 +31,22 @@ export function PiauiMap({ colorFn, height = 520, legend, title }: PiauiMapProps
   }, [municipios]);
 
   const { paths, viewBox } = useMemo(() => {
-    const width = 800;
-    const projection = geoMercator().fitSize([width, height], geo as any);
+    const projection = geoMercator().fitSize([800, 800], geo as any);
     const path = geoPath(projection);
     const paths = geo.features.map((f) => ({
       id: f.properties.id,
       name: f.properties.name,
       d: path(f as any) ?? "",
     }));
-    return { paths, viewBox: `0 0 ${width} ${height}` };
-  }, [geo, height]);
+    const [[x0, y0], [x1, y1]] = path.bounds(geo as any);
+    return { paths, viewBox: `${x0} ${y0} ${x1 - x0} ${y1 - y0}` };
+  }, [geo]);
 
   return (
     <div className="relative w-full">
       {title && <p className="mb-2 text-sm font-medium text-foreground">{title}</p>}
-      <div className="relative rounded-lg border border-border bg-card">
-        <svg viewBox={viewBox} className="h-auto w-full" role="img" aria-label="Mapa do Piauí">
+      <div className="relative rounded-lg border border-border bg-card flex justify-center p-4">
+        <svg viewBox={viewBox} className="h-auto w-full max-h-[720px]" role="img" aria-label="Mapa do Piauí">
           <g>
             {paths.map((p) => {
               const m = bySlug.get(p.id) || bySlug.get(norm(p.name));
