@@ -62,10 +62,12 @@ const PAGE_TITLES: Record<string, string> = {
   "/opm": "Painel de OPMs",
   "/creas": "Painel de CREAS",
   "/risco": "Risco de Feminicídio",
+  "/territorio": "Inteligência Territorial",
   "/municipios": "Municípios",
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
 };
+
 
 function PageHeader() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
