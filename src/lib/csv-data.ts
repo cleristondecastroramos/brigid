@@ -52,9 +52,6 @@ export const geoQueryOptions = queryOptions({
   staleTime: Infinity,
 });
 
-  staleTime: Infinity,
-});
-
 // Helpers
 export function pct(part: number, total: number): string {
   if (!total) return "0%";
