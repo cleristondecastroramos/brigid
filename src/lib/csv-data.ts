@@ -13,18 +13,26 @@ const NUMERIC_FIELDS: Array<keyof Municipio> = [
 ];
 
 async function fetchMunicipios(): Promise<Municipio[]> {
-  const parsed = Papa.parse<Record<string, string>>(csvText, {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (h) => h.replace(/^\ufeff/, "").trim().replace("população", "populacao"),
-  });
-  return parsed.data.map((row) => {
-    const m: any = { ...row };
-    for (const f of NUMERIC_FIELDS) {
-      m[f] = Number(row[f as string] ?? row[(f as string).replace("populacao", "população")] ?? 0) || 0;
-    }
-    return m as Municipio;
-  });
+  try {
+    const res = await fetch("http://localhost:3001/municipios");
+    if (!res.ok) throw new Error("Mock API returned " + res.status);
+    return await res.json();
+  } catch (err) {
+    console.warn("API mockada indisponível, usando fallback do CSV:", err);
+    const parsed = Papa.parse<Record<string, string>>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h) => h.replace(/^\ufeff/, "").trim().replace("população", "populacao"),
+    });
+    return parsed.data.map((row) => {
+      const m: any = { ...row };
+      for (const f of NUMERIC_FIELDS) {
+        m[f] = Number(row[f as string] ?? row[(f as string).replace("populacao", "população")] ?? 0) || 0;
+      }
+      if (m.codigo_ibge) m.id = String(m.codigo_ibge);
+      return m as Municipio;
+    });
+  }
 }
 
 export const municipiosQueryOptions = queryOptions({

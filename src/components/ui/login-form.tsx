@@ -221,10 +221,17 @@ export function LoginForm() {
       toast.error("Por favor, preencha todos os campos.");
       return;
     }
-    // Permite login administrativo simulado
-    login("admin");
-    toast.success("Acesso de Administrador autorizado com sucesso!");
-    navigate({ to: "/painel" });
+    
+    if (email.toLowerCase().trim() === "caocrim@mppi.mp.br") {
+      login("admin");
+      toast.success("Acesso de Administrador autorizado com sucesso!");
+      navigate({ to: "/painel" });
+    } else {
+      // Se não for o admin, loga como público e avisa
+      login("public");
+      toast.error("Credenciais não reconhecidas como administrador. Acesso limitado ao painel público.");
+      navigate({ to: "/painel" });
+    }
   };
 
   if (!showLogin) {

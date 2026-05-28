@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge, AlertBadge } from "@/components/risk-badge";
 import { Link } from "@tanstack/react-router";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList
 } from "recharts";
 
 export const Route = createFileRoute("/painel")({
@@ -86,12 +86,14 @@ function Dashboard() {
             <CardHeader className="pb-2"><CardTitle className="text-base">Distribuição por risco</CardTitle></CardHeader>
             <CardContent className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={riskDist}>
+                <BarChart data={riskDist} margin={{ top: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="nivel" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <YAxis hide={true} />
                   <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="total" radius={[4, 4, 0, 0]} fill="var(--color-primary)" />
+                  <Bar dataKey="total" radius={[4, 4, 0, 0]} fill="var(--color-primary)">
+                    <LabelList dataKey="total" position="top" style={{ fill: "var(--color-foreground)", fontSize: 11, fontWeight: 500 }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

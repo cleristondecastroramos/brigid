@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, HeartHandshake } from "lucide-react";
+import { Download, HeartHandshake, Search, Eraser } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { YesNoBadge } from "@/components/risk-badge";
 import { exportCsv } from "@/lib/export";
+import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
 
 export const Route = createFileRoute("/creas")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -25,35 +26,171 @@ const COLOR_NA = "oklch(0.92 0.01 230)";
 function CreasPanel() {
   const { data: municipios } = useMunicipios();
   const [q, setQ] = useState("");
+  const [comarca, setComarca] = useState("__all");
   const [polo, setPolo] = useState("__all");
+  const [faixaPop, setFaixaPop] = useState<FaixaPop>("__all");
   const [status, setStatus] = useState("__all");
 
+  const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort(), [municipios]);
   const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(), [municipios]);
 
   const filtered = useMemo(() => municipios.filter((m) => {
     if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
+    if (comarca !== "__all" && m.comarca !== comarca) return false;
     if (polo !== "__all" && m.polo_regional !== polo) return false;
+    if (faixaPop !== "__all" && getFaixaPopulacional(m.populacao) !== faixaPop) return false;
     if (status !== "__all" && m.creas_possui !== status) return false;
     return true;
-  }), [municipios, q, polo, status]);
+  }), [municipios, q, comarca, polo, faixaPop, status]);
 
-  const total = municipios.length;
-  const com = municipios.filter((m) => m.creas_possui === "SIM").length;
+  const total = filtered.length;
+  const com = filtered.filter((m) => m.creas_possui === "SIM").length;
   const sem = total - com;
-  const altaPrio = municipios.filter((m) => m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA").length;
+  const altaPrio = filtered.filter((m) => m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA").length;
 
-  const semList = municipios.filter((m) => m.creas_possui !== "SIM");
+  const semList = filtered.filter((m) => m.creas_possui !== "SIM");
 
-  const colorFn = (m: any) => !m ? COLOR_NA : m.creas_possui === "SIM" ? COLOR_WITH : COLOR_WITHOUT;
+  const colorFn = (m: any) => {
+    if (!m) return COLOR_NA;
+    // If there is a filter active, we want to color only the filtered ones. 
+    // Wait, the map needs to dim or hide the ones not in 'filtered'.
+    // In PiauiMap it receives colorFn. Let's just color the non-filtered as NA if they are filtered out.
+    const isFilteredIn = filtered.some(fm => fm.codigo_ibge === m.codigo_ibge);
+    if (!isFilteredIn) return COLOR_NA;
+    
+    return m.creas_possui === "SIM" ? COLOR_WITH : COLOR_WITHOUT;
+  };
+
+  const hasFilter = q !== "" || comarca !== "__all" || polo !== "__all" || faixaPop !== "__all" || status !== "__all";
+  const clearFilters = () => {
+    setQ(""); setComarca("__all"); setPolo("__all"); setFaixaPop("__all"); setStatus("__all");
+  };
+
+  const isDestaque20k = faixaPop === "acima_20k";
 
   return (
     <div className="space-y-6">
+      {/* Barra de Filtros */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
+              {hasFilter && (
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  Filtros ativos
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[200px] flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar município…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <Select value={comarca} onValueChange={setComarca}>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Comarca" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todas as comarcas</SelectItem>
+                  {comarcas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={polo} onValueChange={setPolo}>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Polo regional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todos os polos</SelectItem>
+                  {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={faixaPop} onValueChange={(v) => setFaixaPop(v as FaixaPop)}>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Faixa populacional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todas as faixas</SelectItem>
+                  <SelectItem value="ate_5k">Até 5.000 hab.</SelectItem>
+                  <SelectItem value="5k_10k">5.001 a 10.000 hab.</SelectItem>
+                  <SelectItem value="10k_20k">10.001 a 20.000 hab.</SelectItem>
+                  <SelectItem value="acima_20k">Acima de 20.000 hab.</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="w-[140px]"><SelectValue placeholder="Situação" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todos (status)</SelectItem>
+                  <SelectItem value="SIM">Com CREAS</SelectItem>
+                  <SelectItem value="NAO">Sem CREAS</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={clearFilters} disabled={!hasFilter}>
+                <Eraser className="mr-2 h-4 w-4" /> Limpar
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Municípios" value={total} icon={HeartHandshake} tone="primary" />
+        <KpiCard label="Municípios (Recorte)" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={HeartHandshake} tone="primary" />
         <KpiCard label="Com CREAS" value={com} hint={pct(com, total)} tone="success" />
         <KpiCard label="Sem CREAS" value={sem} hint={pct(sem, total)} tone="critical" />
         <KpiCard label="Prioridade ALTA" value={altaPrio} hint="Para implantação" tone="warning" />
       </div>
+
+      {isDestaque20k && (
+        <Card className="border-warning bg-warning/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-warning-foreground flex items-center gap-2">
+              Destaque Analítico: Municípios acima de 20 mil habitantes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Este recorte atende à etapa estratégica do projeto que prioriza a identificação e atuação sobre municípios de maior porte que ainda não possuem CREAS implementado.
+            </p>
+            <div className="flex gap-4">
+              <div className="rounded-md bg-background p-3 border border-border">
+                <p className="text-xs text-muted-foreground">Total nesta faixa</p>
+                <p className="text-xl font-bold">{total}</p>
+              </div>
+              <div className="rounded-md bg-background p-3 border border-border">
+                <p className="text-xs text-muted-foreground">Com CREAS</p>
+                <p className="text-xl font-bold text-[color:var(--color-success)]">{com}</p>
+              </div>
+              <div className="rounded-md bg-background p-3 border border-border">
+                <p className="text-xs text-muted-foreground">Sem CREAS (Déficit)</p>
+                <p className="text-xl font-bold text-destructive">{sem}</p>
+              </div>
+            </div>
+            {sem > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-foreground">Lista nominal do déficit (&gt; 20 mil hab.):</p>
+                  <Button
+                    size="sm" variant="outline"
+                    className="border-warning text-warning-foreground hover:bg-warning/10"
+                    onClick={() => exportCsv("municipios_acima_20k_sem_creas.csv", semList.map((m) => ({
+                      municipio: m.municipio, codigo_ibge: m.codigo_ibge, populacao: m.populacao,
+                      comarca: m.comarca, polo_regional: m.polo_regional, prioridade: m.prioridade_implantacao_creas
+                    })))}
+                  >
+                    <Download className="mr-2 h-4 w-4" /> Exportar lista de déficit
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {semList.map(m => (
+                    <span key={m.codigo_ibge} className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium">
+                      {m.municipio} <span className="ml-1 text-[10px] text-muted-foreground">({m.populacao.toLocaleString("pt-BR")})</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">Cobertura territorial de CREAS</CardTitle></CardHeader>
@@ -63,7 +200,7 @@ function CreasPanel() {
             legend={[
               { label: "Com CREAS", color: COLOR_WITH },
               { label: "Sem CREAS", color: COLOR_WITHOUT },
-              { label: "Sem dado", color: COLOR_NA },
+              { label: "Sem dado / Fora do filtro", color: COLOR_NA },
             ]}
           />
         </CardContent>
@@ -80,35 +217,18 @@ function CreasPanel() {
               risco: m.risco_feminicidio_nivel, alerta: m.painel_alerta_rede,
             })))}
           >
-            <Download className="mr-2 h-4 w-4" /> Exportar municípios sem CREAS
+            <Download className="mr-2 h-4 w-4" /> Exportar sem CREAS (Filtro atual)
           </Button>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid gap-2 md:grid-cols-3">
-            <Input placeholder="Buscar município…" value={q} onChange={(e) => setQ(e.target.value)} />
-            <Select value={polo} onValueChange={setPolo}>
-              <SelectTrigger><SelectValue placeholder="Polo regional" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Todos os polos</SelectItem>
-                {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger><SelectValue placeholder="Situação" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all">Todas</SelectItem>
-                <SelectItem value="SIM">Com CREAS</SelectItem>
-                <SelectItem value="NAO">Sem CREAS</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="overflow-x-auto rounded-md border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Município</TableHead>
+                  <TableHead>Comarca</TableHead>
                   <TableHead>Polo</TableHead>
+                  <TableHead className="text-right">População</TableHead>
                   <TableHead>CREAS</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Prioridade implantação</TableHead>
@@ -122,7 +242,9 @@ function CreasPanel() {
                         {m.municipio}
                       </Link>
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{m.comarca}</TableCell>
                     <TableCell className="text-muted-foreground">{m.polo_regional}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">{m.populacao.toLocaleString("pt-BR")}</TableCell>
                     <TableCell><YesNoBadge value={m.creas_possui} /></TableCell>
                     <TableCell className="text-muted-foreground">{m.creas_status || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{m.prioridade_implantacao_creas || "—"}</TableCell>
@@ -137,3 +259,4 @@ function CreasPanel() {
     </div>
   );
 }
+

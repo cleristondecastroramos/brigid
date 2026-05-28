@@ -15,6 +15,7 @@ const groups = [
     label: "Monitoramento",
     items: [
       { title: "Painel Estratégico", url: "/painel", icon: LayoutDashboard },
+      { title: "Diagnóstico da Rede", url: "/diagnostico", icon: FileText },
       { title: "Cobertura OPM", url: "/opm", icon: Building2 },
       { title: "Cobertura CREAS", url: "/creas", icon: HeartHandshake },
       { title: "Risco de Feminicídio", url: "/risco", icon: AlertTriangle },
@@ -47,6 +48,7 @@ export function AppSidebar() {
         ...g,
         items: [
           ...g.items,
+          { title: "Gestão da Base Municipal", url: "/base", icon: MapPin },
           { title: "Ponderação de Pesos", url: "/pesos", icon: Sliders },
         ],
       };

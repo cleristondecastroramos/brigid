@@ -5,6 +5,8 @@ import { geoQueryOptions, municipiosQueryOptions } from "@/lib/csv-data";
 import type { Municipio } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+import { Lock, Unlock, ZoomIn, ZoomOut } from "lucide-react";
+
 export type ColorFn = (m: Municipio | undefined) => string;
 
 export function normName(s: string) {
@@ -18,6 +20,8 @@ interface Props {
   dimNonHighlighted?: boolean;
   onSelect?: (m: Municipio | undefined, name: string) => void;
   height?: number;
+  legend?: Array<{ label: string; color: string }>;
+  legendTitle?: string;
 }
 
 export function TerritorialMap({
@@ -27,6 +31,8 @@ export function TerritorialMap({
   dimNonHighlighted,
   onSelect,
   height = 620,
+  legend,
+  legendTitle,
 }: Props) {
   const { data: geo } = useSuspenseQuery(geoQueryOptions);
   const { data: municipios } = useSuspenseQuery(municipiosQueryOptions);
@@ -34,6 +40,7 @@ export function TerritorialMap({
   const [hover, setHover] = useState<{ name: string; m?: Municipio; x: number; y: number } | null>(null);
 
   const [zoom, setZoom] = useState(1);
+  const [zoomLocked, setZoomLocked] = useState(true);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
   const dragRef = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
@@ -65,13 +72,14 @@ export function TerritorialMap({
     const el = svgRef.current;
     if (!el) return;
     const handler = (e: WheelEvent) => {
+      if (zoomLocked) return;
       e.preventDefault();
       const delta = -e.deltaY * 0.0015;
       setZoom((z) => Math.min(8, Math.max(1, z * (1 + delta))));
     };
     el.addEventListener("wheel", handler, { passive: false });
     return () => el.removeEventListener("wheel", handler);
-  }, []);
+  }, [zoomLocked]);
 
   const onMouseDown = (e: React.MouseEvent) => {
     dragRef.current = { x: e.clientX, y: e.clientY, tx, ty };
@@ -87,22 +95,46 @@ export function TerritorialMap({
 
   return (
     <div className="relative w-full select-none">
-      <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-md border border-border bg-card/95 p-1 shadow-sm backdrop-blur">
-        <button
-          aria-label="Aproximar"
-          onClick={() => setZoom((z) => Math.min(8, z * 1.3))}
-          className="flex h-7 w-7 items-center justify-center rounded text-sm text-foreground hover:bg-accent"
-        >+</button>
-        <button
-          aria-label="Afastar"
-          onClick={() => setZoom((z) => Math.max(1, z / 1.3))}
-          className="flex h-7 w-7 items-center justify-center rounded text-sm text-foreground hover:bg-accent"
-        >−</button>
-        <button
-          aria-label="Resetar"
-          onClick={reset}
-          className="flex h-7 w-7 items-center justify-center rounded text-[10px] text-muted-foreground hover:bg-accent"
-        >⌂</button>
+      <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
+        <div className="flex flex-row gap-1 rounded-md border border-border bg-card/95 p-1 shadow-sm backdrop-blur w-fit">
+          <button
+            aria-label="Afastar"
+            onClick={() => !zoomLocked && setZoom((z) => Math.max(1, z / 1.3))}
+            className="flex h-7 w-7 items-center justify-center rounded text-sm text-foreground hover:bg-accent disabled:opacity-50 transition-opacity"
+            disabled={zoomLocked}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          
+          <button
+            aria-label="Travar zoom"
+            onClick={() => setZoomLocked(!zoomLocked)}
+            className="flex h-7 w-7 items-center justify-center rounded text-sm text-foreground hover:bg-accent"
+          >
+            {zoomLocked ? <Lock className="h-4 w-4 text-[color:var(--color-critical)]" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
+          </button>
+
+          <button
+            aria-label="Aproximar"
+            onClick={() => !zoomLocked && setZoom((z) => Math.min(8, z * 1.3))}
+            className="flex h-7 w-7 items-center justify-center rounded text-sm text-foreground hover:bg-accent disabled:opacity-50 transition-opacity"
+            disabled={zoomLocked}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+        </div>
+
+        {legend && (
+          <div className="flex flex-col gap-2 rounded-md border border-border bg-card/95 p-3 shadow-sm backdrop-blur text-xs w-fit">
+            {legendTitle && <span className="font-semibold text-foreground mb-1">{legendTitle}</span>}
+            {legend.map((l) => (
+              <div key={l.label} className="flex items-center gap-2 text-muted-foreground">
+                <span className="inline-block h-3 w-3 rounded-sm border border-border flex-shrink-0" style={{ background: l.color }} />
+                <span>{l.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="relative rounded-lg border border-border bg-card overflow-hidden">

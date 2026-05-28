@@ -45,4 +45,41 @@ export interface Municipio {
   fonte_base_risco: string;
   observacoes_sistema: string;
   ultima_atualizacao_referencia: string;
+  id: string;
+
+  // Novos campos do módulo de Diagnóstico
+  tem_fluxo_formal?: SimNao;
+  tem_protocolo_local_regional?: SimNao;
+  tem_atendimento_psicossocial?: SimNao;
+  tem_atendimento_juridico?: SimNao;
+  tem_equipe_multiprofissional?: SimNao;
+  tem_sala_especializada?: SimNao;
+  tem_articulacao_rede?: SimNao;
+  tem_recursos_minimos?: SimNao;
+  grau_suficiencia_estrutura?: "ADEQUADO" | "PARCIAL" | "INSUFICIENTE" | string;
+
+  // Painel 2 - Violência de Gênero, Investigação e Perícias
+  feminicidios_consumados_2024_2025?: number;
+  feminicidios_tentados_2024_2025?: number;
+  tem_protocolo_investigacao?: SimNao;
+  tem_protocolo_pericial?: SimNao;
+  capacitado_perspectiva_genero?: SimNao;
+  qtd_capacitacoes_realizadas?: number;
+  treinamento_especifico_feminicidio?: SimNao;
+  grau_aderencia_protocolo?: "ALTO" | "MEDIO" | "BAIXO" | string;
+  gargalos_identificados?: string;
+
+  // Painel 3 - Assistência Social e Capacitação
+  tem_protocolo_assistencial?: SimNao;
+  tem_fluxo_encaminhamento?: SimNao;
+  articulacao_creas_rede?: SimNao;
+  tem_equipe_minima_creas?: SimNao;
+  profissionais_capacitados?: number;
+  data_ultima_capacitacao?: string;
+
+  // Índices Sintéticos (calculados dinamicamente)
+  ier_score?: number; // Índice de Estrutura da Rede (0-10)
+  imf_score?: number; // Índice de Maturidade dos Fluxos (0-10)
+  iqt_score?: number; // Índice de Qualificação Técnica (0-10)
 }
+

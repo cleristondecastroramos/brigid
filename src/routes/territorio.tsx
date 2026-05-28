@@ -314,20 +314,9 @@ function TerritorialIntelligence() {
                 highlightSlugs={hasFilter ? filteredSlugs : undefined}
                 dimNonHighlighted={hasFilter}
                 onSelect={(m) => openMunicipio(m)}
+                legend={LAYER_LEGENDS[layer]}
+                legendTitle={`Legenda · ${LAYER_TITLES[layer]}`}
               />
-              {/* Legend */}
-              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border border-border bg-muted/30 p-3 text-xs">
-                <span className="font-semibold text-foreground">Legenda · {LAYER_TITLES[layer]}:</span>
-                {LAYER_LEGENDS[layer].map((l) => (
-                  <span key={l.label} className="inline-flex items-center gap-1.5 text-muted-foreground">
-                    <span className="inline-block h-3 w-3 rounded-sm border border-border" style={{ background: l.color }} />
-                    {l.label}
-                  </span>
-                ))}
-                <span className="ml-auto text-muted-foreground">
-                  Arraste para mover · roda do mouse / botões para zoom · clique no município para detalhar
-                </span>
-              </div>
             </CardContent>
           </Card>
 

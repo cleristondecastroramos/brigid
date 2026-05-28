@@ -71,6 +71,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Painel Estratégico BRIGID",
+  "/diagnostico": "Diagnóstico da Rede e Fluxos",
   "/opm": "Cobertura de OPMs",
   "/creas": "Cobertura de CREAS",
   "/risco": "Risco de Feminicídio",

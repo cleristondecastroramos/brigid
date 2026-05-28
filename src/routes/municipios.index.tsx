@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download } from "lucide-react";
+import { Download, ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
 import { municipiosQueryOptions } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,15 +21,48 @@ function MunicipiosList() {
   const [q, setQ] = useState("");
   const [polo, setPolo] = useState("__all");
   const [risco, setRisco] = useState("__all");
+  const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(), [municipios]);
 
-  const filtered = useMemo(() => municipios.filter((m) => {
-    if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
-    if (polo !== "__all" && m.polo_regional !== polo) return false;
-    if (risco !== "__all" && m.risco_feminicidio_nivel !== risco) return false;
-    return true;
-  }).sort((a, b) => a.municipio.localeCompare(b.municipio, "pt-BR")), [municipios, q, polo, risco]);
+  const filtered = useMemo(() => {
+    let result = municipios.filter((m) => {
+      if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
+      if (polo !== "__all" && m.polo_regional !== polo) return false;
+      if (risco !== "__all" && m.risco_feminicidio_nivel !== risco) return false;
+      return true;
+    });
+
+    return result.sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+      
+      if (aVal === bVal) return 0;
+      
+      const modifier = sortDirection === "asc" ? 1 : -1;
+      
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return aVal.localeCompare(bVal, "pt-BR") * modifier;
+      }
+      
+      return ((aVal as any) < (bVal as any) ? -1 : 1) * modifier;
+    });
+  }, [municipios, q, polo, risco, sortColumn, sortDirection]);
+
+  const handleSort = (column: keyof typeof municipios[0]) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  const SortIcon = ({ column }: { column: keyof typeof municipios[0] }) => {
+    if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30 inline" />;
+    return sortDirection === "asc" ? <ChevronUp className="ml-1 h-3 w-3 inline" /> : <ChevronDown className="ml-1 h-3 w-3 inline" />;
+  };
 
   return (
     <div className="space-y-4">
@@ -65,15 +98,15 @@ function MunicipiosList() {
           <div className="overflow-x-auto rounded-md border border-border">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Município</TableHead>
-                  <TableHead>Comarca</TableHead>
-                  <TableHead>Polo</TableHead>
-                  <TableHead className="text-right">População</TableHead>
-                  <TableHead>OPM</TableHead>
-                  <TableHead>CREAS</TableHead>
-                  <TableHead>Risco</TableHead>
-                  <TableHead>Alerta</TableHead>
+                <TableRow className="bg-slate-200 dark:bg-slate-800">
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("municipio")}>Município <SortIcon column="municipio" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("comarca")}>Comarca <SortIcon column="comarca" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("polo_regional")}>Polo <SortIcon column="polo_regional" /></TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("opm_possui")}>OPM <SortIcon column="opm_possui" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("creas_possui")}>CREAS <SortIcon column="creas_possui" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("risco_feminicidio_score")}>Risco <SortIcon column="risco_feminicidio_score" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("painel_alerta_rede")}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

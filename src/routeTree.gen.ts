@@ -16,7 +16,9 @@ import { Route as PesosRouteImport } from './routes/pesos'
 import { Route as PainelRouteImport } from './routes/painel'
 import { Route as OpmRouteImport } from './routes/opm'
 import { Route as GestaoRouteImport } from './routes/gestao'
+import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
 import { Route as CreasRouteImport } from './routes/creas'
+import { Route as BaseRouteImport } from './routes/base'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MunicipiosIndexRouteImport } from './routes/municipios.index'
 import { Route as MunicipiosSlugRouteImport } from './routes/municipios.$slug'
@@ -56,9 +58,19 @@ const GestaoRoute = GestaoRouteImport.update({
   path: '/gestao',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiagnosticoRoute = DiagnosticoRouteImport.update({
+  id: '/diagnostico',
+  path: '/diagnostico',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreasRoute = CreasRouteImport.update({
   id: '/creas',
   path: '/creas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BaseRoute = BaseRouteImport.update({
+  id: '/base',
+  path: '/base',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -79,7 +91,9 @@ const MunicipiosSlugRoute = MunicipiosSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/base': typeof BaseRoute
   '/creas': typeof CreasRoute
+  '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
   '/painel': typeof PainelRoute
@@ -92,7 +106,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/base': typeof BaseRoute
   '/creas': typeof CreasRoute
+  '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
   '/painel': typeof PainelRoute
@@ -106,7 +122,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/base': typeof BaseRoute
   '/creas': typeof CreasRoute
+  '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
   '/painel': typeof PainelRoute
@@ -121,7 +139,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/base'
     | '/creas'
+    | '/diagnostico'
     | '/gestao'
     | '/opm'
     | '/painel'
@@ -134,7 +154,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/base'
     | '/creas'
+    | '/diagnostico'
     | '/gestao'
     | '/opm'
     | '/painel'
@@ -147,7 +169,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/base'
     | '/creas'
+    | '/diagnostico'
     | '/gestao'
     | '/opm'
     | '/painel'
@@ -161,7 +185,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BaseRoute: typeof BaseRoute
   CreasRoute: typeof CreasRoute
+  DiagnosticoRoute: typeof DiagnosticoRoute
   GestaoRoute: typeof GestaoRoute
   OpmRoute: typeof OpmRoute
   PainelRoute: typeof PainelRoute
@@ -224,11 +250,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diagnostico': {
+      id: '/diagnostico'
+      path: '/diagnostico'
+      fullPath: '/diagnostico'
+      preLoaderRoute: typeof DiagnosticoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/creas': {
       id: '/creas'
       path: '/creas'
       fullPath: '/creas'
       preLoaderRoute: typeof CreasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/base': {
+      id: '/base'
+      path: '/base'
+      fullPath: '/base'
+      preLoaderRoute: typeof BaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -257,7 +297,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BaseRoute: BaseRoute,
   CreasRoute: CreasRoute,
+  DiagnosticoRoute: DiagnosticoRoute,
   GestaoRoute: GestaoRoute,
   OpmRoute: OpmRoute,
   PainelRoute: PainelRoute,

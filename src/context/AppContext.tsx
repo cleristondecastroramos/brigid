@@ -50,7 +50,13 @@ const DEFAULT_THRESHOLDS: Thresholds = {
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("brigid_userRole");
+      return (saved as UserRole) || null;
+    }
+    return null;
+  });
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [thresholds, setThresholds] = useState<Thresholds>(DEFAULT_THRESHOLDS);
   const [simulationInfo, setSimulationInfo] = useState<SimulationInfo>({
@@ -61,10 +67,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const login = (role: UserRole) => {
     setUserRole(role);
+    if (typeof window !== "undefined" && role) {
+      sessionStorage.setItem("brigid_userRole", role);
+    }
   };
 
   const logout = () => {
     setUserRole(null);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("brigid_userRole");
+    }
   };
 
   const updateWeights = (newWeights: Weights) => {
