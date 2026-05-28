@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, HeartHandshake, AlertTriangle,
-  MapPin, ListChecks, FileText, ShieldCheck,
+  MapPin, ListChecks, FileText, ShieldCheck, Map as MapIcon,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -22,9 +22,11 @@ const groups = [
   {
     label: "Territorial",
     items: [
+      { title: "Inteligência Territorial", url: "/territorio", icon: MapIcon },
       { title: "Municípios", url: "/municipios", icon: MapPin },
     ],
   },
+
   {
     label: "Gestão",
     items: [
