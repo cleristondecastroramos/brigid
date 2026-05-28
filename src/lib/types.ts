@@ -1,0 +1,48 @@
+export type SimNao = "SIM" | "NAO" | "";
+export type RiscoNivel = "BAIXO" | "MEDIO" | "ALTO" | "CRITICO" | string;
+export type AlertaRede = "ADEQUADO" | "ATENCAO" | "CRITICO" | string;
+
+export interface Municipio {
+  codigo_ibge: string;
+  municipio: string;
+  populacao: number;
+  comarca: string;
+  polo_regional: string;
+  municipio_slug: string;
+  comarca_slug: string;
+  polo_regional_slug: string;
+  opm_possui: SimNao;
+  opm_status_politicas_publicas: string;
+  opm_orgaotipo: string;
+  opm_possui_estrutura_ativa: SimNao;
+  creas_possui: SimNao;
+  creas_status: string;
+  creas_ausente: SimNao;
+  prioridade_implantacao_creas: string;
+  prioridade_fomento_opm: string;
+  consumado: number;
+  tentado: number;
+  consumado_2023: number;
+  consumado_2024: number;
+  consumado_2025: number;
+  consumado_2026: number;
+  tentado_2023: number;
+  tentado_2024: number;
+  tentado_2025: number;
+  tentado_2026: number;
+  feminicidios_total_2023_2026: number;
+  tentativas_total_2023_2026: number;
+  ocorrencias_total_violencia_genero_monitoradas: number;
+  indicador_tem_feminicidio_consumado: SimNao;
+  indicador_tem_tentativa_feminicidio: SimNao;
+  risco_feminicidio_nivel: RiscoNivel;
+  risco_feminicidio_score: number;
+  painel_alerta_rede: AlertaRede;
+  necessita_atuacao_prioritaria: SimNao;
+  status_monitoramento: string;
+  fonte_base_opm: string;
+  fonte_base_creas: string;
+  fonte_base_risco: string;
+  observacoes_sistema: string;
+  ultima_atualizacao_referencia: string;
+}
