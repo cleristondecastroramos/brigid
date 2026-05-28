@@ -1,6 +1,8 @@
 import Papa from "papaparse";
 import { queryOptions } from "@tanstack/react-query";
 import type { Municipio } from "./types";
+import csvText from "@/data/base_mppi_caocrim.csv?raw";
+import geoJson from "@/data/piaui-map.json";
 
 const NUMERIC_FIELDS: Array<keyof Municipio> = [
   "populacao", "consumado", "tentado",
@@ -11,9 +13,7 @@ const NUMERIC_FIELDS: Array<keyof Municipio> = [
 ];
 
 async function fetchMunicipios(): Promise<Municipio[]> {
-  const res = await fetch("/data/base_mppi_caocrim.csv");
-  const text = await res.text();
-  const parsed = Papa.parse<Record<string, string>>(text, {
+  const parsed = Papa.parse<Record<string, string>>(csvText, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (h) => h.replace(/^\ufeff/, "").trim().replace("população", "populacao"),
@@ -30,7 +30,7 @@ async function fetchMunicipios(): Promise<Municipio[]> {
 export const municipiosQueryOptions = queryOptions({
   queryKey: ["municipios"],
   queryFn: fetchMunicipios,
-  staleTime: 5 * 60 * 1000,
+  staleTime: Infinity,
 });
 
 export interface PiauiGeoJSON {
@@ -43,13 +43,15 @@ export interface PiauiGeoJSON {
 }
 
 async function fetchGeo(): Promise<PiauiGeoJSON> {
-  const res = await fetch("/data/piaui-map.json");
-  return res.json();
+  return geoJson as PiauiGeoJSON;
 }
 
 export const geoQueryOptions = queryOptions({
   queryKey: ["piaui-geo"],
   queryFn: fetchGeo,
+  staleTime: Infinity,
+});
+
   staleTime: Infinity,
 });
 
