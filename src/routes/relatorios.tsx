@@ -4,7 +4,7 @@ import { municipiosQueryOptions } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { exportCsv } from "@/lib/export";
+import { exportCsv, exportXlsx, exportPdf, BRIGID_BRAND } from "@/lib/export";
 
 export const Route = createFileRoute("/relatorios")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -64,25 +64,40 @@ function Relatorios() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Relatórios e exportações</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Todos os arquivos exportados aplicam automaticamente o branding institucional{" "}
+            <span className="font-medium text-foreground">{BRIGID_BRAND.long}</span> — com logo, título longo e rodapé do {BRIGID_BRAND.project}.
+          </p>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
-          {reports.map((r) => (
-            <div key={r.titulo} className="rounded-lg border border-border bg-card p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-foreground">{r.titulo}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{r.descricao}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{r.rows.length} registros</p>
-                  <Button size="sm" variant="outline" className="mt-3" onClick={() => exportCsv(r.file, r.rows)}>
-                    <Download className="mr-2 h-4 w-4" /> Exportar CSV
-                  </Button>
+          {reports.map((r) => {
+            const base = r.file.replace(/\.csv$/i, "");
+            return (
+              <div key={r.titulo} className="rounded-lg border border-border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-foreground">{r.titulo}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">{r.descricao}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{r.rows.length} registros</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => exportCsv(`${base}.csv`, r.rows)}>
+                        <Download className="mr-2 h-4 w-4" /> CSV
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => exportXlsx(`${base}.xlsx`, r.rows)}>
+                        <Download className="mr-2 h-4 w-4" /> XLSX
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => exportPdf(`${base}.pdf`, r.titulo, r.rows)}>
+                        <Download className="mr-2 h-4 w-4" /> PDF
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
     </div>
