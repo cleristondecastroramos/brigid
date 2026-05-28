@@ -12,9 +12,12 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Página não encontrada.</p>
-        <Link to="/" className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Ir para o painel</Link>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
+        <h1 className="mt-2 text-7xl font-bold text-foreground">404</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Página não encontrada na base institucional.</p>
+        <Link to="/" className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">
+          Voltar ao Painel Estratégico
+        </Link>
       </div>
     </div>
   );
@@ -25,22 +28,28 @@ function ErrorComponent({ error }: { error: Error }) {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-lg font-semibold text-foreground">Erro ao carregar</h1>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
+        <h1 className="mt-2 text-lg font-semibold text-foreground">Erro ao carregar a base</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
       </div>
     </div>
   );
 }
 
+const FAVICON = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 3 L42 9 V24 C42 34 34 42 24 45 C14 42 6 34 6 24 V9 Z' fill='%23195e6b'/><text x='24' y='31' text-anchor='middle' font-family='Georgia,serif' font-size='22' font-weight='700' fill='white'>B</text></svg>";
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Feminicídio Zero — MPPI" },
-      { name: "description", content: "Sistema institucional de monitoramento, análise territorial e gestão estratégica do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
+      { title: "BRIGID — Projeto Feminicídio Zero · MPPI" },
+      { name: "description", content: "BRIGID — Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: FAVICON },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
@@ -58,29 +67,30 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  "/": "Dashboard Executivo",
-  "/opm": "Painel de OPMs",
-  "/creas": "Painel de CREAS",
+  "/": "Painel Estratégico BRIGID",
+  "/opm": "Cobertura de OPMs",
+  "/creas": "Cobertura de CREAS",
   "/risco": "Risco de Feminicídio",
   "/territorio": "Inteligência Territorial",
-  "/municipios": "Municípios",
+  "/municipios": "Base Territorial",
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
 };
-
 
 function PageHeader() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   let title = PAGE_TITLES[pathname];
   if (!title) {
     if (pathname.startsWith("/municipios/")) title = "Ficha Territorial";
-    else title = "Feminicídio Zero";
+    else title = "BRIGID";
   }
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur">
       <SidebarTrigger className="-ml-1" />
       <div className="flex flex-col">
-        <p className="text-xs text-muted-foreground">Ministério Público do Estado do Piauí · CAOCRIM</p>
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          BRIGID · MPPI · Projeto Feminicídio Zero
+        </p>
         <h1 className="text-sm font-semibold text-foreground leading-tight">{title}</h1>
       </div>
       <div className="ml-auto hidden items-center gap-2 text-xs text-muted-foreground md:flex">
@@ -103,9 +113,25 @@ function RootComponent() {
           <div className="flex min-w-0 flex-1 flex-col">
             <PageHeader />
             <main className="flex-1 p-4 md:p-6">
-              <Suspense fallback={<div className="text-sm text-muted-foreground">Carregando base territorial…</div>}>
+              <Suspense fallback={
+                <div className="flex h-[60vh] items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Carregando base territorial…</p>
+                  </div>
+                </div>
+              }>
                 <Outlet />
               </Suspense>
+              <footer className="mt-10 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
+                <p>
+                  <span className="font-semibold tracking-[0.18em] text-foreground">BRIGID</span>
+                  {" — "}Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
+                </p>
+                <p className="mt-1 text-muted-foreground/80">
+                  Ministério Público do Estado do Piauí · CAOCRIM · Plataforma institucional de monitoramento, análise territorial e gestão estratégica baseada em evidências.
+                </p>
+              </footer>
             </main>
           </div>
         </div>
