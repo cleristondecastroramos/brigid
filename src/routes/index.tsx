@@ -51,6 +51,21 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-xl border border-border bg-card p-5 md:p-6">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="text-2xl font-semibold tracking-[0.16em] text-foreground">BRIGID</h2>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+            Base de Referência Integrada para Gestão, Inteligência e Dados
+          </span>
+        </div>
+        <p className="mt-3 max-w-4xl text-sm leading-relaxed text-muted-foreground">
+          O <span className="font-medium text-foreground">BRIGID</span> consolida as informações estratégicas do
+          Projeto Feminicídio Zero, apoia o monitoramento territorial da rede de proteção e fortalece a atuação
+          institucional do Ministério Público do Estado do Piauí com base em evidências, integrando cobertura de
+          OPMs e CREAS, indicadores de risco e instrumentos de gestão estratégica.
+        </p>
+      </section>
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <KpiCard label="Municípios" value={total} hint="Universo do Piauí" icon={MapPin} tone="primary" />
         <KpiCard label="Com OPM" value={comOPM} hint={`Cobertura ${pct(comOPM, total)}`} icon={Building2} tone="success" />
