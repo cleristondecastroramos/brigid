@@ -4,7 +4,7 @@ import { municipiosQueryOptions } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { exportCsv } from "@/lib/export";
+import { exportCsv, exportXlsx, exportPdf, BRIGID_BRAND } from "@/lib/export";
 
 export const Route = createFileRoute("/relatorios")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
