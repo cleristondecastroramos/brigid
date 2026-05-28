@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import appCss from "../styles.css?url";
 
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
@@ -34,15 +35,19 @@ function ErrorComponent({ error }: { error: Error }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Feminicídio Zero — MPPI" },
-      { name: "description", content: "Sistema institucional de monitoramento, análise territorial e gestão estratégica do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
+      { title: "BRIGID — Projeto Feminicídio Zero · MPPI" },
+      { name: "description", content: "BRIGID — Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 3 L42 9 V24 C42 34 34 42 24 45 C14 42 6 34 6 24 V9 Z' fill='%23195e6b'/><text x='24' y='30' text-anchor='middle' font-family='Georgia,serif' font-size='22' font-weight='700' fill='white'>B</text></svg>" },
+    ],
   }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
@@ -61,16 +66,16 @@ const PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard Executivo",
   "/opm": "Painel de OPMs",
   "/creas": "Painel de CREAS",
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Painel Estratégico BRIGID",
+  "/opm": "Cobertura de OPMs",
+  "/creas": "Cobertura de CREAS",
   "/risco": "Risco de Feminicídio",
   "/territorio": "Inteligência Territorial",
-  "/municipios": "Municípios",
+  "/municipios": "Base Territorial",
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
 };
-
-
-function PageHeader() {
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
   let title = PAGE_TITLES[pathname];
   if (!title) {
     if (pathname.startsWith("/municipios/")) title = "Ficha Territorial";
@@ -83,6 +88,15 @@ function PageHeader() {
         <p className="text-xs text-muted-foreground">Ministério Público do Estado do Piauí · CAOCRIM</p>
         <h1 className="text-sm font-semibold text-foreground leading-tight">{title}</h1>
       </div>
+  return (
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur">
+      <SidebarTrigger className="-ml-1" />
+      <div className="flex flex-col">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          BRIGID · MPPI · Projeto Feminicídio Zero
+        </p>
+        <h1 className="text-sm font-semibold text-foreground leading-tight">{title}</h1>
+      </div>
       <div className="ml-auto hidden items-center gap-2 text-xs text-muted-foreground md:flex">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-1">
           <span className="h-1.5 w-1.5 rounded-full bg-[color:var(--color-success)]" />
@@ -92,11 +106,6 @@ function PageHeader() {
     </header>
   );
 }
-
-function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
-  return (
-    <QueryClientProvider client={queryClient}>
       <SidebarProvider>
         <div className="flex min-h-dvh w-full bg-background">
           <AppSidebar />

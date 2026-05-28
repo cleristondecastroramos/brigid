@@ -5,11 +5,12 @@ import {
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
 } from "@/components/ui/sidebar";
+import { BrigidMark } from "@/components/brigid-mark";
 import logo from "@/assets/logo-mppi.png";
-
-const groups = [
   {
     label: "Monitoramento",
     items: [
@@ -45,18 +46,17 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex items-center gap-3 px-2 py-3 text-sidebar-primary">
+          <BrigidMark size={36} />
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-semibold text-sidebar-foreground">Feminicídio Zero</span>
-            <span className="text-[11px] text-sidebar-foreground/70">MPPI · CAOCRIM</span>
+            <span className="text-base font-semibold tracking-[0.18em] text-sidebar-foreground">BRIGID</span>
+            <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">
+              Projeto Feminicídio Zero · MPPI
+            </span>
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
-        {groups.map((g) => (
-          <SidebarGroup key={g.label}>
-            <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {g.items.map((item) => (
@@ -76,9 +76,12 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:hidden">
-          <img src={logo} alt="Ministério Público do Piauí" className="h-8 w-auto bg-white rounded px-1" />
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex flex-col gap-2 px-2 py-3 group-data-[collapsible=icon]:hidden">
+          <p className="text-[10px] leading-relaxed text-sidebar-foreground/55">
+            Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
+          </p>
+          <img src={logo} alt="Ministério Público do Estado do Piauí" className="h-7 w-auto self-start rounded bg-white px-1 py-0.5" />
         </div>
       </SidebarFooter>
-    </Sidebar>
-  );
 }
