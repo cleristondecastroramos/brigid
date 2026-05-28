@@ -1,7 +1,3 @@
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
 export function exportCsv(filename: string, rows: Record<string, any>[]) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
@@ -14,16 +10,19 @@ export function exportCsv(filename: string, rows: Record<string, any>[]) {
   download(blob, filename);
 }
 
-export function exportXlsx(filename: string, rows: Record<string, any>[], sheetName = "Dados") {
+export async function exportXlsx(filename: string, rows: Record<string, any>[], sheetName = "Dados") {
   if (!rows.length) return;
+  const XLSX = await import("xlsx");
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, filename);
 }
 
-export function exportPdf(filename: string, title: string, rows: Record<string, any>[]) {
+export async function exportPdf(filename: string, title: string, rows: Record<string, any>[]) {
   if (!rows.length) return;
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
   doc.setFontSize(14);
   doc.text(title, 40, 36);
