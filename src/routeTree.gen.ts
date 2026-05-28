@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerritorioRouteImport } from './routes/territorio'
 import { Route as RiscoRouteImport } from './routes/risco'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as OpmRouteImport } from './routes/opm'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MunicipiosIndexRouteImport } from './routes/municipios.index'
 import { Route as MunicipiosSlugRouteImport } from './routes/municipios.$slug'
 
+const TerritorioRoute = TerritorioRouteImport.update({
+  id: '/territorio',
+  path: '/territorio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RiscoRoute = RiscoRouteImport.update({
   id: '/risco',
   path: '/risco',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/opm': typeof OpmRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
+  '/territorio': typeof TerritorioRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
   '/municipios/': typeof MunicipiosIndexRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/opm': typeof OpmRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
+  '/territorio': typeof TerritorioRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
   '/municipios': typeof MunicipiosIndexRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/opm': typeof OpmRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
+  '/territorio': typeof TerritorioRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
   '/municipios/': typeof MunicipiosIndexRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/opm'
     | '/relatorios'
     | '/risco'
+    | '/territorio'
     | '/municipios/$slug'
     | '/municipios/'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/opm'
     | '/relatorios'
     | '/risco'
+    | '/territorio'
     | '/municipios/$slug'
     | '/municipios'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/opm'
     | '/relatorios'
     | '/risco'
+    | '/territorio'
     | '/municipios/$slug'
     | '/municipios/'
   fileRoutesById: FileRoutesById
@@ -130,12 +142,20 @@ export interface RootRouteChildren {
   OpmRoute: typeof OpmRoute
   RelatoriosRoute: typeof RelatoriosRoute
   RiscoRoute: typeof RiscoRoute
+  TerritorioRoute: typeof TerritorioRoute
   MunicipiosSlugRoute: typeof MunicipiosSlugRoute
   MunicipiosIndexRoute: typeof MunicipiosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/territorio': {
+      id: '/territorio'
+      path: '/territorio'
+      fullPath: '/territorio'
+      preLoaderRoute: typeof TerritorioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/risco': {
       id: '/risco'
       path: '/risco'
@@ -202,9 +222,20 @@ const rootRouteChildren: RootRouteChildren = {
   OpmRoute: OpmRoute,
   RelatoriosRoute: RelatoriosRoute,
   RiscoRoute: RiscoRoute,
+  TerritorioRoute: TerritorioRoute,
   MunicipiosSlugRoute: MunicipiosSlugRoute,
   MunicipiosIndexRoute: MunicipiosIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
