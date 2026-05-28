@@ -10,18 +10,32 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RiscoRouteImport } from './routes/risco'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as OpmRouteImport } from './routes/opm'
+import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as CreasRouteImport } from './routes/creas'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MunicipiosIndexRouteImport } from './routes/municipios.index'
+import { Route as MunicipiosSlugRouteImport } from './routes/municipios.$slug'
 
 const RiscoRoute = RiscoRouteImport.update({
   id: '/risco',
   path: '/risco',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OpmRoute = OpmRouteImport.update({
   id: '/opm',
   path: '/opm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GestaoRoute = GestaoRouteImport.update({
+  id: '/gestao',
+  path: '/gestao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreasRoute = CreasRouteImport.update({
@@ -34,39 +48,90 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MunicipiosIndexRoute = MunicipiosIndexRouteImport.update({
+  id: '/municipios/',
+  path: '/municipios/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MunicipiosSlugRoute = MunicipiosSlugRouteImport.update({
+  id: '/municipios/$slug',
+  path: '/municipios/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/creas': typeof CreasRoute
+  '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
+  '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
+  '/municipios/$slug': typeof MunicipiosSlugRoute
+  '/municipios/': typeof MunicipiosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/creas': typeof CreasRoute
+  '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
+  '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
+  '/municipios/$slug': typeof MunicipiosSlugRoute
+  '/municipios': typeof MunicipiosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/creas': typeof CreasRoute
+  '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
+  '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
+  '/municipios/$slug': typeof MunicipiosSlugRoute
+  '/municipios/': typeof MunicipiosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/creas' | '/opm' | '/risco'
+  fullPaths:
+    | '/'
+    | '/creas'
+    | '/gestao'
+    | '/opm'
+    | '/relatorios'
+    | '/risco'
+    | '/municipios/$slug'
+    | '/municipios/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/creas' | '/opm' | '/risco'
-  id: '__root__' | '/' | '/creas' | '/opm' | '/risco'
+  to:
+    | '/'
+    | '/creas'
+    | '/gestao'
+    | '/opm'
+    | '/relatorios'
+    | '/risco'
+    | '/municipios/$slug'
+    | '/municipios'
+  id:
+    | '__root__'
+    | '/'
+    | '/creas'
+    | '/gestao'
+    | '/opm'
+    | '/relatorios'
+    | '/risco'
+    | '/municipios/$slug'
+    | '/municipios/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreasRoute: typeof CreasRoute
+  GestaoRoute: typeof GestaoRoute
   OpmRoute: typeof OpmRoute
+  RelatoriosRoute: typeof RelatoriosRoute
   RiscoRoute: typeof RiscoRoute
+  MunicipiosSlugRoute: typeof MunicipiosSlugRoute
+  MunicipiosIndexRoute: typeof MunicipiosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,11 +143,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RiscoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/opm': {
       id: '/opm'
       path: '/opm'
       fullPath: '/opm'
       preLoaderRoute: typeof OpmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gestao': {
+      id: '/gestao'
+      path: '/gestao'
+      fullPath: '/gestao'
+      preLoaderRoute: typeof GestaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/creas': {
@@ -99,14 +178,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/municipios/': {
+      id: '/municipios/'
+      path: '/municipios'
+      fullPath: '/municipios/'
+      preLoaderRoute: typeof MunicipiosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/municipios/$slug': {
+      id: '/municipios/$slug'
+      path: '/municipios/$slug'
+      fullPath: '/municipios/$slug'
+      preLoaderRoute: typeof MunicipiosSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreasRoute: CreasRoute,
+  GestaoRoute: GestaoRoute,
   OpmRoute: OpmRoute,
+  RelatoriosRoute: RelatoriosRoute,
   RiscoRoute: RiscoRoute,
+  MunicipiosSlugRoute: MunicipiosSlugRoute,
+  MunicipiosIndexRoute: MunicipiosIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
