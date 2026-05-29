@@ -254,145 +254,166 @@ function DiagnosticoPanel() {
   }, [tab]);
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho de Inteligência Territorial */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-primary" />
-                Diagnóstico Integrado da Rede e Fluxos
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Monitoramento operacional do Termo de Adesão e Participação (Etapas 03, 04 e 05)
-              </p>
+    <div className="space-y-4">
+      {/* ── PAINEL DE CONTROLE UNIFICADO ─────────────────────────────────────── */}
+      <Card className="border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden">
+        {/* Linha 1 — KPIs + Filtros */}
+        <div className="flex items-center gap-0 border-b border-border/50">
+          {/* Bloco: KPI cards premium */}
+          <div className="flex" style={{maxWidth: "54%", width: "54%"}}>
+            {/* IER — Estrutura da Rede */}
+            <div className="relative flex items-center gap-3 px-4 py-3 flex-1 border-r border-border/40 overflow-hidden group hover:bg-primary/[0.03] transition-colors">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary rounded-r-full" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Building2 className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground leading-none">Estrutura da Rede</span>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-2xl font-black text-primary leading-none tabular-nums">{stats.ierMedio}</span>
+                  <span className="text-xs text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-[10px] font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">IER</span>
+                </div>
+                <div className="mt-1.5">
+                  <Progress value={stats.ierMedio * 10} className="h-[3px]" />
+                </div>
+              </div>
             </div>
-            
-            <div className="flex flex-wrap items-center gap-2">
+
+            {/* IMF — Maturidade dos Fluxos */}
+            <div className="relative flex items-center gap-3 px-4 py-3 flex-1 border-r border-border/40 overflow-hidden group hover:bg-[color:var(--color-success)]/[0.03] transition-colors">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[color:var(--color-success)] rounded-r-full" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-success)]/10 shrink-0">
+                <HeartHandshake className="h-4 w-4 text-[color:var(--color-success)]" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground leading-none">Maturidade dos Fluxos</span>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-2xl font-black text-[color:var(--color-success)] leading-none tabular-nums">{stats.imfMedio}</span>
+                  <span className="text-xs text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-[10px] font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">IMF</span>
+                </div>
+                <div className="mt-1.5">
+                  <Progress value={stats.imfMedio * 10} className="h-[3px] [&>div]:bg-[color:var(--color-success)]" />
+                </div>
+              </div>
+            </div>
+
+            {/* IQT — Qualificação Técnica */}
+            <div className="relative flex items-center gap-3 px-4 py-3 flex-1 overflow-hidden group hover:bg-warning/[0.03] transition-colors">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-warning rounded-r-full" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 shrink-0">
+                <GraduationCap className="h-4 w-4 text-warning-foreground" />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground leading-none">Qualificação Técnica</span>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-2xl font-black text-warning-foreground leading-none tabular-nums">{stats.iqtMedio}</span>
+                  <span className="text-xs text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-[10px] font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">IQT</span>
+                </div>
+                <div className="mt-1.5">
+                  <Progress value={stats.iqtMedio * 10} className="h-[3px] [&>div]:bg-warning" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bloco: Filtros alinhados à direita */}
+          <div className="flex items-center gap-3 px-4 py-2 border-l border-border/50 shrink-0 flex-1">
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
               <Select value={selectedPolo} onValueChange={(v) => { setSelectedPolo(v); setSelectedComarca("__all"); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Polo Regional" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs w-[170px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Polos</SelectItem>
                   {polos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
 
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Comarca</label>
               <Select value={selectedComarca} onValueChange={(v) => { setSelectedComarca(v); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Comarca" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs w-[170px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as Comarcas</SelectItem>
                   {comarcas.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
 
+            <div className="flex flex-col gap-0.5">
+              <label className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Município</label>
               <Select value={selectedMunicipio} onValueChange={handleSelectMunicipio}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Município" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs w-[185px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Municípios</SelectItem>
                   {municipiosDropdown.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-
-              {(selectedPolo !== "__all" || selectedComarca !== "__all" || selectedMunicipio !== "__all" || q) && (
-                <Button variant="outline" size="sm" onClick={handleResetFilters}>
-                  Limpar Filtros
-                </Button>
-              )}
             </div>
-          </div>
 
-          {/* Breadcrumb da Leitura Territorial */}
-          <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground border-t border-border/40 pt-3">
-            <span className="font-semibold text-foreground uppercase text-[10px]">Escopo Territorial:</span>
-            <span className={cn("px-2 py-0.5 rounded-full border", activeLevel === "estado" ? "bg-primary/10 border-primary/20 text-primary font-medium" : "bg-muted")}>
+            {(selectedPolo !== "__all" || selectedComarca !== "__all" || selectedMunicipio !== "__all" || q) && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground mt-4" onClick={handleResetFilters}>
+                ✕ Limpar
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Linha 2 — Breadcrumb + Tabs integradas */}
+        <div className="flex items-center justify-between px-4 py-0 bg-muted/20">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground py-1.5">
+            <span className="font-semibold text-foreground/60 uppercase tracking-wider">Escopo:</span>
+            <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "estado" ? "text-primary font-semibold" : "text-muted-foreground")}>
               Estadual
             </span>
-            <ChevronRight className="h-3 w-3" />
-            <span className={cn("px-2 py-0.5 rounded-full border", activeLevel === "polo" ? "bg-primary/10 border-primary/20 text-primary font-medium" : "bg-muted", selectedPolo === "__all" && "opacity-50")}>
-              Polo: {selectedPolo === "__all" ? "Geral" : selectedPolo}
+            <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
+            <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "polo" ? "text-primary font-semibold" : "text-muted-foreground", selectedPolo === "__all" && "opacity-40")}>
+              {selectedPolo === "__all" ? "Todos os Polos" : `Polo: ${selectedPolo}`}
             </span>
-            <ChevronRight className="h-3 w-3" />
-            <span className={cn("px-2 py-0.5 rounded-full border", activeLevel === "comarca" ? "bg-primary/10 border-primary/20 text-primary font-medium" : "bg-muted", selectedComarca === "__all" && "opacity-50")}>
-              Comarca: {selectedComarca === "__all" ? "Geral" : selectedComarca}
+            <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
+            <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "comarca" ? "text-primary font-semibold" : "text-muted-foreground", selectedComarca === "__all" && "opacity-40")}>
+              {selectedComarca === "__all" ? "Todas as Comarcas" : `Comarca: ${selectedComarca}`}
             </span>
-            <ChevronRight className="h-3 w-3" />
-            <span className={cn("px-2 py-0.5 rounded-full border", activeLevel === "municipio" ? "bg-primary/10 border-primary/20 text-primary font-medium" : "bg-muted", selectedMunicipio === "__all" && "opacity-50")}>
-              Município: {selectedMunicipio === "__all" ? "Geral" : municipios.find(m=>m.codigo_ibge===selectedMunicipio)?.municipio}
+            <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
+            <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "municipio" ? "text-primary font-semibold" : "text-muted-foreground", selectedMunicipio === "__all" && "opacity-40")}>
+              {selectedMunicipio === "__all" ? "Todos os Municípios" : municipios.find(m=>m.codigo_ibge===selectedMunicipio)?.municipio}
             </span>
           </div>
-        </CardContent>
+
+          {/* Tabs de navegação integradas no rodapé do card */}
+          <div className="flex items-center">
+            {[
+              { value: "infra", label: "Fluxos e Infraestrutura" },
+              { value: "violencia", label: "Violência e Perícias" },
+              { value: "assistencia", label: "Assistência Social" },
+            ].map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setTab(t.value)}
+                className={cn(
+                  "relative px-4 py-2.5 text-xs font-semibold transition-all duration-200 border-b-2 whitespace-nowrap",
+                  tab === t.value
+                    ? "border-primary text-primary bg-primary/5"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </Card>
-
-      {/* KPI Cards dos Índices Sintéticos */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-l-4 border-l-primary/70">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs uppercase font-semibold">Estrutura da Rede (IER Médio)</CardDescription>
-            <CardTitle className="text-3xl font-extrabold flex items-baseline gap-2">
-              {stats.ierMedio} <span className="text-xs font-normal text-muted-foreground">/ 10</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress value={stats.ierMedio * 10} className="h-1.5" />
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Sala especializada, recursos mínimos e suficiência do atendimento físico local.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-success/70">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs uppercase font-semibold">Maturidade dos Fluxos (IMF Médio)</CardDescription>
-            <CardTitle className="text-3xl font-extrabold flex items-baseline gap-2">
-              {stats.imfMedio} <span className="text-xs font-normal text-muted-foreground">/ 10</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress value={stats.imfMedio * 10} className="h-1.5 bg-muted" />
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Existência de fluxos formais de acolhimento e articulação de rede interinstitucional.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-warning/70">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs uppercase font-semibold">Qualificação Técnica (IQT Médio)</CardDescription>
-            <CardTitle className="text-3xl font-extrabold flex items-baseline gap-2">
-              {stats.iqtMedio} <span className="text-xs font-normal text-muted-foreground">/ 10</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress value={stats.iqtMedio * 10} className="h-1.5" />
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Mão de obra capacitada em gênero, comarcas com treinamento específico em feminicídio.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Tabs Principais dos Painéis Temáticos */}
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-card/75 border border-border/60 shadow-md hover:shadow-lg transition-all p-1.5 rounded-xl gap-1">
-          <TabsTrigger 
-            value="infra" 
-            className="text-xs font-semibold py-2.5 rounded-lg transition-all duration-200 hover:bg-muted/60 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md cursor-pointer"
-          >
-            Fluxos e Infraestrutura
-          </TabsTrigger>
-          <TabsTrigger 
-            value="violencia" 
-            className="text-xs font-semibold py-2.5 rounded-lg transition-all duration-200 hover:bg-muted/60 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md cursor-pointer"
-          >
-            Violência, Investigação e Perícias
-          </TabsTrigger>
-          <TabsTrigger 
-            value="assistencia" 
-            className="text-xs font-semibold py-2.5 rounded-lg transition-all duration-200 hover:bg-muted/60 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md cursor-pointer"
-          >
-            Assistência Social e Capacitação
-          </TabsTrigger>
+        <TabsList className="hidden">
+          <TabsTrigger value="infra">Fluxos e Infraestrutura</TabsTrigger>
+          <TabsTrigger value="violencia">Violência, Investigação e Perícias</TabsTrigger>
+          <TabsTrigger value="assistencia">Assistência Social e Capacitação</TabsTrigger>
         </TabsList>
 
         {/* ========================================================
