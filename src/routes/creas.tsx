@@ -192,22 +192,23 @@ function CreasPanel() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">Cobertura territorial de CREAS</CardTitle></CardHeader>
-        <CardContent>
-          <PiauiMap
-            colorFn={colorFn}
-            legend={[
-              { label: "Com CREAS", color: COLOR_WITH },
-              { label: "Sem CREAS", color: COLOR_WITHOUT },
-              { label: "Sem dado / Fora do filtro", color: COLOR_NA },
-            ]}
-          />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-2"><CardTitle className="text-base">Cobertura territorial de CREAS</CardTitle></CardHeader>
+          <CardContent>
+            <PiauiMap height={850}
+              colorFn={colorFn}
+              legend={[
+                { label: "Com CREAS", color: COLOR_WITH },
+                { label: "Sem CREAS", color: COLOR_WITHOUT },
+                { label: "Sem dado / Fora do filtro", color: COLOR_NA },
+              ]}
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+        <Card className="lg:col-span-1">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
           <CardTitle className="text-base">Municípios — detalhamento</CardTitle>
           <Button
             size="sm" variant="outline"
@@ -255,7 +256,9 @@ function CreasPanel() {
           </div>
           <p className="text-xs text-muted-foreground">Exibindo {Math.min(filtered.length, 80)} de {filtered.length} resultados.</p>
         </CardContent>
-      </Card>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

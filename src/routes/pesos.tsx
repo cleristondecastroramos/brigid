@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RiskBadge } from "@/components/risk-badge";
-import { Scale, RefreshCw, AlertTriangle, ShieldCheck, UserCheck, Calendar } from "lucide-react";
+import { Scale, RefreshCw, AlertTriangle, ShieldCheck, UserCheck, Calendar, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
 
 export const Route = createFileRoute("/pesos")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -29,10 +30,44 @@ function PesosConfigPanel() {
   // Carrega os dados brutos estáticos da query original para fins de comparação
   const { data: rawMunicipios } = useSuspenseQuery(municipiosQueryOptions);
 
+  const [sortColumn, setSortColumn] = useState<"pos" | "municipio" | "score_original" | "score_novo" | "risco_original" | "risco_novo">("score_novo");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const handleSort = (col: typeof sortColumn) => {
+    if (sortColumn === col) setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    else { setSortColumn(col); setSortDirection("desc"); }
+  };
+  
+  const SortIcon = ({ column }: { column: typeof sortColumn }) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
+  };
+
   // Ordena os recalculados para ver o impacto no ranking
   const dynamicRanking = [...dynamicMunicipios]
+    .map(m => {
+      const original = rawMunicipios.find((r) => r.codigo_ibge === m.codigo_ibge);
+      return {
+        ...m,
+        score_original: original?.risco_feminicidio_score ?? 0,
+        risco_original: original?.risco_feminicidio_nivel ?? "BAIXO",
+      }
+    })
     .sort((a, b) => b.risco_feminicidio_score - a.risco_feminicidio_score || b.feminicidios_total_2023_2026 - a.feminicidios_total_2023_2026)
-    .slice(0, 10);
+    .slice(0, 10)
+    .sort((a, b) => {
+      let valA, valB;
+      if (sortColumn === "pos" || sortColumn === "score_novo") { valA = a.risco_feminicidio_score; valB = b.risco_feminicidio_score; }
+      else if (sortColumn === "score_original") { valA = a.score_original; valB = b.score_original; }
+      else if (sortColumn === "municipio") { valA = a.municipio; valB = b.municipio; }
+      else if (sortColumn === "risco_original") { valA = a.risco_original; valB = b.risco_original; }
+      else if (sortColumn === "risco_novo") { valA = a.risco_feminicidio_nivel; valB = b.risco_feminicidio_nivel; }
+
+      if (valA === valB) return 0;
+      const modifier = sortDirection === "asc" ? 1 : -1;
+      if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB) * modifier;
+      return ((valA as number) > (valB as number) ? 1 : -1) * modifier;
+    });
 
   const handleWeightChange = (key: keyof typeof weights, val: number) => {
     updateWeights({
@@ -262,19 +297,18 @@ function PesosConfigPanel() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10">Pos</TableHead>
-                      <TableHead>Município</TableHead>
-                      <TableHead className="text-center">Score original</TableHead>
-                      <TableHead className="text-center">Novo score</TableHead>
-                      <TableHead>Risco original</TableHead>
-                      <TableHead>Novo risco</TableHead>
+                      <TableHead className="w-10 cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('pos')}>Pos <SortIcon column="pos" /></TableHead>
+                      <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('score_original')}>Score original <SortIcon column="score_original" /></TableHead>
+                      <TableHead className="text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('score_novo')}>Novo score <SortIcon column="score_novo" /></TableHead>
+                      <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_original')}>Risco original <SortIcon column="risco_original" /></TableHead>
+                      <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_novo')}>Novo risco <SortIcon column="risco_novo" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {dynamicRanking.map((m, idx) => {
-                      const original = rawMunicipios.find((r) => r.codigo_ibge === m.codigo_ibge);
-                      const originalScore = original?.risco_feminicidio_score ?? 0;
-                      const originalNivel = original?.risco_feminicidio_nivel ?? "BAIXO";
+                      const originalScore = m.score_original;
+                      const originalNivel = m.risco_original;
                       const scoreChanged = m.risco_feminicidio_score !== originalScore;
                       const levelChanged = m.risco_feminicidio_nivel !== originalNivel;
 

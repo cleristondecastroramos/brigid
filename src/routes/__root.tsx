@@ -7,9 +7,11 @@ import { Sun, Moon, ShieldCheck } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import appCss from "../styles.css?url";
 import logo from "@/assets/logo-mppi.png";
 import { AppProvider, useApp } from "@/context/AppContext";
+import AdminAccessDialog from "@/components/ui/admin-access-dialog";
 
 function NotFoundComponent() {
   return (
@@ -39,7 +41,7 @@ function ErrorComponent({ error }: { error: Error }) {
   );
 }
 
-const FAVICON = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 3 L42 9 V24 C42 34 34 42 24 45 C14 42 6 34 6 24 V9 Z' fill='%23195e6b'/><text x='24' y='31' text-anchor='middle' font-family='Georgia,serif' font-size='22' font-weight='700' fill='white'>B</text></svg>";
+const FAVICON = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 3 L42 9 V24 C42 34 34 42 24 45 C14 42 6 34 6 24 V9 Z' fill='%236B21A8'/><text x='24' y='31' text-anchor='middle' font-family='Georgia,serif' font-size='22' font-weight='700' fill='white'>B</text></svg>";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -113,15 +115,18 @@ function PageHeader() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur transition-colors">
       <SidebarTrigger className="-ml-1" />
-      <div className="flex items-center gap-3">
-        <img src={logo} alt="MPPI" className="h-7 w-auto rounded bg-white px-1 py-0.5" />
+      
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white p-0.5 shadow-sm border border-purple-900/10">
+          <img src="/logo_brigid.png" alt="BRIGID" className="h-full w-full object-contain" />
+        </div>
+        <span className="font-bold text-xs tracking-wider text-purple-900 dark:text-purple-300 hidden sm:inline">BRIGID</span>
+        <div className="h-4 w-[1px] bg-border hidden sm:block" />
+        <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">{title}</span>
       </div>
       
       <div className="ml-auto flex items-center gap-3 text-xs">
-        <div className="hidden md:flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 shadow-sm transition-all hover:bg-muted/50">
-          <ShieldCheck className="h-3.5 w-3.5 text-[color:var(--color-success)]" />
-          <span className="font-medium text-foreground tracking-wide uppercase text-[10px]">Acesso Oficial</span>
-        </div>
+        <AdminAccessDialog />
         
         <button
           onClick={toggleTheme}
@@ -153,8 +158,9 @@ function RootInner() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (pathname === "/pesos" && userRole !== "admin") {
-      navigate({ to: "/" });
+    if ((pathname === "/pesos" || pathname === "/base") && userRole !== "admin") {
+      navigate({ to: "/painel" });
+      toast.warning("Acesso restrito. Autentique-se como administrador para acessar essa área.");
     }
   }, [pathname, userRole, navigate]);
   

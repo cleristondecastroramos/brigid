@@ -59,14 +59,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center px-2 py-3 text-sidebar-primary">
-          <div className="hidden w-full items-center justify-center group-data-[collapsible=icon]:flex">
-            <BrigidMark size={36} />
+        <div className="flex items-center gap-2 px-2 py-3 text-sidebar-foreground">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm border border-purple-900/10">
+            <img src="/logo_brigid.png" alt="BRIGID Logo" className="h-full w-full object-contain" />
           </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="text-base font-semibold tracking-[0.18em] text-sidebar-foreground">BRIGID</span>
-            <span className="text-[10px] tracking-wider text-sidebar-foreground/60 leading-tight">
-              Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero - CAOCRIM/MPPI.
+            <span className="text-base font-bold tracking-[0.15em] text-sidebar-foreground">BRIGID</span>
+            <span className="text-[8px] tracking-wider text-sidebar-foreground/70 leading-tight uppercase font-semibold">
+              Feminicídio Zero · MPPI
             </span>
           </div>
         </div>

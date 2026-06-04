@@ -136,11 +136,11 @@ function TerritorialIntelligence() {
   const [openSheet, setOpenSheet] = useState(false);
 
   const comarcas = useMemo(
-    () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort(),
+    () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')),
     [municipios],
   );
   const polos = useMemo(
-    () => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(),
+    () => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')),
     [municipios],
   );
 
@@ -247,7 +247,7 @@ function TerritorialIntelligence() {
         <KpiCard label="Prioritários" value={prioritarios} hint={pct(prioritarios, total)} tone="warning" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
+      <div className="grid gap-4 lg:grid-cols-2">
         {/* Map + filters */}
         <div className="space-y-4">
           <Card>
@@ -308,7 +308,7 @@ function TerritorialIntelligence() {
               </div>
             </CardHeader>
             <CardContent>
-              <TerritorialMap
+              <TerritorialMap height={850}
                 colorFn={colorFn}
                 selectedSlug={selected?.municipio_slug}
                 highlightSlugs={hasFilter ? filteredSlugs : undefined}

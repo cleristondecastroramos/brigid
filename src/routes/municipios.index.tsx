@@ -24,7 +24,7 @@ function MunicipiosList() {
   const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(), [municipios]);
+  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
 
   const filtered = useMemo(() => {
     let result = municipios.filter((m) => {
@@ -60,8 +60,8 @@ function MunicipiosList() {
   };
 
   const SortIcon = ({ column }: { column: keyof typeof municipios[0] }) => {
-    if (sortColumn !== column) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30 inline" />;
-    return sortDirection === "asc" ? <ChevronUp className="ml-1 h-3 w-3 inline" /> : <ChevronDown className="ml-1 h-3 w-3 inline" />;
+    if (sortColumn !== column) return null;
+    return sortDirection === "asc" ? <ChevronUp className="ml-1 h-4 w-4 inline" /> : <ChevronDown className="ml-1 h-4 w-4 inline" />;
   };
 
   return (
@@ -98,15 +98,15 @@ function MunicipiosList() {
           <div className="overflow-x-auto rounded-md border border-border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-200 dark:bg-slate-800">
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("municipio")}>Município <SortIcon column="municipio" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("comarca")}>Comarca <SortIcon column="comarca" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("polo_regional")}>Polo <SortIcon column="polo_regional" /></TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("opm_possui")}>OPM <SortIcon column="opm_possui" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("creas_possui")}>CREAS <SortIcon column="creas_possui" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("risco_feminicidio_score")}>Risco <SortIcon column="risco_feminicidio_score" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("painel_alerta_rede")}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
+                <TableRow>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("municipio")}>Município <SortIcon column="municipio" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("comarca")}>Comarca <SortIcon column="comarca" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("polo_regional")}>Polo <SortIcon column="polo_regional" /></TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("opm_possui")}>OPM <SortIcon column="opm_possui" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("creas_possui")}>CREAS <SortIcon column="creas_possui" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("risco_feminicidio_score")}>Risco <SortIcon column="risco_feminicidio_score" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort("painel_alerta_rede")}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, Building2, Search, Eraser, AlertCircle } from "lucide-react";
+import { Download, Building2, Search, Eraser, AlertCircle, ArrowUp, ArrowDown } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
@@ -20,10 +20,10 @@ export const Route = createFileRoute("/opm")({
   component: OpmPanel,
 });
 
-const COLOR_WITH = "oklch(0.55 0.12 195)";
-const COLOR_WITHOUT = "oklch(0.65 0.2 27)";
-const COLOR_PENDING = "oklch(0.75 0.15 85)";
-const COLOR_NA = "oklch(0.92 0.01 230)";
+const COLOR_WITH = "oklch(0.35 0.15 300)";
+const COLOR_WITHOUT = "oklch(0.6 0 0)";
+const COLOR_PENDING = "oklch(0.65 0.15 300)";
+const COLOR_NA = "oklch(0.95 0 0)";
 
 function OpmPanel() {
   const { data: municipios } = useMunicipios();
@@ -33,10 +33,22 @@ function OpmPanel() {
   const [faixaPop, setFaixaPop] = useState<FaixaPop>("__all");
   const [status, setStatus] = useState("__all");
   const [tipo, setTipo] = useState("__all");
+  const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort(), [municipios]);
-  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(), [municipios]);
-  const tipos = useMemo(() => Array.from(new Set(municipios.map((m) => m.opm_orgaotipo).filter(Boolean))).sort(), [municipios]);
+  const handleSort = (col: keyof typeof municipios[0]) => {
+    if (sortColumn === col) setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    else { setSortColumn(col); setSortDirection("asc"); }
+  };
+  
+  const SortIcon = ({ column }: { column: keyof typeof municipios[0] }) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
+  };
+
+  const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
+  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
+  const tipos = useMemo(() => Array.from(new Set(municipios.map((m) => m.opm_orgaotipo).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
 
   const filtered = useMemo(() => municipios.filter((m) => {
     if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
@@ -46,7 +58,14 @@ function OpmPanel() {
     if (status !== "__all" && m.opm_possui !== status) return false;
     if (tipo !== "__all" && m.opm_orgaotipo !== tipo) return false;
     return true;
-  }), [municipios, q, comarca, polo, faixaPop, status, tipo]);
+  }).sort((a, b) => {
+    const valA = a[sortColumn];
+    const valB = b[sortColumn];
+    if (valA === valB) return 0;
+    const modifier = sortDirection === "asc" ? 1 : -1;
+    if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB, 'pt-BR') * modifier;
+    return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
+  }), [municipios, q, comarca, polo, faixaPop, status, tipo, sortColumn, sortDirection]);
 
   const total = filtered.length;
   const com = filtered.filter((m) => m.opm_possui === "SIM").length;
@@ -171,11 +190,11 @@ function OpmPanel() {
         <KpiCard label="Pendente Detalhamento" value={pendentes} hint="Tipologia a verificar" tone="warning" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="lg:col-span-1">
           <CardHeader className="pb-2"><CardTitle className="text-base">Cobertura territorial de OPMs</CardTitle></CardHeader>
           <CardContent>
-            <PiauiMap
+            <PiauiMap height={850}
               colorFn={colorFn}
               legend={[
                 { label: "Com OPM (Qualificado)", color: COLOR_WITH },
@@ -261,14 +280,14 @@ function OpmPanel() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Município</TableHead>
-                  <TableHead>Comarca</TableHead>
-                  <TableHead>Polo</TableHead>
-                  <TableHead className="text-right">População</TableHead>
-                  <TableHead>OPM</TableHead>
-                  <TableHead>Tipologia</TableHead>
-                  <TableHead>Políticas Efetivas</TableHead>
-                  <TableHead>Estrutura Ativa</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo <SortIcon column="polo_regional" /></TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('populacao')}>População <SortIcon column="populacao" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')}>OPM <SortIcon column="opm_possui" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_orgaotipo')}>Tipologia <SortIcon column="opm_orgaotipo" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_status_politicas_publicas')}>Políticas Efetivas <SortIcon column="opm_status_politicas_publicas" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui_estrutura_ativa')}>Estrutura Ativa <SortIcon column="opm_possui_estrutura_ativa" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

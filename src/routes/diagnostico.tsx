@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { 
   Building2, HeartHandshake, ShieldAlert, Award, 
   MapPin, CheckCircle, AlertCircle, XCircle, Search, 
-  ArrowRight, Users, GraduationCap, HardHat, FileText, ChevronRight, HelpCircle
+  ArrowRight, Users, GraduationCap, HardHat, FileText, ChevronRight, HelpCircle, ArrowUp, ArrowDown
 } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
@@ -24,11 +24,10 @@ export const Route = createFileRoute("/diagnostico")({
   component: DiagnosticoPanel,
 });
 
-// Cores HSL harmoniosas
-const COLOR_OK = "oklch(0.55 0.13 175)"; // Verde
-const COLOR_WARN = "oklch(0.75 0.15 70)"; // Amarelo
-const COLOR_CRIT = "oklch(0.65 0.2 27)"; // Vermelho
-const COLOR_GRAY = "oklch(0.92 0.01 230)"; // Cinza
+const COLOR_OK = "oklch(0.65 0.15 150)"; // Verde
+const COLOR_WARN = "oklch(0.7 0.12 300)"; // Roxo/Cinza Suave
+const COLOR_CRIT = "oklch(0.35 0.15 300)"; // Roxo Escuro
+const COLOR_GRAY = "oklch(0.95 0 0)"; // Cinza
 
 function DiagnosticoPanel() {
   const { data: municipios } = useMunicipios();
@@ -39,20 +38,32 @@ function DiagnosticoPanel() {
   const [selectedMunicipio, setSelectedMunicipio] = useState("__all");
   const [tab, setTab] = useState("infra");
   const [q, setQ] = useState("");
+  const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [assistenciaPage, setAssistenciaPage] = useState(1);
+  const handleSort = (col: keyof typeof municipios[0]) => {
+    if (sortColumn === col) setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    else { setSortColumn(col); setSortDirection("asc"); }
+  };
+  
+  const SortIcon = ({ column }: { column: keyof typeof municipios[0] }) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
+  };
 
   const comarcas = useMemo(() => {
     let list = municipios;
     if (selectedPolo !== "__all") {
       list = list.filter((m) => m.polo_regional === selectedPolo);
     }
-    return Array.from(new Set(list.map((m) => m.comarca).filter(Boolean))).sort();
+    return Array.from(new Set(list.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR'));
   }, [municipios, selectedPolo]);
-  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(), [municipios]);
+  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
   const municipiosDropdown = useMemo(() => {
     let list = municipios;
     if (selectedPolo !== "__all") list = list.filter(m => m.polo_regional === selectedPolo);
     if (selectedComarca !== "__all") list = list.filter(m => m.comarca === selectedComarca);
-    return list.map(m => ({ label: m.municipio, value: m.codigo_ibge })).sort((a,b) => a.label.localeCompare(b.label));
+    return list.map(m => ({ label: m.municipio, value: m.codigo_ibge })).sort((a,b) => a.label.localeCompare(b.label, 'pt-BR'));
   }, [municipios, selectedPolo, selectedComarca]);
 
   // Hierarquia ativa determinada dinamicamente
@@ -71,8 +82,19 @@ function DiagnosticoPanel() {
       if (selectedPolo !== "__all" && m.polo_regional !== selectedPolo) return false;
       if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
+    }).sort((a, b) => {
+      const valA = a[sortColumn];
+      const valB = b[sortColumn];
+      if (valA === valB) return 0;
+      const modifier = sortDirection === "asc" ? 1 : -1;
+      if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB, 'pt-BR') * modifier;
+      return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
     });
-  }, [municipios, selectedMunicipio, selectedComarca, selectedPolo, q]);
+  }, [municipios, selectedMunicipio, selectedComarca, selectedPolo, q, sortColumn, sortDirection]);
+
+  const totalAssistenciaPages = Math.ceil(filteredMunicipios.length / 20) || 1;
+  const safeAssistenciaPage = Math.min(assistenciaPage, totalAssistenciaPages);
+  const assistenciaPaginated = filteredMunicipios.slice((safeAssistenciaPage - 1) * 20, safeAssistenciaPage * 20);
 
   // Handlers para Drilldown interativo no mapa ou listas
   const handleSelectPolo = (poloName: string) => {
@@ -268,11 +290,11 @@ function DiagnosticoPanel() {
                 <Building2 className="h-4 w-4 text-primary" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground leading-none">Estrutura da Rede</span>
+                <span className="text-sm uppercase tracking-widest font-bold text-muted-foreground leading-none">Estrutura da Rede</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-2xl font-black text-primary leading-none tabular-nums">{stats.ierMedio}</span>
-                  <span className="text-xs text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-[10px] font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">IER</span>
+                  <span className="text-sm text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-sm font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">IER</span>
                 </div>
                 <div className="mt-1.5">
                   <Progress value={stats.ierMedio * 10} className="h-[3px]" />
@@ -287,11 +309,11 @@ function DiagnosticoPanel() {
                 <HeartHandshake className="h-4 w-4 text-[color:var(--color-success)]" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground leading-none">Maturidade dos Fluxos</span>
+                <span className="text-sm uppercase tracking-widest font-bold text-muted-foreground leading-none">Maturidade dos Fluxos</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-2xl font-black text-[color:var(--color-success)] leading-none tabular-nums">{stats.imfMedio}</span>
-                  <span className="text-xs text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-[10px] font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">IMF</span>
+                  <span className="text-sm text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-sm font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">IMF</span>
                 </div>
                 <div className="mt-1.5">
                   <Progress value={stats.imfMedio * 10} className="h-[3px] [&>div]:bg-[color:var(--color-success)]" />
@@ -306,11 +328,11 @@ function DiagnosticoPanel() {
                 <GraduationCap className="h-4 w-4 text-warning-foreground" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground leading-none">Qualificação Técnica</span>
+                <span className="text-sm uppercase tracking-widest font-bold text-muted-foreground leading-none">Qualificação Técnica</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-2xl font-black text-warning-foreground leading-none tabular-nums">{stats.iqtMedio}</span>
-                  <span className="text-xs text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-[10px] font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">IQT</span>
+                  <span className="text-sm text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-sm font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">IQT</span>
                 </div>
                 <div className="mt-1.5">
                   <Progress value={stats.iqtMedio * 10} className="h-[3px] [&>div]:bg-warning" />
@@ -322,9 +344,9 @@ function DiagnosticoPanel() {
           {/* Bloco: Filtros alinhados à direita */}
           <div className="flex items-center gap-3 px-4 py-2 border-l border-border/50 shrink-0 flex-1">
             <div className="flex flex-col gap-0.5">
-              <label className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
+              <label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
               <Select value={selectedPolo} onValueChange={(v) => { setSelectedPolo(v); setSelectedComarca("__all"); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="h-8 text-xs w-[170px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
+                <SelectTrigger className="text-sm w-[170px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Polos</SelectItem>
                   {polos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -333,9 +355,9 @@ function DiagnosticoPanel() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Comarca</label>
+              <label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Comarca</label>
               <Select value={selectedComarca} onValueChange={(v) => { setSelectedComarca(v); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="h-8 text-xs w-[170px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
+                <SelectTrigger className="text-sm w-[170px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as Comarcas</SelectItem>
                   {comarcas.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -344,9 +366,9 @@ function DiagnosticoPanel() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-[9px] uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Município</label>
+              <label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Município</label>
               <Select value={selectedMunicipio} onValueChange={handleSelectMunicipio}>
-                <SelectTrigger className="h-8 text-xs w-[185px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
+                <SelectTrigger className="text-sm w-[185px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Municípios</SelectItem>
                   {municipiosDropdown.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
@@ -355,7 +377,7 @@ function DiagnosticoPanel() {
             </div>
 
             {(selectedPolo !== "__all" || selectedComarca !== "__all" || selectedMunicipio !== "__all" || q) && (
-              <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-foreground mt-4" onClick={handleResetFilters}>
+              <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-foreground mt-4" onClick={handleResetFilters}>
                 ✕ Limpar
               </Button>
             )}
@@ -365,7 +387,7 @@ function DiagnosticoPanel() {
         {/* Linha 2 — Breadcrumb + Tabs integradas */}
         <div className="flex items-center justify-between px-4 py-0 bg-muted/20">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground py-1.5">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground py-1.5">
             <span className="font-semibold text-foreground/60 uppercase tracking-wider">Escopo:</span>
             <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "estado" ? "text-primary font-semibold" : "text-muted-foreground")}>
               Estadual
@@ -420,17 +442,17 @@ function DiagnosticoPanel() {
             PAINEL 1: FLUXOS E INFRAESTRUTURA DE ATENDIMENTO
             ======================================================== */}
         <TabsContent value="infra" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Mapa Temático de Estrutura */}
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-1">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center justify-between">
                   <span>Mapa Temático de Estrutura da Rede (IER)</span>
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="text-sm font-normal text-muted-foreground">
                     Exibindo {filteredMunicipios.length} municípios
                   </span>
                 </CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-sm">
                   A cor do município no mapa representa o grau de adequação do Índice de Estrutura da Rede (IER). Clicar no município abre a ficha detalhada.
                 </CardDescription>
               </CardHeader>
@@ -438,59 +460,59 @@ function DiagnosticoPanel() {
                 <PiauiMap 
                   colorFn={mapColorFn} 
                   legend={mapLegend} 
-                  height={500}
+                  height={850}
                 />
               </CardContent>
             </Card>
 
             {/* Quadro de Cobertura e Ranking */}
-            <div className="space-y-6">
+            <div className="space-y-6 lg:col-span-1">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Indicadores do Recorte Territorial</CardTitle>
+                  <CardTitle className="text-base">Indicadores do Recorte Territorial</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6 pt-2">
                   <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Fluxo Formal de Atendimento</span>
-                      <span className="font-semibold">{stats.pctFluxoFormal}</span>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-foreground">Fluxo Formal de Atendimento</span>
+                      <span className="font-bold text-primary">{stats.pctFluxoFormal}</span>
                     </div>
-                    <Progress value={parseFloat(stats.pctFluxoFormal)} className="h-1 bg-muted" />
+                    <Progress value={parseFloat(stats.pctFluxoFormal)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Sala / Estrutura Especializada</span>
-                      <span className="font-semibold">{stats.pctSalaEsp}</span>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-foreground">Sala / Estrutura Especializada</span>
+                      <span className="font-bold text-primary">{stats.pctSalaEsp}</span>
                     </div>
-                    <Progress value={parseFloat(stats.pctSalaEsp)} className="h-1 bg-muted" />
+                    <Progress value={parseFloat(stats.pctSalaEsp)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Recursos Materiais Mínimos</span>
-                      <span className="font-semibold">{stats.pctRecursosMin}</span>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-foreground">Recursos Materiais Mínimos</span>
+                      <span className="font-bold text-primary">{stats.pctRecursosMin}</span>
                     </div>
-                    <Progress value={parseFloat(stats.pctRecursosMin)} className="h-1 bg-muted" />
+                    <Progress value={parseFloat(stats.pctRecursosMin)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Atendimento Psicossocial Local</span>
-                      <span className="font-semibold">{stats.pctAtendPsicossocial}</span>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-foreground">Atendimento Psicossocial Local</span>
+                      <span className="font-bold text-primary">{stats.pctAtendPsicossocial}</span>
                     </div>
-                    <Progress value={parseFloat(stats.pctAtendPsicossocial)} className="h-1 bg-muted" />
+                    <Progress value={parseFloat(stats.pctAtendPsicossocial)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Atendimento Jurídico na Rede</span>
-                      <span className="font-semibold">{stats.pctAtendJuridico}</span>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-foreground">Atendimento Jurídico na Rede</span>
+                      <span className="font-bold text-primary">{stats.pctAtendJuridico}</span>
                     </div>
-                    <Progress value={parseFloat(stats.pctAtendJuridico)} className="h-1 bg-muted" />
+                    <Progress value={parseFloat(stats.pctAtendJuridico)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Articulação da Rede de Segurança/Saúde</span>
-                      <span className="font-semibold">{stats.pctArticulacaoRede}</span>
+                    <div className="flex items-center justify-between text-sm mb-2">
+                      <span className="font-medium text-foreground">Articulação da Rede de Segurança/Saúde</span>
+                      <span className="font-bold text-primary">{stats.pctArticulacaoRede}</span>
                     </div>
-                    <Progress value={parseFloat(stats.pctArticulacaoRede)} className="h-1 bg-muted" />
+                    <Progress value={parseFloat(stats.pctArticulacaoRede)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                 </CardContent>
               </Card>
@@ -498,27 +520,27 @@ function DiagnosticoPanel() {
               {/* Ranking de fragilidade territorial */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Polos Regionais Críticos (Geral)</CardTitle>
-                  <CardDescription className="text-[10px]">
+                  <CardTitle className="text-base">Criticidade por Polos Regionais (Geral)</CardTitle>
+                  <CardDescription className="text-sm">
                     Polos com menores médias nos índices de estrutura, fluxos e treinamento.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <div className="max-h-[220px] overflow-y-auto px-4 pb-4">
+                  <div className="max-h-[500px] overflow-y-auto px-4 pb-4">
                     <Table>
                       <TableHeader className="bg-muted/40">
                         <TableRow>
-                          <TableHead className="py-1 text-xs">Polo</TableHead>
-                          <TableHead className="py-1 text-xs text-right">Média</TableHead>
-                          <TableHead className="py-1 text-xs text-center">Status</TableHead>
+                          <TableHead className="py-1 text-sm text-black">Polo</TableHead>
+                          <TableHead className="py-1 text-sm text-right text-black">Média</TableHead>
+                          <TableHead className="py-1 text-sm text-center text-black">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {rankingLacunas.slice(0, 5).map((r) => (
+                        {rankingLacunas.map((r) => (
                           <TableRow key={r.polo} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleSelectPolo(r.polo)}>
-                            <TableCell className="py-2 text-xs font-medium">{r.polo}</TableCell>
-                            <TableCell className="py-2 text-xs text-right font-bold">{r.media}</TableCell>
-                            <TableCell className="py-2 text-xs text-center">
+                            <TableCell className="py-2 text-sm font-medium">{r.polo}</TableCell>
+                            <TableCell className="py-2 text-sm text-right font-bold">{r.media}</TableCell>
+                            <TableCell className="py-2 text-sm text-center">
                               <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-semibold", 
                                 r.prioridade === "CRÍTICA" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning-foreground"
                               )}>
@@ -539,35 +561,35 @@ function DiagnosticoPanel() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Matriz Territorial de Estrutura por Município</CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-sm">
                 Visão tabular comparativa detalhando a presença ou ausência de recursos de infraestrutura fundamentais nos municípios selecionados.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[300px] overflow-y-auto">
+              <div className="max-h-[600px] overflow-y-auto">
                 <Table>
                   <TableHeader className="bg-muted/70 sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-xs">Município</TableHead>
-                      <TableHead className="text-xs">Comarca</TableHead>
-                      <TableHead className="text-xs text-center">Sala Esp.</TableHead>
-                      <TableHead className="text-xs text-center">Recursos Mín.</TableHead>
-                      <TableHead className="text-xs text-center">Atend. Psico</TableHead>
-                      <TableHead className="text-xs text-center">Atend. Jurídico</TableHead>
-                      <TableHead className="text-xs text-center">Fluxo Formal</TableHead>
-                      <TableHead className="text-xs text-center">Suficiência</TableHead>
-                      <TableHead className="text-xs text-right">Score IER</TableHead>
+                      <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
+                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_sala_especializada')}>Sala Esp. <SortIcon column="tem_sala_especializada" /></TableHead>
+                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_recursos_minimos')}>Recursos Mín. <SortIcon column="tem_recursos_minimos" /></TableHead>
+                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atend. Psico <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
+                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_juridico')}>Atend. Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
+                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
+                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
+                      <TableHead className="text-sm text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('ier_score')}>Score IER <SortIcon column="ier_score" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredMunicipios.slice(0, 15).map(m => (
                       <TableRow key={m.codigo_ibge} className="hover:bg-muted/50">
-                        <TableCell className="font-semibold text-xs py-2 text-foreground">
+                        <TableCell className="font-semibold text-sm py-2 text-foreground">
                           <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="hover:underline text-primary">
                             {m.municipio}
                           </Link>
                         </TableCell>
-                        <TableCell className="text-xs py-2 text-muted-foreground">{m.comarca}</TableCell>
+                        <TableCell className="text-sm py-2 text-muted-foreground">{m.comarca}</TableCell>
                         <TableCell className="py-2 text-center">
                           {m.tem_sala_especializada === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
                         </TableCell>
@@ -592,7 +614,7 @@ function DiagnosticoPanel() {
                             {m.grau_suficiencia_estrutura}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right py-2 font-bold text-xs">{m.ier_score}</TableCell>
+                        <TableCell className="text-right py-2 font-bold text-sm">{m.ier_score}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -623,7 +645,7 @@ function DiagnosticoPanel() {
             <Card className="lg:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Mapeamento de Lacuna: Ocorrências vs Capacitação (Por Polo)</CardTitle>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-sm">
                   Gráfico identificando polos com alto volume de violência de gênero e necessidade urgente de ampliação do nível de capacitação técnica.
                 </CardDescription>
               </CardHeader>
@@ -657,21 +679,21 @@ function DiagnosticoPanel() {
             {/* Lista de Gargalos Técnicos Identificados */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Gargalos Críticos Identificados</CardTitle>
-                <CardDescription className="text-[10px]">
+                <CardTitle className="text-base">Gargalos Críticos Identificados</CardTitle>
+                <CardDescription className="text-sm">
                   Fatos reportados pelas equipes de investigação e perícias locais.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[280px] overflow-y-auto px-4 pb-4 space-y-3">
                   {listGargalos.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-8">Nenhum gargalo reportado no recorte atual.</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">Nenhum gargalo reportado no recorte atual.</p>
                   ) : (
                     listGargalos.map((m, idx) => (
                       <div key={m.codigo_ibge} className="border-b border-border/40 pb-2 last:border-0">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-foreground">{m.municipio}</span>
-                          <span className="text-[9px] text-muted-foreground">{m.polo_regional}</span>
+                          <span className="text-sm font-semibold text-foreground">{m.municipio}</span>
+                          <span className="text-xs text-muted-foreground">{m.polo_regional}</span>
                         </div>
                         <p className="text-[11px] text-destructive mt-1 italic">
                           &ldquo;{m.gargalos_identificados}&rdquo;
@@ -694,32 +716,32 @@ function DiagnosticoPanel() {
                 <Table>
                   <TableHeader className="bg-muted/70 sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-xs">Município</TableHead>
-                      <TableHead className="text-xs text-center">Prot. Investigação</TableHead>
-                      <TableHead className="text-xs text-center">Prot. Pericial</TableHead>
-                      <TableHead className="text-xs text-center">Capacitado Gênero</TableHead>
-                      <TableHead className="text-xs text-center">Treinamento Específico</TableHead>
-                      <TableHead className="text-xs text-center">Qtd. Capacitações</TableHead>
-                      <TableHead className="text-xs text-center">Aderência Técnica</TableHead>
+                      <TableHead className="text-sm cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('tem_protocolo_investigacao')}>Prot. Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
+                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('tem_protocolo_pericial')}>Prot. Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
+                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
+                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
+                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Qtd. Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
+                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredMunicipios.slice(0, 15).map(m => (
                       <TableRow key={m.codigo_ibge}>
-                        <TableCell className="font-semibold text-xs py-2 text-primary">{m.municipio}</TableCell>
+                        <TableCell className="font-semibold text-sm py-2 text-primary">{m.municipio}</TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.tem_protocolo_investigacao === "SIM" ? <span className="text-xs font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-xs text-destructive">NÃO</span>}
+                          {m.tem_protocolo_investigacao === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.tem_protocolo_pericial === "SIM" ? <span className="text-xs font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-xs text-destructive">NÃO</span>}
+                          {m.tem_protocolo_pericial === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.capacitado_perspectiva_genero === "SIM" ? <span className="text-xs font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-xs text-destructive">NÃO</span>}
+                          {m.capacitado_perspectiva_genero === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.treinamento_especifico_feminicidio === "SIM" ? <span className="text-xs font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-xs text-destructive">NÃO</span>}
+                          {m.treinamento_especifico_feminicidio === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
                         </TableCell>
-                        <TableCell className="py-2 text-center text-xs font-medium">{m.qtd_capacitacoes_realizadas}</TableCell>
+                        <TableCell className="py-2 text-center text-sm font-medium">{m.qtd_capacitacoes_realizadas}</TableCell>
                         <TableCell className="py-2 text-center">
                           <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold", 
                             m.grau_aderencia_protocolo === "ALTO" ? "bg-success/15 text-[color:var(--color-success)]" :
@@ -743,69 +765,69 @@ function DiagnosticoPanel() {
             ======================================================== */}
         <TabsContent value="assistencia" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Card>
+            <Card className="flex flex-col min-h-[750px]">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Protocolos Socioassistenciais</CardTitle>
-                <CardDescription className="text-xs">Estrutura CREAS e fluxos de atendimento específicos.</CardDescription>
+                <CardTitle className="text-base">Protocolos Socioassistenciais</CardTitle>
+                <CardDescription className="text-sm">Estrutura CREAS e fluxos de atendimento específicos.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 pt-2">
+              <CardContent className="space-y-8 pt-2 flex-1 flex flex-col justify-center">
                 <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span>Protocolo de Atendimento Socioassistencial</span>
-                    <span className="font-semibold text-foreground">{stats.pctProtAssistencial}</span>
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="font-medium text-foreground">Protocolo de Atendimento Socioassistencial</span>
+                    <span className="font-bold text-primary">{stats.pctProtAssistencial}</span>
                   </div>
-                  <Progress value={parseFloat(stats.pctProtAssistencial)} className="h-1 bg-muted" />
+                  <Progress value={parseFloat(stats.pctProtAssistencial)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span>Fluxo Formal de Encaminhamento</span>
-                    <span className="font-semibold text-foreground">{stats.pctFluxoEncam}</span>
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="font-medium text-foreground">Fluxo Formal de Encaminhamento</span>
+                    <span className="font-bold text-primary">{stats.pctFluxoEncam}</span>
                   </div>
-                  <Progress value={parseFloat(stats.pctFluxoEncam)} className="h-1 bg-muted" />
+                  <Progress value={parseFloat(stats.pctFluxoEncam)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span>Articulação CREAS com Rede de Proteção</span>
-                    <span className="font-semibold text-foreground">{stats.pctArticCreasRede}</span>
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="font-medium text-foreground">Articulação CREAS com Rede de Proteção</span>
+                    <span className="font-bold text-primary">{stats.pctArticCreasRede}</span>
                   </div>
-                  <Progress value={parseFloat(stats.pctArticCreasRede)} className="h-1 bg-muted" />
+                  <Progress value={parseFloat(stats.pctArticCreasRede)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span>Equipe Técnica Mínima Completa</span>
-                    <span className="font-semibold text-foreground">{stats.pctEquipeMinimaCreas}</span>
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="font-medium text-foreground">Equipe Técnica Mínima Completa</span>
+                    <span className="font-bold text-primary">{stats.pctEquipeMinimaCreas}</span>
                   </div>
-                  <Progress value={parseFloat(stats.pctEquipeMinimaCreas)} className="h-1 bg-muted" />
+                  <Progress value={parseFloat(stats.pctEquipeMinimaCreas)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="md:col-span-2">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Detalhamento dos Recursos e Cobertura Assistencial</CardTitle>
+                <CardTitle className="text-base">Detalhamento dos Recursos e Cobertura Assistencial</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="max-h-[300px] overflow-y-auto px-4 pb-4">
+                <div className="max-h-[750px] overflow-y-auto px-4 pb-4">
                   <Table>
                     <TableHeader className="bg-muted/40">
                       <TableRow>
-                        <TableHead className="text-xs">Município</TableHead>
-                        <TableHead className="text-xs text-center">CREAS Ativo</TableHead>
-                        <TableHead className="text-xs text-center">Equipe Mínima</TableHead>
-                        <TableHead className="text-xs text-center">Articulação CREAS</TableHead>
-                        <TableHead className="text-xs text-center">Prof. Capacitados</TableHead>
-                        <TableHead className="text-xs">Última Capacitação</TableHead>
+                        <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('creas_possui')}>CREAS Ativo <SortIcon column="creas_possui" /></TableHead>
+                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
+                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('articulacao_creas_rede')}>Articulação CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
+                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('profissionais_capacitados')}>Prof. Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
+                        <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('data_ultima_capacitacao')}>Última Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredMunicipios.slice(0, 15).map(m => (
+                      {assistenciaPaginated.map(m => (
                         <TableRow key={m.codigo_ibge} className="hover:bg-muted/30">
-                          <TableCell className="font-semibold text-xs py-2 text-primary">{m.municipio}</TableCell>
-                          <TableCell className="py-2 text-center text-xs">
+                          <TableCell className="font-semibold text-sm py-2 text-primary">{m.municipio}</TableCell>
+                          <TableCell className="py-2 text-center text-sm">
                             {m.creas_possui === "SIM" ? (
-                              <span className="text-[10px] bg-success/10 text-[color:var(--color-success)] px-1.5 py-0.5 rounded font-semibold">ATIVO</span>
+                              <span className="text-sm bg-success/10 text-[color:var(--color-success)] px-1.5 py-0.5 rounded font-semibold">ATIVO</span>
                             ) : (
-                              <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-semibold">INATIVO</span>
+                              <span className="text-sm bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-semibold">INATIVO</span>
                             )}
                           </TableCell>
                           <TableCell className="py-2 text-center">
@@ -814,13 +836,37 @@ function DiagnosticoPanel() {
                           <TableCell className="py-2 text-center">
                             {m.articulacao_creas_rede === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
                           </TableCell>
-                          <TableCell className="py-2 text-center text-xs font-bold">{m.profissionais_capacitados}</TableCell>
-                          <TableCell className="py-2 text-xs text-muted-foreground">{m.data_ultima_capacitacao || "—"}</TableCell>
+                          <TableCell className="py-2 text-center text-sm font-bold">{m.profissionais_capacitados}</TableCell>
+                          <TableCell className="py-2 text-sm text-muted-foreground">{m.data_ultima_capacitacao || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                {totalAssistenciaPages > 1 && (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/10">
+                    <div className="text-sm text-muted-foreground">
+                      Exibindo {(safeAssistenciaPage - 1) * 20 + 1} a {Math.min(safeAssistenciaPage * 20, filteredMunicipios.length)} de {filteredMunicipios.length} municípios
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" size="sm" className="text-sm"
+                        onClick={() => setAssistenciaPage(p => Math.max(1, p - 1))}
+                        disabled={safeAssistenciaPage === 1}
+                      >
+                        Anterior
+                      </Button>
+                      <span className="text-sm font-medium px-2">Página {safeAssistenciaPage} de {totalAssistenciaPages}</span>
+                      <Button 
+                        variant="outline" size="sm" className="text-sm"
+                        onClick={() => setAssistenciaPage(p => Math.min(totalAssistenciaPages, p + 1))}
+                        disabled={safeAssistenciaPage === totalAssistenciaPages}
+                      >
+                        Próxima
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -835,36 +881,36 @@ function DiagnosticoPanel() {
               <MapPin className="h-5 w-5" />
               Ficha Territorial Completa do Município: {filteredMunicipios[0].municipio}
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription className="text-sm">
               Consolidado de informações diagnósticas, infraestrutura, protocolos e violência doméstica.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">População</p>
+                <p className="text-sm text-muted-foreground uppercase font-bold">População</p>
                 <p className="text-sm font-semibold">{filteredMunicipios[0].populacao.toLocaleString("pt-BR")} hab.</p>
               </div>
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">Comarca / Polo</p>
+                <p className="text-sm text-muted-foreground uppercase font-bold">Comarca / Polo</p>
                 <p className="text-sm font-semibold">{filteredMunicipios[0].comarca} / {filteredMunicipios[0].polo_regional}</p>
               </div>
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">Score Geral IER</p>
+                <p className="text-sm text-muted-foreground uppercase font-bold">Score Geral IER</p>
                 <p className="text-sm font-semibold text-primary">{filteredMunicipios[0].ier_score} / 10</p>
               </div>
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">Última Atualização</p>
+                <p className="text-sm text-muted-foreground uppercase font-bold">Última Atualização</p>
                 <p className="text-sm font-semibold">{filteredMunicipios[0].ultima_atualizacao_referencia || "2026-05-28"}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-6">
               <div className="space-y-2 bg-background/50 p-4 rounded-lg border border-border/40">
-                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
+                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" /> Infraestrutura e Fluxos
                 </h4>
-                <ul className="space-y-1 text-xs text-muted-foreground">
+                <ul className="space-y-1 text-sm text-muted-foreground">
                   <li className="flex justify-between"><span>Sala Especializada:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_sala_especializada}</span></li>
                   <li className="flex justify-between"><span>Recursos Mínimos:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_recursos_minimos}</span></li>
                   <li className="flex justify-between"><span>Estrutura Geral:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].grau_suficiencia_estrutura}</span></li>
@@ -874,10 +920,10 @@ function DiagnosticoPanel() {
               </div>
 
               <div className="space-y-2 bg-background/50 p-4 rounded-lg border border-border/40">
-                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
+                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" /> Investigação e Perícias
                 </h4>
-                <ul className="space-y-1 text-xs text-muted-foreground">
+                <ul className="space-y-1 text-sm text-muted-foreground">
                   <li className="flex justify-between"><span>Protocolo Investigação:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_protocolo_investigacao}</span></li>
                   <li className="flex justify-between"><span>Protocolo Pericial:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_protocolo_pericial}</span></li>
                   <li className="flex justify-between"><span>Aderência Protocolo:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].grau_aderencia_protocolo}</span></li>
@@ -887,10 +933,10 @@ function DiagnosticoPanel() {
               </div>
 
               <div className="space-y-2 bg-background/50 p-4 rounded-lg border border-border/40">
-                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
+                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" /> Assistência Social
                 </h4>
-                <ul className="space-y-1 text-xs text-muted-foreground">
+                <ul className="space-y-1 text-sm text-muted-foreground">
                   <li className="flex justify-between"><span>Protocolo Socioassistencial:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_protocolo_assistencial}</span></li>
                   <li className="flex justify-between"><span>Encaminhamento Formal:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_fluxo_encaminhamento}</span></li>
                   <li className="flex justify-between"><span>Articulação CREAS:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].articulacao_creas_rede}</span></li>
@@ -900,7 +946,7 @@ function DiagnosticoPanel() {
               </div>
             </div>
             {filteredMunicipios[0].gargalos_identificados && (
-              <div className="mt-4 p-3 bg-destructive/5 rounded-lg border border-destructive/20 text-xs">
+              <div className="mt-4 p-3 bg-destructive/5 rounded-lg border border-destructive/20 text-sm">
                 <span className="font-bold text-destructive">Gargalos Críticos:</span> {filteredMunicipios[0].gargalos_identificados}
               </div>
             )}

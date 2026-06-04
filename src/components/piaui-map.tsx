@@ -137,7 +137,8 @@ export function PiauiMap({ colorFn, height = 520, legend, title }: PiauiMapProps
         <svg
           ref={svgRef}
           viewBox={viewBox}
-          className={cn("h-auto w-full max-h-[720px]", dragRef.current ? "cursor-grabbing" : "cursor-grab")}
+          style={{ maxHeight: height }}
+          className={cn("h-auto w-full", dragRef.current ? "cursor-grabbing" : "cursor-grab")}
           role="img"
           aria-label="Mapa do Piauí"
           onMouseDown={onMouseDown}

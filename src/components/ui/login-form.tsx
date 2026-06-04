@@ -242,26 +242,18 @@ export function LoginForm() {
           <p className="mt-2 text-sm text-white/80">Escolha o tipo de acesso</p>
         </div>
         
-        <div className="flex flex-col gap-4 mt-8">
+        <div className="flex flex-row gap-4 mt-8">
           <Link
             to="/painel"
             onClick={() => {
               login("public");
               toast.success("Acesso ao painel público carregado.");
             }}
-            className="group w-full flex items-center justify-center py-3.5 px-4 bg-white text-[#195e6b] hover:bg-slate-50 rounded-lg font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+            className="group flex-1 flex items-center justify-center py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 rounded-lg font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5"
           >
-            Acessar painel público
+            Acessar o sistema
             <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform" />
           </Link>
-          
-          <button
-            onClick={() => setShowLogin(true)}
-            className="group w-full flex items-center justify-center py-3.5 px-4 bg-transparent border border-white/30 hover:bg-white/10 rounded-lg text-white font-medium transition-all duration-300 cursor-pointer animate-none"
-          >
-            <Lock className="mr-2 h-4 w-4 text-white/70 group-hover:text-white" />
-            Acesso restrito
-          </button>
         </div>
       </div>
     );

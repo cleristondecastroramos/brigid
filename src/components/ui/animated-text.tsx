@@ -1,4 +1,3 @@
-"use client"
 import * as React from "react"
 import { motion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -27,7 +26,7 @@ const AnimatedText = React.forwardRef<HTMLDivElement, AnimatedTextProps>(
     textClassName,
     underlineClassName,
     as: Component = "h1",
-    underlineGradient = "from-[#154d58] via-[#195e6b] to-emerald-600",
+    underlineGradient = "from-blue-500 via-purple-500 to-pink-500",
     underlineHeight = "h-1",
     underlineOffset = "-bottom-2",
     ...props
@@ -87,7 +86,7 @@ const AnimatedText = React.forwardRef<HTMLDivElement, AnimatedTextProps>(
     return (
       <div 
         ref={ref} 
-        className={cn("flex flex-col items-center justify-center gap-2", className)}
+        className={cn("flex flex-col items-start gap-2", className)}
         {...props}
       >
         <div className="relative">
@@ -96,7 +95,7 @@ const AnimatedText = React.forwardRef<HTMLDivElement, AnimatedTextProps>(
             variants={container}
             initial="hidden"
             animate={replay ? "visible" : "hidden"}
-            className={cn("text-4xl font-bold text-center", textClassName)}
+            className={cn("text-4xl font-bold", textClassName)}
           >
             {letters.map((letter, index) => (
               <motion.span key={index} variants={child}>

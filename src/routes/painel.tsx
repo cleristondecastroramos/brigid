@@ -20,10 +20,10 @@ export const Route = createFileRoute("/painel")({
 });
 
 const RISK_COLORS: Record<string, string> = {
-  BAIXO: "oklch(0.7 0.12 160)",
-  MEDIO: "oklch(0.75 0.15 85)",
-  ALTO: "oklch(0.65 0.18 45)",
-  CRITICO: "oklch(0.55 0.22 27)",
+  BAIXO: "oklch(0.65 0.15 150)",
+  MEDIO: "oklch(0.7 0.12 300)",
+  ALTO: "oklch(0.5 0.18 300)",
+  CRITICO: "oklch(0.35 0.15 300)",
 };
 
 function Dashboard() {
@@ -46,8 +46,8 @@ function Dashboard() {
     .slice(0, 8);
 
   const colorFn = (m: any) => {
-    if (!m) return "oklch(0.92 0.01 230)";
-    return RISK_COLORS[m.risco_feminicidio_nivel] ?? "oklch(0.85 0.01 230)";
+    if (!m) return "oklch(0.95 0 0)";
+    return RISK_COLORS[m.risco_feminicidio_nivel] ?? "oklch(0.95 0 0)";
   };
 
   return (
@@ -62,20 +62,20 @@ function Dashboard() {
         <KpiCard label="Atuação prioritária" value={prioritarios} hint={pct(prioritarios, total)} icon={TrendingUp} tone="warning" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="lg:col-span-1">
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Mapa do Piauí — Risco de Feminicídio</CardTitle>
           </CardHeader>
           <CardContent>
-            <PiauiMap
+            <PiauiMap height={850}
               colorFn={colorFn}
               legend={[
                 { label: "Baixo", color: RISK_COLORS.BAIXO },
                 { label: "Médio", color: RISK_COLORS.MEDIO },
                 { label: "Alto", color: RISK_COLORS.ALTO },
                 { label: "Crítico", color: RISK_COLORS.CRITICO },
-                { label: "Sem dado", color: "oklch(0.92 0.01 230)" },
+                { label: "Sem dado", color: "oklch(0.95 0 0)" },
               ]}
             />
           </CardContent>
