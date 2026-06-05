@@ -628,7 +628,8 @@
       "fonte_base_risco": "Base feminicidios 2023-2026",
       "observacoes_sistema": "",
       "ultima_atualizacao_referencia": "2026-05-28",
-      "id": "2200954"
+      "id": "2200954",
+      "gargalos_identificados": "Indisponibilidade de transporte para deslocamento da vítima.; Baixo efetivo policial para cumprimento de medidas protetivas."
     },
     {
       "codigo_ibge": "2201002",
@@ -10080,5 +10081,6 @@
       "ultima_atualizacao_referencia": "2026-05-28",
       "id": "2211704"
     }
-  ]
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }

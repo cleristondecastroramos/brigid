@@ -17,7 +17,7 @@ function LandingPage() {
   const handleAccess = () => {
     login("public");
     toast.success("Acesso ao painel público carregado com sucesso.");
-    navigate({ to: "/painel" });
+    navigate({ to: "/apresentacao-do-sistema" });
   };
 
   return (

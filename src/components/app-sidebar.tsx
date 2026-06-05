@@ -14,7 +14,6 @@ const groups = [
   {
     label: "Monitoramento",
     items: [
-      { title: "Painel Estratégico", url: "/painel", icon: LayoutDashboard },
       { title: "Diagnóstico da Rede", url: "/diagnostico", icon: FileText },
       { title: "Cobertura OPM", url: "/opm", icon: Building2 },
       { title: "Cobertura CREAS", url: "/creas", icon: HeartHandshake },
@@ -72,6 +71,18 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup className="pb-0">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={isActive("/apresentacao-do-sistema")} tooltip="Apresentação do Sistema">
+                <Link to="/apresentacao-do-sistema">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Apresentação do Sistema</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         {sidebarGroups.map((g) => (
           <SidebarGroup key={g.label}>
             <SidebarGroupLabel>{g.label}</SidebarGroupLabel>

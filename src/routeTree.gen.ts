@@ -13,12 +13,12 @@ import { Route as TerritorioRouteImport } from './routes/territorio'
 import { Route as RiscoRouteImport } from './routes/risco'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PesosRouteImport } from './routes/pesos'
-import { Route as PainelRouteImport } from './routes/painel'
 import { Route as OpmRouteImport } from './routes/opm'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
 import { Route as CreasRouteImport } from './routes/creas'
 import { Route as BaseRouteImport } from './routes/base'
+import { Route as ApresentacaoDoSistemaRouteImport } from './routes/apresentacao-do-sistema'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MunicipiosIndexRouteImport } from './routes/municipios.index'
 import { Route as MunicipiosSlugRouteImport } from './routes/municipios.$slug'
@@ -41,11 +41,6 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const PesosRoute = PesosRouteImport.update({
   id: '/pesos',
   path: '/pesos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PainelRoute = PainelRouteImport.update({
-  id: '/painel',
-  path: '/painel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OpmRoute = OpmRouteImport.update({
@@ -73,6 +68,11 @@ const BaseRoute = BaseRouteImport.update({
   path: '/base',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApresentacaoDoSistemaRoute = ApresentacaoDoSistemaRouteImport.update({
+  id: '/apresentacao-do-sistema',
+  path: '/apresentacao-do-sistema',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -91,12 +91,12 @@ const MunicipiosSlugRoute = MunicipiosSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apresentacao-do-sistema': typeof ApresentacaoDoSistemaRoute
   '/base': typeof BaseRoute
   '/creas': typeof CreasRoute
   '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
-  '/painel': typeof PainelRoute
   '/pesos': typeof PesosRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
@@ -106,12 +106,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apresentacao-do-sistema': typeof ApresentacaoDoSistemaRoute
   '/base': typeof BaseRoute
   '/creas': typeof CreasRoute
   '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
-  '/painel': typeof PainelRoute
   '/pesos': typeof PesosRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
@@ -122,12 +122,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/apresentacao-do-sistema': typeof ApresentacaoDoSistemaRoute
   '/base': typeof BaseRoute
   '/creas': typeof CreasRoute
   '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
   '/opm': typeof OpmRoute
-  '/painel': typeof PainelRoute
   '/pesos': typeof PesosRoute
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
@@ -139,12 +139,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/apresentacao-do-sistema'
     | '/base'
     | '/creas'
     | '/diagnostico'
     | '/gestao'
     | '/opm'
-    | '/painel'
     | '/pesos'
     | '/relatorios'
     | '/risco'
@@ -154,12 +154,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/apresentacao-do-sistema'
     | '/base'
     | '/creas'
     | '/diagnostico'
     | '/gestao'
     | '/opm'
-    | '/painel'
     | '/pesos'
     | '/relatorios'
     | '/risco'
@@ -169,12 +169,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/apresentacao-do-sistema'
     | '/base'
     | '/creas'
     | '/diagnostico'
     | '/gestao'
     | '/opm'
-    | '/painel'
     | '/pesos'
     | '/relatorios'
     | '/risco'
@@ -185,12 +185,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApresentacaoDoSistemaRoute: typeof ApresentacaoDoSistemaRoute
   BaseRoute: typeof BaseRoute
   CreasRoute: typeof CreasRoute
   DiagnosticoRoute: typeof DiagnosticoRoute
   GestaoRoute: typeof GestaoRoute
   OpmRoute: typeof OpmRoute
-  PainelRoute: typeof PainelRoute
   PesosRoute: typeof PesosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   RiscoRoute: typeof RiscoRoute
@@ -229,13 +229,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PesosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/painel': {
-      id: '/painel'
-      path: '/painel'
-      fullPath: '/painel'
-      preLoaderRoute: typeof PainelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/opm': {
       id: '/opm'
       path: '/opm'
@@ -271,6 +264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BaseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/apresentacao-do-sistema': {
+      id: '/apresentacao-do-sistema'
+      path: '/apresentacao-do-sistema'
+      fullPath: '/apresentacao-do-sistema'
+      preLoaderRoute: typeof ApresentacaoDoSistemaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -297,12 +297,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApresentacaoDoSistemaRoute: ApresentacaoDoSistemaRoute,
   BaseRoute: BaseRoute,
   CreasRoute: CreasRoute,
   DiagnosticoRoute: DiagnosticoRoute,
   GestaoRoute: GestaoRoute,
   OpmRoute: OpmRoute,
-  PainelRoute: PainelRoute,
   PesosRoute: PesosRoute,
   RelatoriosRoute: RelatoriosRoute,
   RiscoRoute: RiscoRoute,

@@ -4,6 +4,7 @@ import { Download, Building2, Search, Eraser, AlertCircle, ArrowUp, ArrowDown } 
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
+import { ChartHelper } from "@/components/chart-helper";
 import { PiauiMap } from "@/components/piaui-map";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { YesNoBadge } from "@/components/risk-badge";
 import { exportCsv } from "@/lib/export";
 import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList, PieChart, Pie, Cell } from "recharts";
 
 export const Route = createFileRoute("/opm")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -35,6 +36,11 @@ function OpmPanel() {
   const [tipo, setTipo] = useState("__all");
   const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [filtroKpi, setFiltroKpi] = useState<string | null>(null);
+
+  const handleKpiClick = (filtro: string) => {
+    setFiltroKpi(prev => prev === filtro ? null : filtro);
+  };
 
   const handleSort = (col: keyof typeof municipios[0]) => {
     if (sortColumn === col) setSortDirection(prev => prev === "asc" ? "desc" : "asc");
@@ -46,17 +52,24 @@ function OpmPanel() {
     return sortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
   };
 
-  const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
-  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
-  const tipos = useMemo(() => Array.from(new Set(municipios.map((m) => m.opm_orgaotipo).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
+  const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
+  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
+  const tipos = useMemo(() => Array.from(new Set(municipios.map((m) => m.opm_orgaotipo).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
 
-  const filtered = useMemo(() => municipios.filter((m) => {
+  const baseFiltered = useMemo(() => municipios.filter((m) => {
     if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
     if (comarca !== "__all" && m.comarca !== comarca) return false;
     if (polo !== "__all" && m.polo_regional !== polo) return false;
     if (faixaPop !== "__all" && getFaixaPopulacional(m.populacao) !== faixaPop) return false;
     if (status !== "__all" && m.opm_possui !== status) return false;
     if (tipo !== "__all" && m.opm_orgaotipo !== tipo) return false;
+    return true;
+  }), [municipios, q, comarca, polo, faixaPop, status, tipo]);
+
+  const filtered = useMemo(() => baseFiltered.filter((m) => {
+    if (filtroKpi === "com") return m.opm_possui === "SIM";
+    if (filtroKpi === "sem") return m.opm_possui === "NAO";
+    if (filtroKpi === "pendentes") return m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE";
     return true;
   }).sort((a, b) => {
     const valA = a[sortColumn];
@@ -65,12 +78,12 @@ function OpmPanel() {
     const modifier = sortDirection === "asc" ? 1 : -1;
     if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB, 'pt-BR') * modifier;
     return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
-  }), [municipios, q, comarca, polo, faixaPop, status, tipo, sortColumn, sortDirection]);
+  }), [baseFiltered, filtroKpi, sortColumn, sortDirection]);
 
-  const total = filtered.length;
-  const com = filtered.filter((m) => m.opm_possui === "SIM").length;
-  const sem = filtered.filter((m) => m.opm_possui === "NAO").length;
-  const pendentes = filtered.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE").length;
+  const total = baseFiltered.length;
+  const com = baseFiltered.filter((m) => m.opm_possui === "SIM").length;
+  const sem = baseFiltered.filter((m) => m.opm_possui === "NAO").length;
+  const pendentes = baseFiltered.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE").length;
 
   const semList = filtered.filter((m) => m.opm_possui !== "SIM");
   const pendentesList = filtered.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE");
@@ -183,17 +196,33 @@ function OpmPanel() {
       </Card>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <KpiCard label="Municípios (Recorte)" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={Building2} tone="primary" />
-        <KpiCard label="Com OPM" value={com} hint={pct(com, total)} tone="success" />
-        <KpiCard label="Sem OPM" value={sem} hint={pct(sem, total)} tone="critical" />
-        <KpiCard label="Cobertura Total" value={pct(com, total)} tone="primary" />
-        <KpiCard label="Pendente Detalhamento" value={pendentes} hint="Tipologia a verificar" tone="warning" />
+        <KpiCard label="Municípios (Recorte)" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={Building2} tone="primary" onClick={() => setFiltroKpi(null)} isActive={filtroKpi === null} />
+        <KpiCard label="Com OPM" value={com} hint={pct(com, total)} tone="success" onClick={() => handleKpiClick("com")} isActive={filtroKpi === "com"} />
+        <KpiCard label="Sem OPM" value={sem} hint={pct(sem, total)} tone="critical" onClick={() => handleKpiClick("sem")} isActive={filtroKpi === "sem"} />
+        <KpiCard label="Cobertura Total" value={pct(com, total)} tone="primary" onClick={() => handleKpiClick("com")} isActive={filtroKpi === "com"} />
+        <KpiCard label="Pendente Detalhamento" value={pendentes} hint="Tipologia a verificar" tone="warning" onClick={() => handleKpiClick("pendentes")} isActive={filtroKpi === "pendentes"} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="lg:col-span-1">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Cobertura territorial de OPMs</CardTitle></CardHeader>
-          <CardContent>
+          <CardHeader className="pb-2 relative">
+            <ChartHelper>
+              <p>
+                Monitora a implantação de Organismos de Políticas para as Mulheres (OPMs) no território.
+              </p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li><strong className="text-foreground/80">Qualificado:</strong> OPM instituído por lei, com dotação orçamentária e equipe mínima.</li>
+                <li><strong className="text-foreground/80">Sem OPM:</strong> Inexistência formal do órgão ou estrutura inadequada (desativado).</li>
+              </ul>
+              <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                <p className="text-primary-700 dark:text-primary-300 font-medium">
+                  A ausência de OPM prejudica a articulação de políticas públicas de gênero na base municipal e fragiliza a prevenção à violência.
+                </p>
+              </div>
+            </ChartHelper>
+            <CardTitle className="text-base pr-8">Cobertura territorial de OPMs</CardTitle>
+          </CardHeader>
+          <CardContent className="relative">
             <PiauiMap height={850}
               colorFn={colorFn}
               legend={[
@@ -203,12 +232,81 @@ function OpmPanel() {
                 { label: "Fora do filtro", color: COLOR_NA },
               ]}
             />
+
+            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+              <p className="text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição por cobertura</p>
+              <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Qualificado", total: com - pendentes, color: COLOR_WITH },
+                        { name: "Pendente Det.", total: pendentes, color: COLOR_PENDING },
+                        { name: "Sem OPM", total: sem, color: COLOR_WITHOUT }
+                      ].filter(d => d.total > 0)}
+                      dataKey="total"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={35}
+                      outerRadius={55}
+                      label={({ cx, cy, midAngle, outerRadius, percent, name, fill }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = outerRadius * 1.3;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (
+                          <text 
+                            x={x} y={y} 
+                            fill={fill} 
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central" 
+                            fontSize={10} 
+                            fontWeight={600}
+                          >
+                            {`${name} ${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        );
+                      }}
+                      labelLine={false}
+                      stroke="var(--color-background)"
+                      strokeWidth={2}
+                    >
+                      {[
+                        { name: "Qualificado", total: com - pendentes, color: COLOR_WITH },
+                        { name: "Pendente Det.", total: pendentes, color: COLOR_PENDING },
+                        { name: "Sem OPM", total: sem, color: COLOR_WITHOUT }
+                      ].filter(d => d.total > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [value, "Municípios"]}
+                      contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 11 }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-base">Distribuição por Tipologia</CardTitle></CardHeader>
+            <CardHeader className="pb-2 relative">
+            <ChartHelper><p>
+                      Classifica as estruturas de políticas para mulheres (OPMs) com base no seu nível hierárquico na prefeitura.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Secretaria:</strong> Maior orçamento e autonomia.</li>
+                      <li><strong className="text-foreground/80">Coordenação:</strong> Estruturas menores, geralmente subordinadas.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Identifique a <strong className="font-bold">Tipologia</strong> para direcionar recomendações sobre o fortalecimento da autonomia gerencial.
+                      </p>
+                    </div></ChartHelper>
+            <CardTitle className="text-base pr-8">Distribuição por Tipologia</CardTitle></CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }} layout="vertical">
@@ -226,48 +324,23 @@ function OpmPanel() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-destructive bg-destructive/5">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-destructive flex items-center gap-2 text-base">
-              <AlertCircle className="h-5 w-5" /> Déficit (Sem OPM)
-            </CardTitle>
-            <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">{sem} municípios</span>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-              {semList.length > 0 ? semList.map(m => (
-                <Link key={m.codigo_ibge} to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="inline-flex items-center rounded-full border border-destructive/20 bg-background px-2.5 py-0.5 text-xs font-medium hover:bg-destructive/10 transition-colors">
-                  {m.municipio}
-                </Link>
-              )) : <span className="text-sm text-muted-foreground">Nenhum município nesta condição.</span>}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card className="border-warning bg-warning/5">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-warning-foreground flex items-center gap-2 text-base">
-              <AlertCircle className="h-5 w-5" /> Pendente de Detalhamento
-            </CardTitle>
-            <span className="rounded-full bg-warning/20 px-2.5 py-0.5 text-xs font-semibold text-warning-foreground">{pendentes} municípios</span>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-3">Municípios que informaram possuir OPM, mas a tipologia (Secretaria, Coordenadoria, etc.) ainda não foi qualificada.</p>
-            <div className="flex flex-wrap gap-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar">
-              {pendentesList.length > 0 ? pendentesList.map(m => (
-                <Link key={m.codigo_ibge} to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="inline-flex items-center rounded-full border border-warning/30 bg-background px-2.5 py-0.5 text-xs font-medium hover:bg-warning/20 transition-colors">
-                  {m.municipio}
-                </Link>
-              )) : <span className="text-sm text-muted-foreground">Nenhum município nesta condição.</span>}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
-          <CardTitle className="text-base">Municípios — detalhamento</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 relative">
+            <ChartHelper><p>
+                      Visão analítica individual dos municípios quanto à implementação e funcionamento dos órgãos de política para mulheres.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Base Legal:</strong> Leis de criação aprovadas.</li>
+                      <li><strong className="text-foreground/80">Qualificação:</strong> Atendimento aos critérios mínimos de operação.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Utilize a <strong className="font-bold">Exportação de Planilha</strong> para fundamentar inquéritos voltados à regularização de OPMs inativas.
+                      </p>
+                    </div></ChartHelper>
+            <CardTitle className="text-base pr-8">Municípios — detalhamento</CardTitle>
           <Button size="sm" variant="outline" onClick={() => exportCsv("municipios_opm_filtro.csv", filtered.map((m) => ({
             municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional, comarca: m.comarca, populacao: m.populacao,
             opm_possui: m.opm_possui, opm_orgaotipo: m.opm_orgaotipo, opm_status_politicas_publicas: m.opm_status_politicas_publicas

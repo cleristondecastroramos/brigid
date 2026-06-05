@@ -4,6 +4,7 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { municipiosQueryOptions } from "@/lib/csv-data";
 import { useApp } from "@/context/AppContext";
 import { Search, Save, Pencil, ArrowUpDown, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,7 +77,12 @@ function GestaoBaseMunicipal() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["municipios"] });
       setEditingId(null);
+      toast.success("Município atualizado com sucesso!");
     },
+    onError: (err) => {
+      console.error(err);
+      toast.error("Erro ao salvar! Verifique se o servidor backend (json-server) está rodando.");
+    }
   });
 
   if (userRole !== "admin") {
@@ -273,9 +279,9 @@ function GestaoBaseMunicipal() {
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[850px] max-h-[95vh] overflow-y-auto p-0 border-none rounded-xl overflow-hidden bg-background [&>button]:text-white [&>button]:opacity-100 [&>button]:hover:opacity-100">
-                          <DialogHeader className="bg-[#195e6b] text-white p-5 border-none flex flex-col text-left">
+                          <DialogHeader className="bg-primary text-primary-foreground p-5 border-none flex flex-col text-left">
                             <span className="text-[10px] uppercase font-medium tracking-widest opacity-70">Editar Município:</span>
-                            <DialogTitle className="text-white text-[22px] font-bold mt-1.5 leading-tight">{m.municipio}</DialogTitle>
+                            <DialogTitle className="text-primary-foreground text-[22px] font-bold mt-1.5 leading-tight">{m.municipio}</DialogTitle>
                           </DialogHeader>
                           
                           <div className="px-6 py-4">

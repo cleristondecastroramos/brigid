@@ -21,7 +21,7 @@ function NotFoundComponent() {
         <h1 className="mt-2 text-7xl font-bold text-foreground">404</h1>
         <p className="mt-2 text-sm text-muted-foreground">Página não encontrada na base institucional.</p>
         <Link to="/" className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">
-          Voltar ao Painel Estratégico
+          Voltar à Apresentação do Sistema
         </Link>
       </div>
     </div>
@@ -80,7 +80,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  "/": "Painel Estratégico BRIGID",
+  "/": "Apresentação do Sistema",
+  "/apresentacao-do-sistema": "Apresentação do Sistema",
   "/diagnostico": "Diagnóstico da Rede e Fluxos",
   "/opm": "Cobertura de OPMs",
   "/creas": "Cobertura de CREAS",
@@ -159,7 +160,7 @@ function RootInner() {
 
   useEffect(() => {
     if ((pathname === "/pesos" || pathname === "/base") && userRole !== "admin") {
-      navigate({ to: "/painel" });
+      navigate({ to: "/apresentacao-do-sistema" });
       toast.warning("Acesso restrito. Autentique-se como administrador para acessar essa área.");
     }
   }, [pathname, userRole, navigate]);

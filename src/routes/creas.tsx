@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, HeartHandshake, Search, Eraser } from "lucide-react";
+import { Download, HeartHandshake, Search, Eraser, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
+import { ChartHelper } from "@/components/chart-helper";
 import { PiauiMap } from "@/components/piaui-map";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { YesNoBadge } from "@/components/risk-badge";
 import { exportCsv } from "@/lib/export";
 import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
-
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 export const Route = createFileRoute("/creas")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
   component: CreasPanel,
@@ -30,11 +31,33 @@ function CreasPanel() {
   const [polo, setPolo] = useState("__all");
   const [faixaPop, setFaixaPop] = useState<FaixaPop>("__all");
   const [status, setStatus] = useState("__all");
+  const [filtroKpi, setFiltroKpi] = useState<string | null>(null);
+
+  const [sortCol, setSortCol] = useState<string>("municipio");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (col: string) => {
+    if (sortCol === col) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortCol(col);
+      setSortDir("asc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (sortCol !== col) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30" />;
+    return sortDir === "asc" ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />;
+  };
+
+  const handleKpiClick = (filtro: string) => {
+    setFiltroKpi(prev => prev === filtro ? null : filtro);
+  };
 
   const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort(), [municipios]);
   const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(), [municipios]);
 
-  const filtered = useMemo(() => municipios.filter((m) => {
+  const baseFiltered = useMemo(() => municipios.filter((m) => {
     if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
     if (comarca !== "__all" && m.comarca !== comarca) return false;
     if (polo !== "__all" && m.polo_regional !== polo) return false;
@@ -43,12 +66,38 @@ function CreasPanel() {
     return true;
   }), [municipios, q, comarca, polo, faixaPop, status]);
 
-  const total = filtered.length;
-  const com = filtered.filter((m) => m.creas_possui === "SIM").length;
+  const filtered = useMemo(() => baseFiltered.filter((m) => {
+    if (filtroKpi === "com") return m.creas_possui === "SIM";
+    if (filtroKpi === "sem") return m.creas_possui !== "SIM";
+    if (filtroKpi === "altaPrio") return m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA";
+    return true;
+  }), [baseFiltered, filtroKpi]);
+
+  const total = baseFiltered.length;
+  const com = baseFiltered.filter((m) => m.creas_possui === "SIM").length;
   const sem = total - com;
-  const altaPrio = filtered.filter((m) => m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA").length;
+  const altaPrio = baseFiltered.filter((m) => m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA").length;
 
   const semList = filtered.filter((m) => m.creas_possui !== "SIM");
+
+  const sortedData = useMemo(() => {
+    return [...filtered].sort((a: any, b: any) => {
+      let valA = a[sortCol] || "";
+      let valB = b[sortCol] || "";
+      
+      if (sortCol === "populacao") {
+        valA = Number(valA) || 0;
+        valB = Number(valB) || 0;
+      } else {
+        valA = String(valA).toLowerCase();
+        valB = String(valB).toLowerCase();
+      }
+
+      if (valA < valB) return sortDir === "asc" ? -1 : 1;
+      if (valA > valB) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filtered, sortCol, sortDir]);
 
   const colorFn = (m: any) => {
     if (!m) return COLOR_NA;
@@ -133,16 +182,28 @@ function CreasPanel() {
       </Card>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Municípios (Recorte)" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={HeartHandshake} tone="primary" />
-        <KpiCard label="Com CREAS" value={com} hint={pct(com, total)} tone="success" />
-        <KpiCard label="Sem CREAS" value={sem} hint={pct(sem, total)} tone="critical" />
-        <KpiCard label="Prioridade ALTA" value={altaPrio} hint="Para implantação" tone="warning" />
+        <KpiCard label="Municípios (Recorte)" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={HeartHandshake} tone="primary" onClick={() => setFiltroKpi(null)} isActive={filtroKpi === null} />
+        <KpiCard label="Com CREAS" value={com} hint={pct(com, total)} tone="success" onClick={() => handleKpiClick("com")} isActive={filtroKpi === "com"} />
+        <KpiCard label="Sem CREAS" value={sem} hint={pct(sem, total)} tone="critical" onClick={() => handleKpiClick("sem")} isActive={filtroKpi === "sem"} />
+        <KpiCard label="Prioridade ALTA" value={altaPrio} hint="Para implantação" tone="warning" onClick={() => handleKpiClick("altaPrio")} isActive={filtroKpi === "altaPrio"} />
       </div>
 
       {isDestaque20k && (
         <Card className="border-warning bg-warning/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-warning-foreground flex items-center gap-2">
+          <CardHeader className="pb-2 relative">
+            <ChartHelper><p>
+                      Mapeia a capacidade de cada município em ofertar assistência qualificada a mulheres em situação de violência.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Estrutura:</strong> Presença de Centro de Referência.</li>
+                      <li><strong className="text-foreground/80">Atendimento:</strong> Equipes e articulação com a rede local.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Cruze os dados de <strong className="font-bold">Profissionais Capacitados</strong> e avalie se a estrutura física está acompanhada de preparo técnico.
+                      </p>
+                    </div></ChartHelper>
+            <CardTitle className="text-warning-foreground flex items-center gap-2 pr-8">
               Destaque Analítico: Municípios acima de 20 mil habitantes
             </CardTitle>
           </CardHeader>
@@ -192,10 +253,26 @@ function CreasPanel() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Cobertura territorial de CREAS</CardTitle></CardHeader>
-          <CardContent>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2 relative">
+              <ChartHelper>
+                <p>
+                  Mapeia a presença de Centros de Referência Especializados de Assistência Social (CREAS) nos municípios.
+                </p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li><strong className="text-foreground/80">Com CREAS:</strong> Municípios que já possuem a estrutura básica de proteção social especial instalada.</li>
+                  <li><strong className="text-foreground/80">Sem CREAS:</strong> Municípios com vulnerabilidade estrutural na rede de proteção a vítimas.</li>
+                </ul>
+                <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                  <p className="text-primary-700 dark:text-primary-300 font-medium">
+                    A ausência de CREAS em áreas com alta densidade populacional ou altos índices de violência indica lacuna grave de assistência do Estado e exige atuação preventiva do Ministério Público.
+                  </p>
+                </div>
+              </ChartHelper>
+              <CardTitle className="text-base pr-8">Cobertura territorial de CREAS</CardTitle>
+            </CardHeader>
+            <CardContent className="relative">
             <PiauiMap height={850}
               colorFn={colorFn}
               legend={[
@@ -204,12 +281,75 @@ function CreasPanel() {
                 { label: "Sem dado / Fora do filtro", color: COLOR_NA },
               ]}
             />
+            
+            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+              <p className="text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição por cobertura</p>
+              <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Com CREAS", total: com, color: COLOR_WITH },
+                        { name: "Sem CREAS", total: sem, color: COLOR_WITHOUT }
+                      ].filter(d => d.total > 0)}
+                      dataKey="total"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={35}
+                      outerRadius={55}
+                      label={({ cx, cy, midAngle, outerRadius, percent, name, fill }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = outerRadius * 1.3;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (
+                          <text 
+                            x={x} y={y} 
+                            fill={fill} 
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central" 
+                            fontSize={10} 
+                            fontWeight={600}
+                          >
+                            {`${name} ${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        );
+                      }}
+                      labelLine={false}
+                      stroke="var(--color-background)"
+                      strokeWidth={2}
+                    >
+                      {[{ name: "Com CREAS", total: com, color: COLOR_WITH }, { name: "Sem CREAS", total: sem, color: COLOR_WITHOUT }].filter(d => d.total > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [value, "Municípios"]}
+                      contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 11 }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
-          <CardTitle className="text-base">Municípios — detalhamento</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 relative">
+            <ChartHelper><p>
+                      Mapeia a capacidade de cada município em ofertar assistência qualificada a mulheres em situação de violência.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Estrutura:</strong> Presença de Centro de Referência.</li>
+                      <li><strong className="text-foreground/80">Atendimento:</strong> Equipes e articulação com a rede local.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Cruze os dados de <strong className="font-bold">Profissionais Capacitados</strong> e avalie se a estrutura física está acompanhada de preparo técnico.
+                      </p>
+                    </div></ChartHelper>
+            <CardTitle className="text-base pr-8">Municípios — detalhamento</CardTitle>
           <Button
             size="sm" variant="outline"
             onClick={() => exportCsv("municipios_sem_creas.csv", semList.map((m) => ({
@@ -226,17 +366,31 @@ function CreasPanel() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Município</TableHead>
-                  <TableHead>Comarca</TableHead>
-                  <TableHead>Polo</TableHead>
-                  <TableHead className="text-right">População</TableHead>
-                  <TableHead>CREAS</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Prioridade implantação</TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("municipio")}>
+                    <div className="flex items-center">Município <SortIcon col="municipio" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("comarca")}>
+                    <div className="flex items-center">Comarca <SortIcon col="comarca" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("polo_regional")}>
+                    <div className="flex items-center">Polo <SortIcon col="polo_regional" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("populacao")}>
+                    <div className="flex items-center justify-end">População <SortIcon col="populacao" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("creas_possui")}>
+                    <div className="flex items-center">CREAS <SortIcon col="creas_possui" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("creas_status")}>
+                    <div className="flex items-center">Status <SortIcon col="creas_status" /></div>
+                  </TableHead>
+                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("prioridade_implantacao_creas")}>
+                    <div className="flex items-center">Prioridade implantação <SortIcon col="prioridade_implantacao_creas" /></div>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.slice(0, 80).map((m) => (
+                {sortedData.slice(0, 80).map((m) => (
                   <TableRow key={m.codigo_ibge}>
                     <TableCell>
                       <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="font-medium text-foreground hover:underline">
@@ -258,7 +412,6 @@ function CreasPanel() {
         </CardContent>
           </Card>
         </div>
-      </div>
     </div>
   );
 }

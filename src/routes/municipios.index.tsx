@@ -24,7 +24,7 @@ function MunicipiosList() {
   const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
+  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
 
   const filtered = useMemo(() => {
     let result = municipios.filter((m) => {

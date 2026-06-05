@@ -14,20 +14,71 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { ChartHelper } from "@/components/chart-helper";
 import { cn } from "@/lib/utils";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from "recharts";
 
 export const Route = createFileRoute("/diagnostico")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
   component: DiagnosticoPanel,
 });
 
-const COLOR_OK = "oklch(0.65 0.15 150)"; // Verde
-const COLOR_WARN = "oklch(0.7 0.12 300)"; // Roxo/Cinza Suave
-const COLOR_CRIT = "oklch(0.35 0.15 300)"; // Roxo Escuro
-const COLOR_GRAY = "oklch(0.95 0 0)"; // Cinza
+const COLOR_OK = "oklch(0.55 0.13 175)";
+const COLOR_WARN = "oklch(0.8 0.15 85)";
+const COLOR_CRIT = "oklch(0.65 0.2 27)";
+const COLOR_GRAY = "oklch(0.92 0.01 230)";
+const COLOR_DARK_PURPLE = "oklch(0.35 0.15 300)";
+
+const LacunaTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const isCritical = data.lacuna_percentual >= 70;
+    const isWarning = data.lacuna_percentual >= 40 && data.lacuna_percentual < 70;
+    const colorClass = isCritical ? "text-destructive" : isWarning ? "text-warning-foreground" : "text-primary";
+    const fillColor = isCritical ? COLOR_CRIT : isWarning ? COLOR_WARN : COLOR_OK;
+    
+    return (
+      <div className="bg-card/95 backdrop-blur-xl border border-border/60 p-3 rounded-xl shadow-2xl min-w-[280px] z-50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: fillColor }} />
+        
+        <p className="font-bold text-[15px] mb-3 border-b border-border/50 pb-2 pl-3">{label}</p>
+        
+        <div className="flex flex-col gap-3 mb-4 pl-3">
+          <div className="flex justify-between items-center gap-4">
+            <span className="font-bold text-muted-foreground uppercase tracking-wider text-[11px]">Lacuna Institucional:</span>
+            <span className={cn("font-black text-2xl", colorClass)}>{data.lacuna_percentual}%</span>
+          </div>
+          <div className="flex justify-between items-center gap-4">
+            <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">Cobertura Formativa:</span>
+            <span className="font-bold text-sm text-primary">{data.cobertura_percentual}%</span>
+          </div>
+        </div>
+
+        <div className="bg-muted/30 rounded-lg p-3 mx-2 mb-1 flex flex-col gap-2.5 text-xs border border-border/30 shadow-inner">
+          <p className="font-semibold text-muted-foreground mb-0.5 text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+            <HelpCircle className="w-3 h-3" /> Volume Absoluto
+          </p>
+          <div className="flex justify-between items-center">
+            <span className="flex items-center gap-1.5 font-medium opacity-90" style={{ color: COLOR_DARK_PURPLE }}>
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLOR_DARK_PURPLE }} /> Demandas territoriais:
+            </span>
+            <span className="font-bold text-foreground">{data.ocorrencias}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-primary flex items-center gap-1.5 font-medium opacity-90">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" /> Respostas institucionais:
+            </span>
+            <span className="font-bold text-foreground">{data.capacitacoes}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};;
 
 function DiagnosticoPanel() {
   const { data: municipios } = useMunicipios();
@@ -56,9 +107,9 @@ function DiagnosticoPanel() {
     if (selectedPolo !== "__all") {
       list = list.filter((m) => m.polo_regional === selectedPolo);
     }
-    return Array.from(new Set(list.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR'));
+    return Array.from(new Set(list.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR'));
   }, [municipios, selectedPolo]);
-  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')), [municipios]);
+  const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
   const municipiosDropdown = useMemo(() => {
     let list = municipios;
     if (selectedPolo !== "__all") list = list.filter(m => m.polo_regional === selectedPolo);
@@ -222,7 +273,7 @@ function DiagnosticoPanel() {
     }).sort((a, b) => a.media - b.media); // Ordem crescente: piores médias primeiro
   }, [municipios]);
 
-  // Cruzamento do Painel 2: Ocorrências vs Capacitação (exibir por polo)
+  // Cruzamento do Painel 2: Ocorrências vs Capacitação (exibir por polo ordenado por déficit percentual)
   const poloCruzamentoData = useMemo(() => {
     const poloStats: Record<string, { polo: string; ocorrencias: number; capacitacoes: number }> = {};
     municipios.forEach(m => {
@@ -233,7 +284,16 @@ function DiagnosticoPanel() {
       poloStats[m.polo_regional].ocorrencias += (m.feminicidios_consumados_2024_2025 ?? 0) + (m.feminicidios_tentados_2024_2025 ?? 0);
       poloStats[m.polo_regional].capacitacoes += m.qtd_capacitacoes_realizadas ?? 0;
     });
-    return Object.values(poloStats);
+    return Object.values(poloStats).map(p => {
+      let cobertura_percentual = p.ocorrencias > 0 ? (p.capacitacoes / p.ocorrencias) * 100 : 100;
+      cobertura_percentual = Math.min(100, Math.max(0, cobertura_percentual));
+      const lacuna_percentual = 100 - cobertura_percentual;
+      return {
+        ...p,
+        cobertura_percentual: Number(cobertura_percentual.toFixed(1)),
+        lacuna_percentual: Number(lacuna_percentual.toFixed(1))
+      };
+    }).sort((a, b) => b.lacuna_percentual - a.lacuna_percentual);
   }, [municipios]);
 
   // Lista de gargalos destacados
@@ -290,11 +350,11 @@ function DiagnosticoPanel() {
                 <Building2 className="h-4 w-4 text-primary" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm uppercase tracking-widest font-bold text-muted-foreground leading-none">Estrutura da Rede</span>
+                <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">Estrutura da Rede</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-2xl font-black text-primary leading-none tabular-nums">{stats.ierMedio}</span>
-                  <span className="text-sm text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-sm font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">IER</span>
+                  <span className="text-base text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-base font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">IER</span>
                 </div>
                 <div className="mt-1.5">
                   <Progress value={stats.ierMedio * 10} className="h-[3px]" />
@@ -309,11 +369,11 @@ function DiagnosticoPanel() {
                 <HeartHandshake className="h-4 w-4 text-[color:var(--color-success)]" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm uppercase tracking-widest font-bold text-muted-foreground leading-none">Maturidade dos Fluxos</span>
+                <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">Maturidade dos Fluxos</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-2xl font-black text-[color:var(--color-success)] leading-none tabular-nums">{stats.imfMedio}</span>
-                  <span className="text-sm text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-sm font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">IMF</span>
+                  <span className="text-base text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-base font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">IMF</span>
                 </div>
                 <div className="mt-1.5">
                   <Progress value={stats.imfMedio * 10} className="h-[3px] [&>div]:bg-[color:var(--color-success)]" />
@@ -328,11 +388,11 @@ function DiagnosticoPanel() {
                 <GraduationCap className="h-4 w-4 text-warning-foreground" />
               </div>
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm uppercase tracking-widest font-bold text-muted-foreground leading-none">Qualificação Técnica</span>
+                <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">Qualificação Técnica</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
                   <span className="text-2xl font-black text-warning-foreground leading-none tabular-nums">{stats.iqtMedio}</span>
-                  <span className="text-sm text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-sm font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">IQT</span>
+                  <span className="text-base text-muted-foreground font-medium">/10</span>
+                  <span className="ml-auto text-base font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">IQT</span>
                 </div>
                 <div className="mt-1.5">
                   <Progress value={stats.iqtMedio * 10} className="h-[3px] [&>div]:bg-warning" />
@@ -344,9 +404,9 @@ function DiagnosticoPanel() {
           {/* Bloco: Filtros alinhados à direita */}
           <div className="flex items-center gap-3 px-4 py-2 border-l border-border/50 shrink-0 flex-1">
             <div className="flex flex-col gap-0.5">
-              <label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
+              <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
               <Select value={selectedPolo} onValueChange={(v) => { setSelectedPolo(v); setSelectedComarca("__all"); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="text-sm w-[170px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[170px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Polos</SelectItem>
                   {polos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -355,9 +415,9 @@ function DiagnosticoPanel() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Comarca</label>
+              <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Comarca</label>
               <Select value={selectedComarca} onValueChange={(v) => { setSelectedComarca(v); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="text-sm w-[170px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[170px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as Comarcas</SelectItem>
                   {comarcas.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -366,9 +426,9 @@ function DiagnosticoPanel() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-xs uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Município</label>
+              <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Município</label>
               <Select value={selectedMunicipio} onValueChange={handleSelectMunicipio}>
-                <SelectTrigger className="text-sm w-[185px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[185px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Municípios</SelectItem>
                   {municipiosDropdown.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
@@ -377,7 +437,7 @@ function DiagnosticoPanel() {
             </div>
 
             {(selectedPolo !== "__all" || selectedComarca !== "__all" || selectedMunicipio !== "__all" || q) && (
-              <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-foreground mt-4" onClick={handleResetFilters}>
+              <Button variant="ghost" size="sm" className="text-base text-muted-foreground hover:text-foreground mt-4" onClick={handleResetFilters}>
                 ✕ Limpar
               </Button>
             )}
@@ -387,7 +447,7 @@ function DiagnosticoPanel() {
         {/* Linha 2 — Breadcrumb + Tabs integradas */}
         <div className="flex items-center justify-between px-4 py-0 bg-muted/20">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-sm text-muted-foreground py-1.5">
+          <div className="flex items-center gap-1 text-base text-muted-foreground py-1.5">
             <span className="font-semibold text-foreground/60 uppercase tracking-wider">Escopo:</span>
             <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "estado" ? "text-primary font-semibold" : "text-muted-foreground")}>
               Estadual
@@ -407,7 +467,7 @@ function DiagnosticoPanel() {
           </div>
 
           {/* Tabs de navegação integradas no rodapé do card */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 px-4 py-2">
             {[
               { value: "infra", label: "Fluxos e Infraestrutura" },
               { value: "violencia", label: "Violência e Perícias" },
@@ -417,10 +477,10 @@ function DiagnosticoPanel() {
                 key={t.value}
                 onClick={() => setTab(t.value)}
                 className={cn(
-                  "relative px-4 py-2.5 text-xs font-semibold transition-all duration-200 border-b-2 whitespace-nowrap",
+                  "relative px-4 py-2 text-sm font-semibold transition-all duration-200 whitespace-nowrap rounded-md border",
                   tab === t.value
-                    ? "border-primary text-primary bg-primary/5"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    ? "bg-foreground text-background border-foreground shadow-sm"
+                    : "border-foreground/20 text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
                 {t.label}
@@ -445,70 +505,190 @@ function DiagnosticoPanel() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Mapa Temático de Estrutura */}
             <Card className="lg:col-span-1">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center justify-between">
+              <CardHeader className="pb-3 relative">
+                <ChartHelper>
+                  <p>
+                      Mapeia o nível de prontidão estrutural dos municípios para atendimento a vítimas.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Adequada / Alta:</strong> Rede com capacidade satisfatória instalada.</li>
+                      <li><strong className="text-foreground/80">Insufic. / Crítica:</strong> Alta vulnerabilidade estrutural local.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        O <strong className="font-bold">IER (Índice de Estrutura da Rede)</strong> guia a priorização de vistorias técnicas e cobranças administrativas do MPPI.
+                      </p>
+                    </div>
+                </ChartHelper>
+                <CardTitle className="text-lg flex items-center justify-between pr-8">
                   <span>Mapa Temático de Estrutura da Rede (IER)</span>
-                  <span className="text-sm font-normal text-muted-foreground">
+                  <span className="text-base font-normal text-muted-foreground">
                     Exibindo {filteredMunicipios.length} municípios
                   </span>
                 </CardTitle>
-                <CardDescription className="text-sm">
+                <CardDescription className="text-base">
                   A cor do município no mapa representa o grau de adequação do Índice de Estrutura da Rede (IER). Clicar no município abre a ficha detalhada.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
                 <PiauiMap 
                   colorFn={mapColorFn} 
                   legend={mapLegend} 
                   height={850}
                 />
+                
+                <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+                  <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição das classificações</p>
+                  <div className="flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Adequada / Alta", total: filteredMunicipios.filter(m => {
+                                let score = 0;
+                                if (tab === "infra") score = m.ier_score ?? 0;
+                                else if (tab === "violencia") score = m.iqt_score ?? 0;
+                                else score = m.imf_score ?? 0;
+                                return score >= 7;
+                              }).length, color: COLOR_OK },
+                            { name: "Regular / Média", total: filteredMunicipios.filter(m => {
+                                let score = 0;
+                                if (tab === "infra") score = m.ier_score ?? 0;
+                                else if (tab === "violencia") score = m.iqt_score ?? 0;
+                                else score = m.imf_score ?? 0;
+                                return score >= 4 && score < 7;
+                              }).length, color: COLOR_WARN },
+                            { name: "Insufic. / Crítica", total: filteredMunicipios.filter(m => {
+                                let score = 0;
+                                if (tab === "infra") score = m.ier_score ?? 0;
+                                else if (tab === "violencia") score = m.iqt_score ?? 0;
+                                else score = m.imf_score ?? 0;
+                                return score < 4;
+                              }).length, color: COLOR_CRIT }
+                          ].filter(d => d.total > 0)}
+                          dataKey="total"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={35}
+                          outerRadius={55}
+                          label={({ cx, cy, midAngle, outerRadius, percent, name, fill }) => {
+                            const RADIAN = Math.PI / 180;
+                            const radius = outerRadius * 1.3;
+                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                            return (
+                              <text 
+                                x={x} y={y} 
+                                fill={fill} 
+                                textAnchor={x > cx ? 'start' : 'end'} 
+                                dominantBaseline="central" 
+                                fontSize={10} 
+                                fontWeight={600}
+                              >
+                                {`${name} ${(percent * 100).toFixed(0)}%`}
+                              </text>
+                            );
+                          }}
+                          labelLine={false}
+                          stroke="var(--color-background)"
+                          strokeWidth={2}
+                        >
+                          {[
+                            { name: "Adequada / Alta", total: filteredMunicipios.filter(m => {
+                                let score = 0;
+                                if (tab === "infra") score = m.ier_score ?? 0;
+                                else if (tab === "violencia") score = m.iqt_score ?? 0;
+                                else score = m.imf_score ?? 0;
+                                return score >= 7;
+                              }).length, color: COLOR_OK },
+                            { name: "Regular / Média", total: filteredMunicipios.filter(m => {
+                                let score = 0;
+                                if (tab === "infra") score = m.ier_score ?? 0;
+                                else if (tab === "violencia") score = m.iqt_score ?? 0;
+                                else score = m.imf_score ?? 0;
+                                return score >= 4 && score < 7;
+                              }).length, color: COLOR_WARN },
+                            { name: "Insufic. / Crítica", total: filteredMunicipios.filter(m => {
+                                let score = 0;
+                                if (tab === "infra") score = m.ier_score ?? 0;
+                                else if (tab === "violencia") score = m.iqt_score ?? 0;
+                                else score = m.imf_score ?? 0;
+                                return score < 4;
+                              }).length, color: COLOR_CRIT }
+                          ].filter(d => d.total > 0).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number) => [value, "Municípios"]}
+                          contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 11 }} 
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
             {/* Quadro de Cobertura e Ranking */}
             <div className="space-y-6 lg:col-span-1">
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Indicadores do Recorte Territorial</CardTitle>
+                <CardHeader className="pb-2 relative">
+                  <ChartHelper>
+                    <p>
+                      Apresenta o percentual de cobertura dos serviços essenciais de proteção no recorte selecionado.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Fluxo Formal:</strong> Existência de diretrizes oficiais de encaminhamento.</li>
+                      <li><strong className="text-foreground/80">Sala Especializada:</strong> Espaços de escuta protegida.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Identifique rapidamente quais <strong className="font-bold">eixos da rede de atendimento</strong> estão mais defasados e necessitam de articulação interinstitucional.
+                      </p>
+                    </div>
+                  </ChartHelper>
+                  <CardTitle className="text-lg pr-8">Indicadores do Recorte Territorial</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-2">
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-base mb-2">
                       <span className="font-medium text-foreground">Fluxo Formal de Atendimento</span>
                       <span className="font-bold text-primary">{stats.pctFluxoFormal}</span>
                     </div>
                     <Progress value={parseFloat(stats.pctFluxoFormal)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-base mb-2">
                       <span className="font-medium text-foreground">Sala / Estrutura Especializada</span>
                       <span className="font-bold text-primary">{stats.pctSalaEsp}</span>
                     </div>
                     <Progress value={parseFloat(stats.pctSalaEsp)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-base mb-2">
                       <span className="font-medium text-foreground">Recursos Materiais Mínimos</span>
                       <span className="font-bold text-primary">{stats.pctRecursosMin}</span>
                     </div>
                     <Progress value={parseFloat(stats.pctRecursosMin)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-base mb-2">
                       <span className="font-medium text-foreground">Atendimento Psicossocial Local</span>
                       <span className="font-bold text-primary">{stats.pctAtendPsicossocial}</span>
                     </div>
                     <Progress value={parseFloat(stats.pctAtendPsicossocial)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-base mb-2">
                       <span className="font-medium text-foreground">Atendimento Jurídico na Rede</span>
                       <span className="font-bold text-primary">{stats.pctAtendJuridico}</span>
                     </div>
                     <Progress value={parseFloat(stats.pctAtendJuridico)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
                   </div>
                   <div>
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-base mb-2">
                       <span className="font-medium text-foreground">Articulação da Rede de Segurança/Saúde</span>
                       <span className="font-bold text-primary">{stats.pctArticulacaoRede}</span>
                     </div>
@@ -519,9 +699,23 @@ function DiagnosticoPanel() {
 
               {/* Ranking de fragilidade territorial */}
               <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Criticidade por Polos Regionais (Geral)</CardTitle>
-                  <CardDescription className="text-sm">
+                <CardHeader className="pb-2 relative">
+                  <ChartHelper>
+                    <p>
+                      Ranqueia as regiões de acordo com o nível médio de fragilidade de suas redes de proteção.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Média:</strong> Agregação dos índices de estrutura, fluxos e treinamento.</li>
+                      <li><strong className="text-foreground/80">Status:</strong> Nível de atenção exigida pela região.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        A classificação de <strong className="font-bold">Criticidade</strong> norteia a atuação estratégica por macrorregião, otimizando o esforço fiscalizatório.
+                      </p>
+                    </div>
+                  </ChartHelper>
+                  <CardTitle className="text-lg pr-8">Criticidade por Polos Regionais (Geral)</CardTitle>
+                  <CardDescription className="text-base pr-8">
                     Polos com menores médias nos índices de estrutura, fluxos e treinamento.
                   </CardDescription>
                 </CardHeader>
@@ -530,17 +724,17 @@ function DiagnosticoPanel() {
                     <Table>
                       <TableHeader className="bg-muted/40">
                         <TableRow>
-                          <TableHead className="py-1 text-sm text-black">Polo</TableHead>
-                          <TableHead className="py-1 text-sm text-right text-black">Média</TableHead>
-                          <TableHead className="py-1 text-sm text-center text-black">Status</TableHead>
+                          <TableHead className="py-1 text-base text-black">Polo</TableHead>
+                          <TableHead className="py-1 text-base text-right text-black">Média</TableHead>
+                          <TableHead className="py-1 text-base text-center text-black">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {rankingLacunas.map((r) => (
                           <TableRow key={r.polo} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleSelectPolo(r.polo)}>
-                            <TableCell className="py-2 text-sm font-medium">{r.polo}</TableCell>
-                            <TableCell className="py-2 text-sm text-right font-bold">{r.media}</TableCell>
-                            <TableCell className="py-2 text-sm text-center">
+                            <TableCell className="py-2 text-base font-medium">{r.polo}</TableCell>
+                            <TableCell className="py-2 text-base text-right font-bold">{r.media}</TableCell>
+                            <TableCell className="py-2 text-base text-center">
                               <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-semibold", 
                                 r.prioridade === "CRÍTICA" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning-foreground"
                               )}>
@@ -559,9 +753,23 @@ function DiagnosticoPanel() {
 
           {/* Matriz de presenca/ausencia de serviços */}
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Matriz Territorial de Estrutura por Município</CardTitle>
-              <CardDescription className="text-sm">
+            <CardHeader className="pb-2 relative">
+              <ChartHelper>
+                <p>
+                      Visão tabular comparativa da presença de recursos de infraestrutura fundamentais em cada município.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Recursos Mínimos:</strong> Itens operacionais básicos.</li>
+                      <li><strong className="text-foreground/80">Atendimento:</strong> Presença de profissionais qualificados.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Utilize a ordenação por <strong className="font-bold">Suficiência</strong> para extrair a lista exata de alvos para recomendações diretas.
+                      </p>
+                    </div>
+              </ChartHelper>
+              <CardTitle className="text-lg pr-8">Matriz Territorial de Estrutura por Município</CardTitle>
+              <CardDescription className="text-base pr-8">
                 Visão tabular comparativa detalhando a presença ou ausência de recursos de infraestrutura fundamentais nos municípios selecionados.
               </CardDescription>
             </CardHeader>
@@ -570,26 +778,26 @@ function DiagnosticoPanel() {
                 <Table>
                   <TableHeader className="bg-muted/70 sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_sala_especializada')}>Sala Esp. <SortIcon column="tem_sala_especializada" /></TableHead>
-                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_recursos_minimos')}>Recursos Mín. <SortIcon column="tem_recursos_minimos" /></TableHead>
-                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atend. Psico <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
-                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_juridico')}>Atend. Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
-                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
-                      <TableHead className="text-sm text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
-                      <TableHead className="text-sm text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('ier_score')}>Score IER <SortIcon column="ier_score" /></TableHead>
+                      <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
+                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_sala_especializada')}>Sala Esp. <SortIcon column="tem_sala_especializada" /></TableHead>
+                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_recursos_minimos')}>Recursos Mín. <SortIcon column="tem_recursos_minimos" /></TableHead>
+                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atend. Psico <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
+                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_juridico')}>Atend. Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
+                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
+                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
+                      <TableHead className="text-base text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('ier_score')}>Score IER <SortIcon column="ier_score" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredMunicipios.slice(0, 15).map(m => (
                       <TableRow key={m.codigo_ibge} className="hover:bg-muted/50">
-                        <TableCell className="font-semibold text-sm py-2 text-foreground">
+                        <TableCell className="font-semibold text-base py-2 text-foreground">
                           <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="hover:underline text-primary">
                             {m.municipio}
                           </Link>
                         </TableCell>
-                        <TableCell className="text-sm py-2 text-muted-foreground">{m.comarca}</TableCell>
+                        <TableCell className="text-base py-2 text-muted-foreground">{m.comarca}</TableCell>
                         <TableCell className="py-2 text-center">
                           {m.tem_sala_especializada === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
                         </TableCell>
@@ -606,7 +814,7 @@ function DiagnosticoPanel() {
                           {m.tem_fluxo_formal === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold", 
+                          <span className={cn("px-1.5 py-0.5 rounded text-xs font-semibold", 
                             m.grau_suficiencia_estrutura === "ADEQUADO" ? "bg-success/15 text-[color:var(--color-success)]" :
                             m.grau_suficiencia_estrutura === "PARCIAL" ? "bg-warning/15 text-warning-foreground" :
                             "bg-destructive/15 text-destructive"
@@ -614,14 +822,14 @@ function DiagnosticoPanel() {
                             {m.grau_suficiencia_estrutura}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right py-2 font-bold text-sm">{m.ier_score}</TableCell>
+                        <TableCell className="text-right py-2 font-bold text-base">{m.ier_score}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
               {filteredMunicipios.length > 15 && (
-                <p className="text-[11px] text-muted-foreground mt-2 text-center">
+                <p className="text-sm text-muted-foreground mt-2 text-center">
                   Exibindo 15 de {filteredMunicipios.length} municípios cadastrados no recorte. Use a pesquisa ou filtros no topo para detalhar.
                 </p>
               )}
@@ -642,35 +850,64 @@ function DiagnosticoPanel() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Gráfico de Correlação: Volume de Ocorrências vs Capacitação */}
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Mapeamento de Lacuna: Ocorrências vs Capacitação (Por Polo)</CardTitle>
-                <CardDescription className="text-sm">
-                  Gráfico identificando polos com alto volume de violência de gênero e necessidade urgente de ampliação do nível de capacitação técnica.
+            <Card className="lg:col-span-2 flex flex-col">
+              <CardHeader className="pb-3 border-b border-border/50 relative">
+                  <ChartHelper>
+                    <p>
+                      Este painel mede a eficiência da resposta institucional do MPPI frente às pressões territoriais (demandas).
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Demandas:</strong> Ocorrências criminais reportadas.</li>
+                      <li><strong className="text-foreground/80">Respostas:</strong> Esforço formativo e capacitações executadas.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        A <strong className="font-bold">Lacuna Institucional (%)</strong> aponta o percentual da demanda que ainda carece de resposta proporcional. Polos com maior déficit ficam no topo com cores de alerta.
+                      </p>
+                    </div>
+                  </ChartHelper>
+                <CardTitle className="text-lg text-foreground pr-8">Lacuna Institucional de Capacitação por Polo</CardTitle>
+                <CardDescription className="text-base leading-relaxed mt-1 text-muted-foreground/90 pr-8">
+                  Comparativo padronizado entre pressão territorial de ocorrências e resposta formativa, com foco no déficit percentual de cobertura.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-[320px] flex items-center justify-center">
+              <CardContent className="h-[800px] flex items-center justify-center pt-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={poloCruzamentoData} margin={{ top: 25, right: 30, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="polo" fontSize={11} />
-                    <YAxis hide={true} />
-                    <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} />
-                    <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar 
-                      dataKey="ocorrencias" 
-                      name="Ocorrências Feminicídio (Cons. + Tent.)" 
-                      fill="oklch(0.65 0.2 27)" 
-                      radius={[4, 4, 0, 0]} 
-                      label={{ position: "top", fontSize: 10, fontWeight: "600", fill: "oklch(0.3 0.02 240)" }}
+                  <BarChart 
+                    layout="vertical" 
+                    data={poloCruzamentoData} 
+                    margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
+                    onClick={(e) => {
+                      if (e && e.activeLabel) {
+                        handleSelectPolo(e.activeLabel);
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={true} vertical={true} />
+                    <XAxis type="number" domain={[0, 100]} hide />
+                    <YAxis 
+                      type="category" 
+                      dataKey="polo" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 13, fontWeight: 600, fill: "var(--color-foreground)" }} 
+                      width={120} 
                     />
+                    <Tooltip content={<LacunaTooltip />} cursor={{ fill: "var(--color-muted)", opacity: 0.4 }} />
                     <Bar 
-                      dataKey="capacitacoes" 
-                      name="Capacitações de Equipes" 
-                      fill="oklch(0.55 0.13 175)" 
-                      radius={[4, 4, 0, 0]} 
-                      label={{ position: "top", fontSize: 10, fontWeight: "600", fill: "oklch(0.3 0.02 240)" }}
-                    />
+                      dataKey="lacuna_percentual" 
+                      name="Lacuna Institucional (%)" 
+                      radius={[0, 4, 4, 0]} 
+                      barSize={18}
+                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                    >
+                      {poloCruzamentoData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.lacuna_percentual >= 70 ? COLOR_CRIT : entry.lacuna_percentual >= 40 ? COLOR_WARN : COLOR_OK} 
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -678,26 +915,49 @@ function DiagnosticoPanel() {
 
             {/* Lista de Gargalos Técnicos Identificados */}
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Gargalos Críticos Identificados</CardTitle>
-                <CardDescription className="text-sm">
+              <CardHeader className="pb-2 relative">
+                <ChartHelper>
+                  <p>
+                      Mapeia os principais bloqueios práticos ao atendimento qualificado, conforme reportado em campo.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Infraestrutura:</strong> Falta de viaturas, espaço físico ou material.</li>
+                      <li><strong className="text-foreground/80">Pessoal:</strong> Déficit de profissionais especializados.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Os <strong className="font-bold">Gargalos reportados</strong> são evidências qualitativas fortíssimas para embasar Ações Civis Públicas (ACPs).
+                      </p>
+                    </div>
+                </ChartHelper>
+                <CardTitle className="text-lg pr-8">Gargalos Críticos Identificados</CardTitle>
+                <CardDescription className="text-base pr-8">
                   Fatos reportados pelas equipes de investigação e perícias locais.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="max-h-[280px] overflow-y-auto px-4 pb-4 space-y-3">
+                <div className="max-h-[800px] overflow-y-auto px-4 pb-4 space-y-3">
                   {listGargalos.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">Nenhum gargalo reportado no recorte atual.</p>
+                    <p className="text-base text-muted-foreground text-center py-8">Nenhum gargalo reportado no recorte atual.</p>
                   ) : (
                     listGargalos.map((m, idx) => (
                       <div key={m.codigo_ibge} className="border-b border-border/40 pb-2 last:border-0">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-foreground">{m.municipio}</span>
-                          <span className="text-xs text-muted-foreground">{m.polo_regional}</span>
-                        </div>
-                        <p className="text-[11px] text-destructive mt-1 italic">
-                          &ldquo;{m.gargalos_identificados}&rdquo;
-                        </p>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-base font-semibold text-foreground">{m.municipio}</span>
+                            <span className="text-sm text-muted-foreground">{m.polo_regional}</span>
+                          </div>
+                          <div className="text-sm text-destructive flex flex-col gap-1.5">
+                            {m.gargalos_identificados?.split(";").map((g, i) => {
+                              const text = g.trim();
+                              if (!text) return null;
+                              return (
+                                <div key={i} className="flex items-start gap-1.5 bg-destructive/5 px-2 py-1.5 rounded border border-destructive/10">
+                                  <span className="mt-0.5 text-[10px]">🔴</span>
+                                  <span className="italic leading-snug">{text}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
                       </div>
                     ))
                   )}
@@ -708,42 +968,56 @@ function DiagnosticoPanel() {
 
           {/* Matriz Qualitativa do Painel 2 */}
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Protocolos Técnicos e Aderência por Município</CardTitle>
+            <CardHeader className="pb-2 relative">
+              <ChartHelper>
+                <p>
+                      Monitora a formalização das diretrizes de investigação e perícia técnica na segurança pública.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Protocolos:</strong> Existência de regras oficiais de apuração.</li>
+                      <li><strong className="text-foreground/80">Capacitações:</strong> Volume de treinamento para aplicação das regras.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        O <strong className="font-bold">Grau de Aderência Técnica</strong> mede não apenas a teoria formal, mas a efetiva preparação policial na ponta.
+                      </p>
+                    </div>
+              </ChartHelper>
+              <CardTitle className="text-lg pr-8">Protocolos Técnicos e Aderência por Município</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[260px] overflow-y-auto">
+              <div className="max-h-[650px] overflow-y-auto">
                 <Table>
                   <TableHeader className="bg-muted/70 sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-sm cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('tem_protocolo_investigacao')}>Prot. Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
-                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('tem_protocolo_pericial')}>Prot. Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
-                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
-                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
-                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Qtd. Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
-                      <TableHead className="text-sm text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
+                      <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_investigacao')}>Prot. Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_pericial')}>Prot. Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Qtd. Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredMunicipios.slice(0, 15).map(m => (
+                    {filteredMunicipios.slice(0, 50).map(m => (
                       <TableRow key={m.codigo_ibge}>
-                        <TableCell className="font-semibold text-sm py-2 text-primary">{m.municipio}</TableCell>
+                        <TableCell className="font-semibold text-base py-2 text-primary">{m.municipio}</TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.tem_protocolo_investigacao === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
+                          {m.tem_protocolo_investigacao === "SIM" ? <span className="text-base font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-base text-destructive">NÃO</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.tem_protocolo_pericial === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
+                          {m.tem_protocolo_pericial === "SIM" ? <span className="text-base font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-base text-destructive">NÃO</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.capacitado_perspectiva_genero === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
+                          {m.capacitado_perspectiva_genero === "SIM" ? <span className="text-base font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-base text-destructive">NÃO</span>}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.treinamento_especifico_feminicidio === "SIM" ? <span className="text-sm font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-sm text-destructive">NÃO</span>}
+                          {m.treinamento_especifico_feminicidio === "SIM" ? <span className="text-base font-bold text-[color:var(--color-success)]">SIM</span> : <span className="text-base text-destructive">NÃO</span>}
                         </TableCell>
-                        <TableCell className="py-2 text-center text-sm font-medium">{m.qtd_capacitacoes_realizadas}</TableCell>
+                        <TableCell className="py-2 text-center text-base font-medium">{m.qtd_capacitacoes_realizadas}</TableCell>
                         <TableCell className="py-2 text-center">
-                          <span className={cn("px-1.5 py-0.5 rounded text-[10px] font-semibold", 
+                          <span className={cn("px-1.5 py-0.5 rounded text-xs font-semibold", 
                             m.grau_aderencia_protocolo === "ALTO" ? "bg-success/15 text-[color:var(--color-success)]" :
                             m.grau_aderencia_protocolo === "MEDIO" ? "bg-warning/15 text-warning-foreground" :
                             "bg-destructive/15 text-destructive"
@@ -765,69 +1039,122 @@ function DiagnosticoPanel() {
             ======================================================== */}
         <TabsContent value="assistencia" className="space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Card className="flex flex-col min-h-[750px]">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Protocolos Socioassistenciais</CardTitle>
-                <CardDescription className="text-sm">Estrutura CREAS e fluxos de atendimento específicos.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8 pt-2 flex-1 flex flex-col justify-center">
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium text-foreground">Protocolo de Atendimento Socioassistencial</span>
-                    <span className="font-bold text-primary">{stats.pctProtAssistencial}</span>
-                  </div>
-                  <Progress value={parseFloat(stats.pctProtAssistencial)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium text-foreground">Fluxo Formal de Encaminhamento</span>
-                    <span className="font-bold text-primary">{stats.pctFluxoEncam}</span>
-                  </div>
-                  <Progress value={parseFloat(stats.pctFluxoEncam)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium text-foreground">Articulação CREAS com Rede de Proteção</span>
-                    <span className="font-bold text-primary">{stats.pctArticCreasRede}</span>
-                  </div>
-                  <Progress value={parseFloat(stats.pctArticCreasRede)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium text-foreground">Equipe Técnica Mínima Completa</span>
-                    <span className="font-bold text-primary">{stats.pctEquipeMinimaCreas}</span>
-                  </div>
-                  <Progress value={parseFloat(stats.pctEquipeMinimaCreas)} className="h-5 md:h-6 bg-muted/60 border border-border/50" />
-                </div>
-              </CardContent>
-            </Card>
+            {(() => {
+              const assistenciaMetrics = [
+                { id: 'prot', label: 'Protocolo de Atendimento', desc: 'Diretrizes padronizadas de assistência.', valStr: stats.pctProtAssistencial, val: parseFloat(stats.pctProtAssistencial) || 0 },
+                { id: 'fluxo', label: 'Fluxo Formal de Encaminhamento', desc: 'Estruturação de direcionamento oficial.', valStr: stats.pctFluxoEncam, val: parseFloat(stats.pctFluxoEncam) || 0 },
+                { id: 'rede', label: 'Articulação com a Rede', desc: 'Comunicação interinstitucional ativa.', valStr: stats.pctArticCreasRede, val: parseFloat(stats.pctArticCreasRede) || 0 },
+                { id: 'equipe', label: 'Equipe Técnica Mínima', desc: 'Profissionais básicos exigidos em lei.', valStr: stats.pctEquipeMinimaCreas, val: parseFloat(stats.pctEquipeMinimaCreas) || 0 }
+              ].sort((a, b) => b.val - a.val);
+              
+              const assistenciaAvg = assistenciaMetrics.reduce((acc, curr) => acc + curr.val, 0) / (assistenciaMetrics.length || 1);
+              const bestMetric = assistenciaMetrics[0];
+              const worstMetric = assistenciaMetrics[assistenciaMetrics.length - 1];
+
+              const getSemanticColorClass = (val: number) => {
+                if (val >= 75) return "[&>div]:bg-primary";
+                if (val >= 40) return "[&>div]:bg-primary/50";
+                return "[&>div]:bg-destructive/70";
+              };
+
+              return (
+                <Card className="flex flex-col min-h-[750px]">
+                  <CardHeader className="pb-2 border-b border-border/50 relative">
+                    <ChartHelper>
+                      <p>
+                      Sintetiza a capacidade instalada da rede de proteção social especial (CREAS e afins).
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">Força/Lacuna:</strong> O indicador de melhor/pior desempenho relativo.</li>
+                      <li><strong className="text-foreground/80">Articulação:</strong> Nível de integração com a segurança e justiça.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        A <strong className="font-bold">Média Geral de Maturidade</strong> aponta o quão preparada a assistência social está para amparar as vítimas encaminhadas.
+                      </p>
+                    </div>
+                    </ChartHelper>
+                    <CardTitle className="text-lg pr-8">Maturidade Socioassistencial</CardTitle>
+                    <CardDescription className="text-base pr-8">Diagnóstico executivo de fluxos e estrutura dos CREAS.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-4 flex-1 flex flex-col">
+                    {/* Síntese Executiva Topo */}
+                    <div className="grid grid-cols-3 gap-3 mb-8 p-3 bg-muted/20 rounded-lg border border-border/40">
+                      <div className="flex flex-col items-center justify-center text-center p-2 border border-foreground/20 rounded-md bg-background/50 shadow-sm">
+                        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">Média Geral</span>
+                        <span className="text-xl font-black text-primary">{assistenciaAvg.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center text-center p-2 border border-foreground/20 rounded-md bg-background/50 shadow-sm">
+                        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1 line-clamp-1" title="Maior Força">Maior Força</span>
+                        <span className="text-sm font-bold text-foreground leading-tight line-clamp-2 h-8 flex items-center justify-center" title={bestMetric.label}>{bestMetric.label}</span>
+                        <span className="text-sm font-black text-primary mt-1">{bestMetric.valStr}</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center text-center p-2 border border-foreground/20 rounded-md bg-background/50 shadow-sm">
+                        <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1 line-clamp-1" title="Maior Lacuna">Maior Lacuna</span>
+                        <span className="text-sm font-bold text-foreground leading-tight line-clamp-2 h-8 flex items-center justify-center" title={worstMetric.label}>{worstMetric.label}</span>
+                        <span className="text-sm font-black text-destructive mt-1">{worstMetric.valStr}</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-7 flex-1 flex flex-col justify-center">
+                      {assistenciaMetrics.map(m => (
+                        <div key={m.id} className="group">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex flex-col pr-4">
+                              <span className="font-bold text-foreground text-[15px] group-hover:text-primary transition-colors">{m.label}</span>
+                              <span className="text-[15px] font-medium text-muted-foreground leading-snug mt-0.5">{m.desc}</span>
+                            </div>
+                            <span className="font-black text-primary text-xl mt-0.5 tabular-nums">{m.valStr}</span>
+                          </div>
+                          <Progress value={m.val} className={cn("h-8 bg-muted/60 border border-border/50 shadow-sm", getSemanticColorClass(m.val))} />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             <Card className="md:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Detalhamento dos Recursos e Cobertura Assistencial</CardTitle>
+              <CardHeader className="pb-2 relative">
+                <ChartHelper>
+                  <p>
+                      Visão exaustiva por município da rede de suporte assistencial às vítimas.
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li><strong className="text-foreground/80">CREAS Ativo:</strong> Existência do equipamento primário de proteção.</li>
+                      <li><strong className="text-foreground/80">Equipe Mínima:</strong> Atendimento à Norma Operacional Básica.</li>
+                    </ul>
+                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                        Exportando esta base, é possível mapear rapidamente onde o MPPI deve intervir para <strong className="font-bold">abertura de novos equipamentos</strong> sociais.
+                      </p>
+                    </div>
+                </ChartHelper>
+                <CardTitle className="text-lg pr-8">Detalhamento dos Recursos e Cobertura Assistencial</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="max-h-[750px] overflow-y-auto px-4 pb-4">
                   <Table>
                     <TableHeader className="bg-muted/40">
                       <TableRow>
-                        <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('creas_possui')}>CREAS Ativo <SortIcon column="creas_possui" /></TableHead>
-                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
-                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('articulacao_creas_rede')}>Articulação CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
-                        <TableHead className="text-sm text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('profissionais_capacitados')}>Prof. Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
-                        <TableHead className="text-sm text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('data_ultima_capacitacao')}>Última Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
+                        <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('creas_possui')}>CREAS Ativo <SortIcon column="creas_possui" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('articulacao_creas_rede')}>Articulação CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('profissionais_capacitados')}>Prof. Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
+                        <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('data_ultima_capacitacao')}>Última Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {assistenciaPaginated.map(m => (
                         <TableRow key={m.codigo_ibge} className="hover:bg-muted/30">
-                          <TableCell className="font-semibold text-sm py-2 text-primary">{m.municipio}</TableCell>
-                          <TableCell className="py-2 text-center text-sm">
+                          <TableCell className="font-semibold text-base py-2 text-primary">{m.municipio}</TableCell>
+                          <TableCell className="py-2 text-center text-base">
                             {m.creas_possui === "SIM" ? (
-                              <span className="text-sm bg-success/10 text-[color:var(--color-success)] px-1.5 py-0.5 rounded font-semibold">ATIVO</span>
+                              <span className="text-base bg-success/10 text-[color:var(--color-success)] px-1.5 py-0.5 rounded font-semibold">ATIVO</span>
                             ) : (
-                              <span className="text-sm bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-semibold">INATIVO</span>
+                              <span className="text-base bg-destructive/10 text-destructive px-1.5 py-0.5 rounded font-semibold">INATIVO</span>
                             )}
                           </TableCell>
                           <TableCell className="py-2 text-center">
@@ -836,8 +1163,8 @@ function DiagnosticoPanel() {
                           <TableCell className="py-2 text-center">
                             {m.articulacao_creas_rede === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
                           </TableCell>
-                          <TableCell className="py-2 text-center text-sm font-bold">{m.profissionais_capacitados}</TableCell>
-                          <TableCell className="py-2 text-sm text-muted-foreground">{m.data_ultima_capacitacao || "—"}</TableCell>
+                          <TableCell className="py-2 text-center text-base font-bold">{m.profissionais_capacitados}</TableCell>
+                          <TableCell className="py-2 text-base text-muted-foreground">{m.data_ultima_capacitacao ? m.data_ultima_capacitacao.split('-').reverse().join('/') : "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -845,20 +1172,20 @@ function DiagnosticoPanel() {
                 </div>
                 {totalAssistenciaPages > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/10">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-base text-muted-foreground">
                       Exibindo {(safeAssistenciaPage - 1) * 20 + 1} a {Math.min(safeAssistenciaPage * 20, filteredMunicipios.length)} de {filteredMunicipios.length} municípios
                     </div>
                     <div className="flex items-center gap-2">
                       <Button 
-                        variant="outline" size="sm" className="text-sm"
+                        variant="outline" size="sm" className="text-base"
                         onClick={() => setAssistenciaPage(p => Math.max(1, p - 1))}
                         disabled={safeAssistenciaPage === 1}
                       >
                         Anterior
                       </Button>
-                      <span className="text-sm font-medium px-2">Página {safeAssistenciaPage} de {totalAssistenciaPages}</span>
+                      <span className="text-base font-medium px-2">Página {safeAssistenciaPage} de {totalAssistenciaPages}</span>
                       <Button 
-                        variant="outline" size="sm" className="text-sm"
+                        variant="outline" size="sm" className="text-base"
                         onClick={() => setAssistenciaPage(p => Math.min(totalAssistenciaPages, p + 1))}
                         disabled={safeAssistenciaPage === totalAssistenciaPages}
                       >
@@ -877,40 +1204,40 @@ function DiagnosticoPanel() {
       {selectedMunicipio !== "__all" && filteredMunicipios[0] && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2 text-primary">
+            <CardTitle className="text-lg flex items-center gap-2 text-primary">
               <MapPin className="h-5 w-5" />
               Ficha Territorial Completa do Município: {filteredMunicipios[0].municipio}
             </CardTitle>
-            <CardDescription className="text-sm">
+            <CardDescription className="text-base">
               Consolidado de informações diagnósticas, infraestrutura, protocolos e violência doméstica.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-sm text-muted-foreground uppercase font-bold">População</p>
-                <p className="text-sm font-semibold">{filteredMunicipios[0].populacao.toLocaleString("pt-BR")} hab.</p>
+                <p className="text-base text-muted-foreground uppercase font-bold">População</p>
+                <p className="text-base font-semibold">{filteredMunicipios[0].populacao.toLocaleString("pt-BR")} hab.</p>
               </div>
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-sm text-muted-foreground uppercase font-bold">Comarca / Polo</p>
-                <p className="text-sm font-semibold">{filteredMunicipios[0].comarca} / {filteredMunicipios[0].polo_regional}</p>
+                <p className="text-base text-muted-foreground uppercase font-bold">Comarca / Polo</p>
+                <p className="text-base font-semibold">{filteredMunicipios[0].comarca} / {filteredMunicipios[0].polo_regional}</p>
               </div>
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-sm text-muted-foreground uppercase font-bold">Score Geral IER</p>
-                <p className="text-sm font-semibold text-primary">{filteredMunicipios[0].ier_score} / 10</p>
+                <p className="text-base text-muted-foreground uppercase font-bold">Score Geral IER</p>
+                <p className="text-base font-semibold text-primary">{filteredMunicipios[0].ier_score} / 10</p>
               </div>
               <div className="space-y-1 bg-background p-3 rounded-lg border border-border/40">
-                <p className="text-sm text-muted-foreground uppercase font-bold">Última Atualização</p>
-                <p className="text-sm font-semibold">{filteredMunicipios[0].ultima_atualizacao_referencia || "2026-05-28"}</p>
+                <p className="text-base text-muted-foreground uppercase font-bold">Última Atualização</p>
+                <p className="text-base font-semibold">{filteredMunicipios[0].ultima_atualizacao_referencia || "2026-05-28"}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mt-6">
               <div className="space-y-2 bg-background/50 p-4 rounded-lg border border-border/40">
-                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
+                <h4 className="text-base font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" /> Infraestrutura e Fluxos
                 </h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <ul className="space-y-1 text-base text-muted-foreground">
                   <li className="flex justify-between"><span>Sala Especializada:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_sala_especializada}</span></li>
                   <li className="flex justify-between"><span>Recursos Mínimos:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_recursos_minimos}</span></li>
                   <li className="flex justify-between"><span>Estrutura Geral:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].grau_suficiencia_estrutura}</span></li>
@@ -920,10 +1247,10 @@ function DiagnosticoPanel() {
               </div>
 
               <div className="space-y-2 bg-background/50 p-4 rounded-lg border border-border/40">
-                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
+                <h4 className="text-base font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" /> Investigação e Perícias
                 </h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <ul className="space-y-1 text-base text-muted-foreground">
                   <li className="flex justify-between"><span>Protocolo Investigação:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_protocolo_investigacao}</span></li>
                   <li className="flex justify-between"><span>Protocolo Pericial:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_protocolo_pericial}</span></li>
                   <li className="flex justify-between"><span>Aderência Protocolo:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].grau_aderencia_protocolo}</span></li>
@@ -933,10 +1260,10 @@ function DiagnosticoPanel() {
               </div>
 
               <div className="space-y-2 bg-background/50 p-4 rounded-lg border border-border/40">
-                <h4 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
+                <h4 className="text-base font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
                   <CheckCircle className="h-3.5 w-3.5 text-primary" /> Assistência Social
                 </h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <ul className="space-y-1 text-base text-muted-foreground">
                   <li className="flex justify-between"><span>Protocolo Socioassistencial:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_protocolo_assistencial}</span></li>
                   <li className="flex justify-between"><span>Encaminhamento Formal:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].tem_fluxo_encaminhamento}</span></li>
                   <li className="flex justify-between"><span>Articulação CREAS:</span> <span className="font-semibold text-foreground">{filteredMunicipios[0].articulacao_creas_rede}</span></li>
@@ -946,8 +1273,15 @@ function DiagnosticoPanel() {
               </div>
             </div>
             {filteredMunicipios[0].gargalos_identificados && (
-              <div className="mt-4 p-3 bg-destructive/5 rounded-lg border border-destructive/20 text-sm">
-                <span className="font-bold text-destructive">Gargalos Críticos:</span> {filteredMunicipios[0].gargalos_identificados}
+              <div className="mt-4 p-3 bg-destructive/5 rounded-lg border border-destructive/20 text-base">
+                <span className="font-bold text-destructive mb-2 block">Gargalos Críticos:</span>
+                <ul className="list-disc pl-5 space-y-1">
+                  {filteredMunicipios[0].gargalos_identificados.split(";").map((g, i) => {
+                    const text = g.trim();
+                    if (!text) return null;
+                    return <li key={i} className="text-foreground/90">{text}</li>;
+                  })}
+                </ul>
               </div>
             )}
           </CardContent>

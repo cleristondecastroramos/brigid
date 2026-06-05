@@ -225,12 +225,12 @@ export function LoginForm() {
     if (email.toLowerCase().trim() === "caocrim@mppi.mp.br") {
       login("admin");
       toast.success("Acesso de Administrador autorizado com sucesso!");
-      navigate({ to: "/painel" });
+      navigate({ to: "/apresentacao-do-sistema" });
     } else {
       // Se não for o admin, loga como público e avisa
       login("public");
       toast.error("Credenciais não reconhecidas como administrador. Acesso limitado ao painel público.");
-      navigate({ to: "/painel" });
+      navigate({ to: "/apresentacao-do-sistema" });
     }
   };
 
@@ -244,7 +244,7 @@ export function LoginForm() {
         
         <div className="flex flex-row gap-4 mt-8">
           <Link
-            to="/painel"
+            to="/apresentacao-do-sistema"
             onClick={() => {
               login("public");
               toast.success("Acesso ao painel público carregado.");

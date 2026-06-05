@@ -6,6 +6,7 @@ export interface Municipio {
   codigo_ibge: string;
   municipio: string;
   populacao: number;
+  populacao_feminina?: number; // Para futura migração de denominador
   comarca: string;
   polo_regional: string;
   municipio_slug: string;
@@ -46,6 +47,10 @@ export interface Municipio {
   observacoes_sistema: string;
   ultima_atualizacao_referencia: string;
   id: string;
+
+  // Campos calculados por população (Taxas por 100k hab)
+  taxa_feminicidios_100k?: number;
+  taxa_tentativas_100k?: number;
 
   // Novos campos do módulo de Diagnóstico
   tem_fluxo_formal?: SimNao;

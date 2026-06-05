@@ -9,6 +9,8 @@ interface KpiCardProps {
   icon?: LucideIcon;
   tone?: "default" | "success" | "warning" | "critical" | "primary";
   className?: string;
+  onClick?: () => void;
+  isActive?: boolean;
 }
 
 const toneStyles: Record<string, string> = {
@@ -19,9 +21,17 @@ const toneStyles: Record<string, string> = {
   critical: "bg-destructive/15 text-destructive",
 };
 
-export function KpiCard({ label, value, hint, icon: Icon, tone = "default", className }: KpiCardProps) {
+export function KpiCard({ label, value, hint, icon: Icon, tone = "default", className, onClick, isActive }: KpiCardProps) {
   return (
-    <Card className={cn("border-border/70", className)}>
+    <Card 
+      onClick={onClick}
+      className={cn(
+        "border-border/70 transition-colors", 
+        onClick && "cursor-pointer hover:bg-accent/40",
+        isActive && "ring-2 ring-primary border-primary",
+        className
+      )}
+    >
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -39,3 +49,4 @@ export function KpiCard({ label, value, hint, icon: Icon, tone = "default", clas
     </Card>
   );
 }
+

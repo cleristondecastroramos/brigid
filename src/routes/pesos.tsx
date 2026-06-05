@@ -123,9 +123,10 @@ function PesosConfigPanel() {
         <div className="space-y-6 lg:col-span-5">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Ponderação dos Indicadores</CardTitle>
+              <CardTitle className="text-base">Ponderação dos Indicadores (Modelo Híbrido)</CardTitle>
               <CardDescription>
-                Defina o peso multiplicador para ocorrências e fatores institucionais.
+                Defina o peso multiplicador. Os cálculos baseiam-se numa combinação de Taxa Relativa (por 100 mil hab.) com o Volume Absoluto (peso 70/30).
+                <br /><span className="text-[10px] text-muted-foreground mt-1 inline-block">* Denominador provisório: População Total (o sistema migrará automaticamente para População Feminina quando o dado for inserido na base).</span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -226,7 +227,7 @@ function PesosConfigPanel() {
                 <input
                   type="range"
                   min="1"
-                  max="20"
+                  max="50"
                   step="1"
                   value={thresholds.medio}
                   onChange={(e) => handleThresholdChange("medio", Number(e.target.value))}
@@ -245,7 +246,7 @@ function PesosConfigPanel() {
                 <input
                   type="range"
                   min={thresholds.medio + 1}
-                  max="40"
+                  max="100"
                   step="1"
                   value={thresholds.alto}
                   onChange={(e) => handleThresholdChange("alto", Number(e.target.value))}
@@ -264,7 +265,7 @@ function PesosConfigPanel() {
                 <input
                   type="range"
                   min={thresholds.alto + 1}
-                  max="100"
+                  max="200"
                   step="1"
                   value={thresholds.critico}
                   onChange={(e) => handleThresholdChange("critico", Number(e.target.value))}

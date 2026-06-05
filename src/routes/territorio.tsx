@@ -136,11 +136,11 @@ function TerritorialIntelligence() {
   const [openSheet, setOpenSheet] = useState(false);
 
   const comarcas = useMemo(
-    () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')),
+    () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')),
     [municipios],
   );
   const polos = useMemo(
-    () => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b, 'pt-BR'), 'pt-BR')),
+    () => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')),
     [municipios],
   );
 

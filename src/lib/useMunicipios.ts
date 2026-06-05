@@ -16,12 +16,24 @@ export function useMunicipios() {
   const { weights, thresholds } = useApp();
 
   const data: Municipio[] = rawMunicipios.map((m) => {
-    // 1. Calcular o Score Dinâmico de Feminicídio
-    const score =
-      m.feminicidios_total_2023_2026 * weights.pesoFeminicidios +
-      m.tentativas_total_2023_2026 * weights.pesoTentativas +
+    // 1. Calcular Taxas Relativas (por 100 mil habitantes/mulheres)
+    // Se a base já tiver populacao_feminina, usa ela. Caso contrário, usa populacao total como denominador provisório.
+    const populacao_denominador = m.populacao_feminina || m.populacao;
+    const taxa_feminicidios_100k = (m.feminicidios_total_2023_2026 / populacao_denominador) * 100000;
+    const taxa_tentativas_100k = (m.tentativas_total_2023_2026 / populacao_denominador) * 100000;
+
+    // 2. Calcular o Score Dinâmico Híbrido de Feminicídio
+    // O índice composto suaviza o impacto em municípios muito pequenos: 70% peso da taxa, 30% peso do volume absoluto
+    const fatorFemi = (taxa_feminicidios_100k * 0.7) + (m.feminicidios_total_2023_2026 * 0.3);
+    const fatorTent = (taxa_tentativas_100k * 0.7) + (m.tentativas_total_2023_2026 * 0.3);
+
+    let score =
+      (fatorFemi * weights.pesoFeminicidios) +
+      (fatorTent * weights.pesoTentativas) +
       (m.opm_possui !== "SIM" ? weights.pesoOPM : 0) +
       (m.creas_possui !== "SIM" ? weights.pesoCREAS : 0);
+
+    score = Math.round(score * 10) / 10;
 
     // 2. Classificar a faixa de risco com base nos limites (thresholds)
     let nivel = "BAIXO";
@@ -98,6 +110,9 @@ export function useMunicipios() {
       risco_feminicidio_score: score,
       risco_feminicidio_nivel: nivel,
       necessita_atuacao_prioritaria,
+      // Taxas
+      taxa_feminicidios_100k: Math.round(taxa_feminicidios_100k * 10) / 10,
+      taxa_tentativas_100k: Math.round(taxa_tentativas_100k * 10) / 10,
       
       // Novos campos
       tem_fluxo_formal,
