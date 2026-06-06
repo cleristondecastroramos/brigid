@@ -152,6 +152,8 @@ export async function exportPdf(filename: string, title: string, rows: Record<st
     styles: { fontSize: 8, cellPadding: 4 },
     headStyles: { fillColor: [33, 53, 95], textColor: 255 },
     alternateRowStyles: { fillColor: [245, 247, 250] },
+    horizontalPageBreak: true,
+    horizontalPageBreakRepeat: 0,
     didDrawPage: () => {
       drawHeader();
     },

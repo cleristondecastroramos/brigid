@@ -9,7 +9,6 @@ import {
   Activity, 
   Map, 
   ChevronRight, 
-  ShieldAlert,
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,8 +17,8 @@ import { cn } from "@/lib/utils";
 export function PageHero() {
   return (
     <div className="bg-primary/5 border border-primary/10 rounded-xl p-8 mb-8 relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-        <ShieldAlert className="w-64 h-64 text-primary" />
+      <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+        <img src="/logo_brigid.png" alt="Logo BRIGID" className="w-64 h-64 object-contain mix-blend-multiply dark:mix-blend-screen" />
       </div>
       <div className="relative z-10 max-w-4xl">
         <h1 className="text-4xl md:text-5xl font-black text-primary tracking-tight mb-4">BRIGID</h1>

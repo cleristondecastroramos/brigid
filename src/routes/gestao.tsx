@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Clock, Circle } from "lucide-react";
+import { CheckCircle2, Clock, Circle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/gestao")({
   component: Gestao,
@@ -17,17 +19,6 @@ interface Entrega {
   descricao: string;
 }
 
-const ENTREGAS: Entrega[] = [
-  { titulo: "Painel BI de OPMs com mapa interativo", responsavel: "CAOCRIM · NTI", prazo: "2026-Q1", status: "andamento", progresso: 70, descricao: "Visualização da cobertura de Organismos de Políticas para Mulheres por município, tipologia e território." },
-  { titulo: "Painel BI de CREAS com mapa interativo", responsavel: "CAOCRIM · SASC", prazo: "2026-Q1", status: "andamento", progresso: 65, descricao: "Mapeamento de cobertura de CREAS e identificação de municípios prioritários para implantação." },
-  { titulo: "Painel de Indicadores de Violência e Risco de Feminicídio", responsavel: "CAOCRIM · Inteligência", prazo: "2026-Q2", status: "andamento", progresso: 55, descricao: "Cruzamento de feminicídios consumados, tentativas e cobertura institucional para suporte à decisão." },
-  { titulo: "Diagnóstico das Secretarias e Coordenadorias da Mulher", responsavel: "CAOCRIM · SEMPI", prazo: "2026-Q2", status: "andamento", progresso: 40, descricao: "Levantamento institucional sobre presença, estrutura e funcionamento das OPMs em todos os 224 municípios." },
-  { titulo: "Plano de fomento para implantação de CREAS em municípios descobertos", responsavel: "SASC/SUAS · MPPI", prazo: "2026-Q3", status: "planejada", progresso: 10, descricao: "Construção de plano interinstitucional de articulação para implantação de CREAS em municípios sem cobertura." },
-  { titulo: "Padronização do fluxo de atendimento às vítimas", responsavel: "CAOCRIM · Rede de Proteção", prazo: "2026-Q3", status: "planejada", progresso: 5, descricao: "Manual e protocolo de atendimento integrado entre Ministério Público, CREAS, OPMs e Segurança Pública." },
-  { titulo: "Programa educativo de enfrentamento à violência de gênero", responsavel: "MPPI · Educação", prazo: "2026-Q4", status: "planejada", progresso: 0, descricao: "Ações educativas e formativas voltadas a escolas, redes municipais e comunidades." },
-  { titulo: "Carta-compromisso institucional com municípios prioritários", responsavel: "PGJ-MPPI", prazo: "2025-Q4", status: "concluida", progresso: 100, descricao: "Pactuação formal com gestores municipais para fortalecimento da rede de enfrentamento." },
-];
-
 const STATUS_LABEL: Record<Entrega["status"], { label: string; icon: any; cls: string }> = {
   concluida: { label: "Concluída", icon: CheckCircle2, cls: "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)] border-[color:var(--color-success)]/30" },
   andamento: { label: "Em andamento", icon: Clock, cls: "bg-[color:var(--color-warning)]/20 text-[color:var(--color-warning)] border-[color:var(--color-warning)]/40" },
@@ -35,11 +26,36 @@ const STATUS_LABEL: Record<Entrega["status"], { label: string; icon: any; cls: s
 };
 
 function Gestao() {
-  const total = ENTREGAS.length;
-  const concluidas = ENTREGAS.filter((e) => e.status === "concluida").length;
-  const andamento = ENTREGAS.filter((e) => e.status === "andamento").length;
-  const planejadas = ENTREGAS.filter((e) => e.status === "planejada").length;
-  const progressoMedio = Math.round(ENTREGAS.reduce((s, e) => s + e.progresso, 0) / total);
+  const { data: entregas = [], isLoading, error } = useQuery({
+    queryKey: ['entregas_estrategicas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('entregas_estrategicas').select('*').order('id', { ascending: true });
+      if (error) throw error;
+      return data as Entrega[];
+    }
+  });
+
+  const total = entregas.length;
+  const concluidas = entregas.filter((e) => e.status === "concluida").length;
+  const andamento = entregas.filter((e) => e.status === "andamento").length;
+  const planejadas = entregas.filter((e) => e.status === "planejada").length;
+  const progressoMedio = total > 0 ? Math.round(entregas.reduce((s, e) => s + (e.progresso || 0), 0) / total) : 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md bg-destructive/15 p-4 text-destructive">
+        Erro ao carregar dados do Supabase. Verifique se as tabelas foram criadas.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -62,8 +78,8 @@ function Gestao() {
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">Entregas estratégicas — Feminicídio Zero</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          {ENTREGAS.map((e) => {
-            const s = STATUS_LABEL[e.status];
+          {entregas.map((e) => {
+            const s = STATUS_LABEL[e.status] || STATUS_LABEL.planejada;
             const Icon = s.icon;
             return (
               <div key={e.titulo} className="rounded-lg border border-border bg-card p-4">
@@ -82,9 +98,9 @@ function Gestao() {
                 </div>
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Progresso</span><span className="tabular-nums">{e.progresso}%</span>
+                    <span>Progresso</span><span className="tabular-nums">{e.progresso || 0}%</span>
                   </div>
-                  <Progress value={e.progresso} className="mt-1.5" />
+                  <Progress value={e.progresso || 0} className="mt-1.5" />
                 </div>
               </div>
             );

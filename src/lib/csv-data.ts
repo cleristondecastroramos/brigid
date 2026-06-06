@@ -4,6 +4,8 @@ import type { Municipio } from "./types";
 import csvText from "@/data/base_mppi_caocrim.csv?raw";
 import geoJson from "@/data/piaui-map-fixed.json";
 
+import { supabase } from "./supabase";
+
 const NUMERIC_FIELDS: Array<keyof Municipio> = [
   "populacao", "consumado", "tentado",
   "consumado_2023", "consumado_2024", "consumado_2025", "consumado_2026",
@@ -13,12 +15,12 @@ const NUMERIC_FIELDS: Array<keyof Municipio> = [
 ];
 
 async function fetchMunicipios(): Promise<Municipio[]> {
-  try {
-    const res = await fetch("http://localhost:3001/municipios");
-    if (!res.ok) throw new Error("Mock API returned " + res.status);
-    return await res.json();
-  } catch (err) {
-    console.warn("API mockada indisponível, usando fallback do CSV:", err);
+  const { data, error } = await supabase.from('municipios').select('*');
+  
+  if (error) {
+    console.error("Erro ao buscar municípios no Supabase:", error);
+    // Fallback para o CSV caso o Supabase não esteja populado ainda
+    console.warn("Usando fallback do CSV...");
     const parsed = Papa.parse<Record<string, string>>(csvText, {
       header: true,
       skipEmptyLines: true,
@@ -33,6 +35,8 @@ async function fetchMunicipios(): Promise<Municipio[]> {
       return m as Municipio;
     });
   }
+  
+  return data as Municipio[];
 }
 
 export const municipiosQueryOptions = queryOptions({
