@@ -58,53 +58,77 @@ function Gestao() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardContent className="grid grid-cols-2 gap-4 p-5 md:grid-cols-4">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <Card className="border border-border/60 shadow-sm">
+        <CardContent className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
           <Stat label="Entregas totais" value={total} />
           <Stat label="Concluídas" value={concluidas} tone="success" />
           <Stat label="Em andamento" value={andamento} tone="warning" />
           <Stat label="Planejadas" value={planejadas} />
-          <div className="md:col-span-4">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Progresso médio do projeto</span>
-              <span className="tabular-nums font-medium text-foreground">{progressoMedio}%</span>
+          <div className="md:col-span-4 mt-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+              <span className="font-medium uppercase tracking-wider">Progresso Geral do Projeto</span>
+              <span className="tabular-nums font-bold text-foreground text-sm">{progressoMedio}%</span>
             </div>
-            <Progress value={progressoMedio} className="mt-2" />
+            <Progress value={progressoMedio} className="h-3 shadow-inner" />
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-base">Entregas estratégicas — Feminicídio Zero</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {entregas.map((e) => {
-            const s = STATUS_LABEL[e.status] || STATUS_LABEL.planejada;
-            const Icon = s.icon;
-            return (
-              <div key={e.titulo} className="rounded-lg border border-border bg-card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-semibold text-foreground">{e.titulo}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">{e.descricao}</p>
-                  </div>
-                  <Badge variant="outline" className={s.cls}>
-                    <Icon className="mr-1 h-3 w-3" /> {s.label}
-                  </Badge>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  <span><strong className="text-foreground">Responsável:</strong> {e.responsavel}</span>
-                  <span><strong className="text-foreground">Prazo:</strong> {e.prazo}</span>
-                </div>
-                <div className="mt-3">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Progresso</span><span className="tabular-nums">{e.progresso || 0}%</span>
-                  </div>
-                  <Progress value={e.progresso || 0} className="mt-1.5" />
-                </div>
-              </div>
-            );
-          })}
+      <Card className="border border-border/60 shadow-sm overflow-hidden">
+        <CardHeader className="bg-muted/20 border-b border-border/40 py-4"><CardTitle className="text-base font-bold text-primary">Entregas estratégicas — Feminicídio Zero</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-muted-foreground border-collapse">
+              <thead className="bg-muted/30 text-xs uppercase text-foreground/70 border-b border-border/60">
+                <tr>
+                  <th className="px-5 py-4 font-semibold w-2/5">Entrega e Descrição</th>
+                  <th className="px-5 py-4 font-semibold w-32">Responsável</th>
+                  <th className="px-5 py-4 font-semibold w-28">Prazo</th>
+                  <th className="px-5 py-4 font-semibold w-36">Status</th>
+                  <th className="px-5 py-4 font-semibold w-40">Progresso</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {[...entregas].sort((a, b) => {
+                  const parsePrazo = (p: string) => {
+                    if (!p) return 99999;
+                    const yearMatch = p.match(/(\d{4})/);
+                    const qMatch = p.match(/Q(\d)/i);
+                    if (yearMatch && qMatch) {
+                      return parseInt(yearMatch[1]) * 10 + parseInt(qMatch[1]); // ex: 20254
+                    }
+                    return 99999;
+                  };
+                  return parsePrazo(a.prazo) - parsePrazo(b.prazo);
+                }).map((e) => {
+                  const s = STATUS_LABEL[e.status] || STATUS_LABEL.planejada;
+                  const Icon = s.icon;
+                  return (
+                    <tr key={e.titulo} className="hover:bg-muted/30 transition-colors bg-card">
+                      <td className="px-5 py-4">
+                        <div className="font-semibold text-foreground text-sm">{e.titulo}</div>
+                        <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{e.descricao}</div>
+                      </td>
+                      <td className="px-5 py-4 text-xs font-medium text-foreground/80">{e.responsavel}</td>
+                      <td className="px-5 py-4 text-xs tabular-nums text-foreground/80">{e.prazo}</td>
+                      <td className="px-5 py-4">
+                        <Badge variant="outline" className={s.cls + " font-semibold py-0.5 whitespace-nowrap shadow-sm"}>
+                          <Icon className="mr-1.5 h-3.5 w-3.5" /> {s.label}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-between text-xs mb-2 font-bold text-foreground/80">
+                          <span>{e.progresso || 0}%</span>
+                        </div>
+                        <Progress value={e.progresso || 0} className="h-2.5 shadow-inner" />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -38,6 +38,7 @@ const groups = [
     label: "Referência",
     items: [
       { title: "Metodologia de Cálculos", url: "/metodologia", icon: BookOpen },
+      { title: "Manual Técnico", url: "/manual", icon: FileText },
     ],
   },
 ];

@@ -15,6 +15,7 @@ import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as PesosRouteImport } from './routes/pesos'
 import { Route as OpmRouteImport } from './routes/opm'
 import { Route as MetodologiaRouteImport } from './routes/metodologia'
+import { Route as ManualRouteImport } from './routes/manual'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as DiagnosticoRouteImport } from './routes/diagnostico'
 import { Route as CreasRouteImport } from './routes/creas'
@@ -52,6 +53,11 @@ const OpmRoute = OpmRouteImport.update({
 const MetodologiaRoute = MetodologiaRouteImport.update({
   id: '/metodologia',
   path: '/metodologia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualRoute = ManualRouteImport.update({
+  id: '/manual',
+  path: '/manual',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GestaoRoute = GestaoRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/creas': typeof CreasRoute
   '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
+  '/manual': typeof ManualRoute
   '/metodologia': typeof MetodologiaRoute
   '/opm': typeof OpmRoute
   '/pesos': typeof PesosRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/creas': typeof CreasRoute
   '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
+  '/manual': typeof ManualRoute
   '/metodologia': typeof MetodologiaRoute
   '/opm': typeof OpmRoute
   '/pesos': typeof PesosRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/creas': typeof CreasRoute
   '/diagnostico': typeof DiagnosticoRoute
   '/gestao': typeof GestaoRoute
+  '/manual': typeof ManualRoute
   '/metodologia': typeof MetodologiaRoute
   '/opm': typeof OpmRoute
   '/pesos': typeof PesosRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/creas'
     | '/diagnostico'
     | '/gestao'
+    | '/manual'
     | '/metodologia'
     | '/opm'
     | '/pesos'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/creas'
     | '/diagnostico'
     | '/gestao'
+    | '/manual'
     | '/metodologia'
     | '/opm'
     | '/pesos'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/creas'
     | '/diagnostico'
     | '/gestao'
+    | '/manual'
     | '/metodologia'
     | '/opm'
     | '/pesos'
@@ -202,6 +214,7 @@ export interface RootRouteChildren {
   CreasRoute: typeof CreasRoute
   DiagnosticoRoute: typeof DiagnosticoRoute
   GestaoRoute: typeof GestaoRoute
+  ManualRoute: typeof ManualRoute
   MetodologiaRoute: typeof MetodologiaRoute
   OpmRoute: typeof OpmRoute
   PesosRoute: typeof PesosRoute
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/metodologia'
       fullPath: '/metodologia'
       preLoaderRoute: typeof MetodologiaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manual': {
+      id: '/manual'
+      path: '/manual'
+      fullPath: '/manual'
+      preLoaderRoute: typeof ManualRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gestao': {
@@ -322,6 +342,7 @@ const rootRouteChildren: RootRouteChildren = {
   CreasRoute: CreasRoute,
   DiagnosticoRoute: DiagnosticoRoute,
   GestaoRoute: GestaoRoute,
+  ManualRoute: ManualRoute,
   MetodologiaRoute: MetodologiaRoute,
   OpmRoute: OpmRoute,
   PesosRoute: PesosRoute,
