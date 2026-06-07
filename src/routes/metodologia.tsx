@@ -22,9 +22,7 @@ function MetodologiaPage() {
     <div className="space-y-12 max-w-[1000px] mx-auto pb-16 pt-8">
       {/* 1. APRESENTAÇÃO INSTITUCIONAL */}
       <section className="flex flex-col gap-4">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-2 border border-primary/20">
-          <Scale className="h-10 w-10 text-primary" />
-        </div>
+
         <h1 className="text-4xl font-black tracking-tight text-foreground">
           Nota Técnica Metodológica
         </h1>

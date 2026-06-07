@@ -22,6 +22,7 @@ interface Props {
   height?: number;
   legend?: Array<{ label: string; color: string }>;
   legendTitle?: string;
+  municipios: Municipio[];
 }
 
 export function TerritorialMap({
@@ -33,9 +34,9 @@ export function TerritorialMap({
   height = 620,
   legend,
   legendTitle,
+  municipios,
 }: Props) {
   const { data: geo } = useSuspenseQuery(geoQueryOptions);
-  const { data: municipios } = useSuspenseQuery(municipiosQueryOptions);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [hover, setHover] = useState<{ name: string; m?: Municipio; x: number; y: number } | null>(null);
 
@@ -194,7 +195,7 @@ export function TerritorialMap({
             {hover.m && (
               <div className="mt-1 space-y-0.5 text-muted-foreground">
                 <p>Comarca: <span className="text-foreground">{hover.m.comarca || "—"}</span></p>
-                <p>Polo: <span className="text-foreground">{hover.m.polo_regional || "—"}</span></p>
+                <p>Polo Regional: <span className="text-foreground">{hover.m.polo_regional || "—"}</span></p>
                 <p>Risco: <span className="text-foreground">{hover.m.risco_feminicidio_nivel}</span> · score {hover.m.risco_feminicidio_score}</p>
                 <p className="text-[10px]">Clique para detalhar</p>
               </div>

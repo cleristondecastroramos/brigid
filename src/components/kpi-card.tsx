@@ -34,12 +34,12 @@ export function KpiCard({ label, value, hint, tooltip, icon: Icon, tone = "defau
         className
       )}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-3 pb-3.5">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">{value}</p>
-            {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-muted-foreground leading-none">{label}</p>
+            <p className="mt-1.5 text-xl sm:text-2xl font-semibold tabular-nums text-foreground leading-none">{value}</p>
+            {hint && <p className="mt-1 text-[10px] text-muted-foreground leading-none">{hint}</p>}
           </div>
           {Icon && (
             <div className={cn("flex h-9 w-9 items-center justify-center rounded-md", toneStyles[tone])}>

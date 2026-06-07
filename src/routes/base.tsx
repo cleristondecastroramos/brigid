@@ -239,7 +239,7 @@ function GestaoBaseMunicipal() {
                     <div className="flex items-center">Comarca <SortIcon column="comarca" /></div>
                   </th>
                   <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("polo_regional")}>
-                    <div className="flex items-center">Polo <SortIcon column="polo_regional" /></div>
+                    <div className="flex items-center">Polo Regional <SortIcon column="polo_regional" /></div>
                   </th>
                   <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("opm_possui")}>
                     <div className="flex items-center">OPM <SortIcon column="opm_possui" /></div>

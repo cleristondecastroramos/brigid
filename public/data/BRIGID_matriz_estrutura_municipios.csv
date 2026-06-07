@@ -1,0 +1,230 @@
+﻿# BRIGID — Base de Referência Integrada para Gestão, Inteligência e Dados
+# Projeto Feminicídio Zero · Ministério Público do Estado do Piauí · CAOCRIM
+# Gerado em: 07/06/2026, 09:41:31
+# Documento institucional gerado pela plataforma BRIGID · MPPI · CAOCRIM · Projeto Feminicídio Zero
+
+municipio,comarca,polo_regional,tem_sala_especializada,tem_recursos_minimos,tem_atendimento_psicossocial,tem_atendimento_juridico,tem_fluxo_formal,tem_protocolo_local_regional,tem_articulacao_rede,tem_equipe_multiprofissional,capacitado_perspectiva_genero,treinamento_especifico_feminicidio,grau_suficiencia_estrutura,ier_score,imf_score,iqt_score
+Acauã,Paulistana,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Agricolândia,São Pedro do Piauí,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Água Branca,Água Branca,Teresina,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+Alagoinha do Piauí,Pio IX,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Alegrete do Piauí,Fronteiras,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Alto Longá,Altos,Teresina,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,NAO,SIM,PARCIAL,8,7,6.5
+Altos,Altos,Teresina,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,ADEQUADO,10,7,10
+Alvorada do Gurguéia,Cristino Castro,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Amarante,Amarante,Floriano,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Angical do Piauí,Regeneração,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,SIM,NAO,INSUFICIENTE,0,7,3.5
+Anísio de Abreu,Caracol,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,SIM,NAO,INSUFICIENTE,0,7,3.5
+Antônio Almeida,Marcos Parente,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Aroazes,Valença do Piauí,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,SIM,NAO,INSUFICIENTE,0,7,3.5
+Aroeiras do Itaim,Picos,Picos,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,4,0
+Arraial,Floriano,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Assunção do Piauí,São Miguel do Tapuio,Campo Maior,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,SIM,SIM,INSUFICIENTE,0,3,10
+Avelino Lopes,Avelino Lopes,Corrente,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Baixa Grande do Ribeiro,Ribeiro Gonçalves,Floriano,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,NAO,SIM,PARCIAL,8,3,6.5
+Barra D'Alcântara,Elesbão Veloso,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Barras,Barras,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,ADEQUADO,10,3,3.5
+Barreiras do Piauí,Gilbués,Corrente,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Barro Duro,Barro Duro,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Batalha,Batalha,Piripiri,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,SIM,SIM,PARCIAL,8,3,10
+Bela Vista do Piauí,Simplício Mendes,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Belém do Piauí,Padre Marcos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Beneditinos,Beneditinos,Teresina,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,NAO,SIM,PARCIAL,8,3,6.5
+Bertolínia,Manoel Emídio,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Betânia do Piauí,Paulistana,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Boa Hora,Barras,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Bocaina,Picos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Bom Jesus,Bom Jesus,Corrente,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,SIM,SIM,ADEQUADO,10,3,10
+Bom Princípio do Piauí,Buriti dos Lopes,Parnaíba,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,SIM,NAO,INSUFICIENTE,0,7,3.5
+Bonfim do Piauí,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,SIM,NAO,INSUFICIENTE,0,3,3.5
+Boqueirão do Piauí,Capitão De Campos,Piripiri,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Brasileira,Piripiri,Piripiri,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Brejo do Piauí,Canto do Buriti,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Buriti dos Lopes,Buriti dos Lopes,Parnaíba,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Buriti dos Montes,Castelo do Piauí,Campo Maior,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,SIM,SIM,INSUFICIENTE,0,7,10
+Cabeceiras do Piauí,Barras,Piripiri,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,NAO,SIM,PARCIAL,8,7,6.5
+Cajazeiras do Piauí,Oeiras,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Cajueiro da Praia,Luís Correia,Parnaíba,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Caldeirão Grande do Piauí,Simões,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Campinas do Piauí,Simplício Mendes,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Campo Alegre do Fidalgo,São João do Piauí,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Campo Grande do Piauí,Jaicós,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Campo Largo do Piauí,Porto,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Campo Maior,Campo Maior,Campo Maior,SIM,SIM,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,ADEQUADO,10,10,3.5
+Canavieira,Jerumenha,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Canto do Buriti,Canto do Buriti,São Raimundo Nonato,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Capitão de Campos,Capitão De Campos,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,NAO,NAO,PARCIAL,8,7,0
+Capitão Gervásio Oliveira,São João do Piauí,São Raimundo Nonato,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Caracol,Caracol,São Raimundo Nonato,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Caraúbas do Piauí,Buriti dos Lopes,Parnaíba,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Caridade do Piauí,Simões,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,SIM,SIM,INSUFICIENTE,0,7,10
+Castelo do Piauí,Castelo do Piauí,Campo Maior,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Caxingó,Buriti dos Lopes,Parnaíba,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Cocal,Cocal,Parnaíba,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Cocal de Telha,Capitão De Campos,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Cocal dos Alves,Cocal,Parnaíba,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Coivaras,Altos,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Colônia do Gurguéia,Manoel Emídio,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Colônia do Piauí,Oeiras,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Conceição do Canindé,Simplício Mendes,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Coronel José Dias,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Corrente,Corrente,Corrente,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Cristalândia do Piauí,Corrente,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Cristino Castro,Cristino Castro,Corrente,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Curimatá,Avelino Lopes,Corrente,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Currais,Bom Jesus,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Curral Novo do Piauí,Simões,Picos,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Curralinhos,Monsenhor Gil,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Demerval Lobão,Demerval Lobão,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Dirceu Arcoverde,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Dom Expedito Lopes,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,SIM,NAO,INSUFICIENTE,0,3,3.5
+Dom Inocêncio,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,SIM,NAO,INSUFICIENTE,0,3,3.5
+Domingos Mourão,Pedro II,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Elesbão Veloso,Elesbão Veloso,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Eliseu Martins,Manoel Emídio,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Esperantina,Esperantina,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,ADEQUADO,10,3,3.5
+Fartura do Piauí,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Flores do Piauí,Itaueira,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Floresta do Piauí,Simplício Mendes,Oeiras,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Floriano,Floriano,Floriano,SIM,SIM,SIM,SIM,SIM,SIM,NAO,NAO,SIM,NAO,ADEQUADO,10,6,3.5
+Francinópolis,Elesbão Veloso,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Francisco Ayres,Floriano,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Francisco Macedo,Padre Marcos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Francisco Santos,Picos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Fronteiras,Fronteiras,Picos,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+Geminiano,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Gilbués,Gilbués,Corrente,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+Guadalupe,Guadalupe,Floriano,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+Guaribas,Caracol,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Hugo Napoleão,Água Branca,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Ilha Grande,Parnaíba,Parnaíba,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,SIM,NAO,INSUFICIENTE,0,7,3.5
+Inhuma,Inhuma,Picos,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Ipiranga do Piauí,Inhuma,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Isaías Coelho,Itainópolis,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Itainópolis,Itainópolis,Picos,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Itaueira,Itaueira,Floriano,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,NAO,NAO,PARCIAL,8,7,0
+Jacobina do Piauí,Paulistana,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Jaicós,Jaicós,Picos,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Jardim do Mulato,Regeneração,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Jatobá do Piauí,Campo Maior,Campo Maior,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Jerumenha,Jerumenha,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+João Costa,São João do Piauí,São Raimundo Nonato,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Joaquim Pires,Esperantina,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,NAO,NAO,PARCIAL,8,7,0
+Joca Marques,Luzilândia,Piripiri,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+José de Freitas,José De Freitas,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,ADEQUADO,10,7,3.5
+Juazeiro do Piauí,Castelo do Piauí,Campo Maior,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Júlio Borges,Avelino Lopes,Corrente,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Jurema,Caracol,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Lagoa Alegre,União,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Lagoa de São Francisco,Pedro II,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Lagoa do Barro do Piauí,São João do Piauí,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Lagoa do Piauí,Demerval Lobão,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Lagoa do Sítio,Valença do Piauí,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Lagoinha do Piauí,Água Branca,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Landri Sales,Marcos Parente,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Luís Correia,Luís Correia,Parnaíba,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,ADEQUADO,10,7,3.5
+Luzilândia,Luzilândia,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Madeiro,Luzilândia,Piripiri,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Manoel Emídio,Manoel Emídio,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Marcolândia,Simões,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Marcos Parente,Marcos Parente,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Massapê do Piauí,Jaicós,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Matias Olímpio,Matias Olímpio,Piripiri,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,SIM,SIM,PARCIAL,8,3,10
+Miguel Alves,Miguel Alves,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,NAO,NAO,ADEQUADO,10,3,0
+Miguel Leão,Monsenhor Gil,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Milton Brandão,Pedro II,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Monsenhor Gil,Monsenhor Gil,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Monsenhor Hipólito,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Monte Alegre do Piauí,Gilbués,Corrente,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Morro Cabeça no Tempo,Avelino Lopes,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Morro do Chapéu do Piauí,Esperantina,Piripiri,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Murici dos Portelas,Buriti dos Lopes,Parnaíba,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,NAO,NAO,PARCIAL,8,3,0
+Nazaré do Piauí,Floriano,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Nazária,Demerval Lobão,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,NAO,NAO,PARCIAL,8,3,0
+Nossa Senhora de Nazaré,Campo Maior,Campo Maior,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Nossa Senhora dos Remédios,Porto,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Nova Santa Rita,São João do Piauí,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Novo Oriente do Piauí,Valença do Piauí,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Novo Santo Antônio,Altos,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Oeiras,Oeiras,Oeiras,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,ADEQUADO,10,7,10
+Olho D'Água do Piauí,Água Branca,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Padre Marcos,Padre Marcos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Paes Landim,Simplício Mendes,Oeiras,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Pajeú do Piauí,Canto do Buriti,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Palmeira do Piauí,Cristino Castro,Corrente,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Palmeirais,Amarante,Floriano,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+Paquetá,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Parnaguá,Parnaguá,Corrente,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,NAO,SIM,PARCIAL,8,7,6.5
+Parnaíba,Parnaíba,Parnaíba,SIM,SIM,SIM,NAO,SIM,SIM,SIM,SIM,SIM,SIM,ADEQUADO,10,10,10
+Passagem Franca do Piauí,Barro Duro,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Patos do Piauí,Jaicós,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+Pau D'Arco do Piauí,Altos,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Paulistana,Paulistana,Picos,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+Pavussu,Itaueira,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Pedro II,Pedro II,Piripiri,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,ADEQUADO,10,7,10
+Pedro Laurentino,São João do Piauí,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Picos,Picos,Picos,SIM,SIM,SIM,SIM,SIM,SIM,NAO,NAO,SIM,NAO,ADEQUADO,10,6,3.5
+Pimenteiras,Valença do Piauí,Picos,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,NAO,NAO,PARCIAL,8,3,0
+Pio IX,Pio IX,Picos,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,NAO,NAO,PARCIAL,8,3,0
+Piracuruca,Piracuruca,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,PARCIAL,8,3,3.5
+Piripiri,Piripiri,Piripiri,SIM,SIM,SIM,SIM,SIM,SIM,NAO,NAO,SIM,NAO,ADEQUADO,10,6,3.5
+Porto,Porto,Piripiri,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,NAO,NAO,PARCIAL,8,3,0
+Porto Alegre do Piauí,Uruçuí,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Prata do Piauí,Barro Duro,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Queimada Nova,Paulistana,Picos,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Redenção do Gurguéia,Bom Jesus,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Regeneração,Regeneração,Floriano,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,SIM,SIM,PARCIAL,8,3,10
+Riacho Frio,Parnaguá,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Ribeira do Piauí,Canto do Buriti,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Ribeiro Gonçalves,Ribeiro Gonçalves,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Rio Grande do Piauí,Itaueira,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santa Cruz do Piauí,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santa Cruz dos Milagres,Barro Duro,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santa Filomena,Gilbués,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santa Luz,Cristino Castro,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santa Rosa do Piauí,Oeiras,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santana do Piauí,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santo Antônio de Lisboa,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,SIM,NAO,INSUFICIENTE,0,7,3.5
+Santo Antônio dos Milagres,São Pedro do Piauí,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Santo Inácio do Piauí,Simplício Mendes,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São Braz do Piauí,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São Félix do Piauí,Barro Duro,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São Francisco de Assis do Piauí,Simplício Mendes,Oeiras,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São Francisco do Piauí,Oeiras,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São Gonçalo do Gurguéia,Gilbués,Corrente,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São Gonçalo do Piauí,São Pedro do Piauí,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São João da Canabrava,Picos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São João da Fronteira,Piracuruca,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São João da Serra,Altos,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São João da Varjota,Oeiras,Oeiras,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São João do Arraial,Matias Olímpio,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São João do Piauí,São João do Piauí,São Raimundo Nonato,SIM,SIM,SIM,NAO,SIM,NAO,SIM,SIM,SIM,SIM,PARCIAL,8,7,10
+São José do Divino,Piracuruca,Piripiri,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São José do Peixe,Floriano,Floriano,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São José do Piauí,Picos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São Julião,Fronteiras,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São Lourenço do Piauí,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São Luis do Piauí,Picos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,SIM,SIM,NAO,SIM,INSUFICIENTE,0,7,6.5
+São Miguel da Baixa Grande,Barro Duro,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+São Miguel do Fidalgo,Oeiras,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+São Miguel do Tapuio,São Miguel do Tapuio,Campo Maior,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,NAO,NAO,PARCIAL,8,7,0
+São Pedro do Piauí,São Pedro do Piauí,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,NAO,NAO,PARCIAL,8,7,0
+São Raimundo Nonato,São Raimundo Nonato,São Raimundo Nonato,SIM,SIM,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,ADEQUADO,10,10,3.5
+Sebastião Barros,Corrente,Corrente,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Sebastião Leal,Manoel Emídio,Floriano,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Sigefredo Pacheco,Campo Maior,Campo Maior,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Simões,Simões,Picos,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Simplício Mendes,Simplício Mendes,Oeiras,SIM,SIM,SIM,SIM,SIM,NAO,SIM,NAO,SIM,NAO,PARCIAL,8,7,3.5
+Socorro do Piauí,Simplício Mendes,Oeiras,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Sussuapara,Picos,Picos,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Tamboril do Piauí,Canto do Buriti,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Tanque do Piauí,Elesbão Veloso,Teresina,NAO,NAO,NAO,SIM,SIM,NAO,SIM,NAO,NAO,NAO,INSUFICIENTE,0,7,0
+Teresina,Teresina,Teresina,SIM,SIM,SIM,SIM,SIM,SIM,NAO,NAO,SIM,NAO,ADEQUADO,10,6,3.5
+União,União,Teresina,SIM,SIM,SIM,SIM,SIM,NAO,NAO,NAO,SIM,NAO,ADEQUADO,10,3,3.5
+Uruçuí,Uruçuí,Floriano,SIM,SIM,SIM,NAO,SIM,NAO,NAO,SIM,SIM,SIM,PARCIAL,8,3,10
+Valença do Piauí,Valença do Piauí,Picos,SIM,SIM,SIM,NAO,SIM,SIM,NAO,SIM,SIM,SIM,PARCIAL,8,6,10
+Várzea Branca,São Raimundo Nonato,São Raimundo Nonato,NAO,NAO,NAO,SIM,SIM,NAO,NAO,NAO,NAO,NAO,INSUFICIENTE,0,3,0
+Várzea Grande,Elesbão Veloso,Teresina,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Vera Mendes,Itainópolis,Picos,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Vila Nova do Piauí,Padre Marcos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5
+Wall Ferraz,Picos,Picos,NAO,NAO,NAO,NAO,SIM,NAO,NAO,SIM,NAO,SIM,INSUFICIENTE,0,3,6.5

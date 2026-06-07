@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { YesNoBadge } from "@/components/risk-badge";
-import { exportCsv } from "@/lib/export";
+import { exportCsv, exportPdf } from "@/lib/export";
 import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, LabelList, PieChart, Pie, Cell } from "recharts";
 
 export const Route = createFileRoute("/opm")({
@@ -54,7 +55,18 @@ function OpmPanel() {
 
   const comarcas = useMemo(() => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
   const polos = useMemo(() => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
-  const tipos = useMemo(() => Array.from(new Set(municipios.map((m) => m.opm_orgaotipo).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')), [municipios]);
+  const tipos = useMemo(() => {
+    const rawTipos = Array.from(new Set(municipios.map((m) => m.opm_orgaotipo).filter(Boolean)));
+    const order = ["Secretaria", "Coordenadoria", "Departamento", "Diretoria", "Gerência", "Outros", "Outro"];
+    return rawTipos.sort((a, b) => {
+      const indexA = order.indexOf(String(a));
+      const indexB = order.indexOf(String(b));
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return String(a).localeCompare(String(b), 'pt-BR');
+    });
+  }, [municipios]);
 
   const baseFiltered = useMemo(() => municipios.filter((m) => {
     if (q && !m.municipio.toLowerCase().includes(q.toLowerCase())) return false;
@@ -164,35 +176,35 @@ function OpmPanel() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold text-foreground">Filtros de Análise:</span>
-              {hasFilter && (
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Filtros ativos</span>
-              )}
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
+            {hasFilter && (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Filtros ativos</span>
+            )}
+          </div>
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative w-full md:w-[500px] shrink-0">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Buscar município…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9 h-9" />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[200px] flex-1">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Buscar município…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-8" />
-              </div>
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              <Select value={polo} onValueChange={setPolo}>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Polo Regional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todos os Polos Regionais</SelectItem>
+                  {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <Select value={comarca} onValueChange={setComarca}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Comarca" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Comarca" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as comarcas</SelectItem>
                   {comarcas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={polo} onValueChange={setPolo}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Polo regional" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all">Todos os polos</SelectItem>
-                  {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
               <Select value={faixaPop} onValueChange={(v) => setFaixaPop(v as FaixaPop)}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Faixa pop." /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Faixa populacional" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as faixas</SelectItem>
                   <SelectItem value="ate_5k">Até 5.000 hab.</SelectItem>
@@ -202,7 +214,7 @@ function OpmPanel() {
                 </SelectContent>
               </Select>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos (status)</SelectItem>
                   <SelectItem value="SIM">Com OPM</SelectItem>
@@ -210,13 +222,13 @@ function OpmPanel() {
                 </SelectContent>
               </Select>
               <Select value={tipo} onValueChange={setTipo}>
-                <SelectTrigger className="w-[130px]"><SelectValue placeholder="Tipologia" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Tipologia" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas (tipologia)</SelectItem>
                   {tipos.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button variant="outline" onClick={clearFilters} disabled={!hasFilter}>
+              <Button variant="outline" size="sm" onClick={clearFilters} disabled={!hasFilter} className="h-9">
                 <Eraser className="mr-2 h-4 w-4" /> Limpar
               </Button>
             </div>
@@ -402,18 +414,44 @@ function OpmPanel() {
                         Utilize a <strong className="font-bold">Exportação de Planilha</strong> para fundamentar inquéritos voltados à regularização de OPMs inativas.
                       </p>
                     </div></ChartHelper>
-            <CardTitle className="text-lg pr-16">Municípios — detalhamento</CardTitle>
+            <CardTitle className="text-lg pr-16">Detalhamento por Municípios</CardTitle>
           <div className="absolute top-4 right-12 z-10">
-            <button
-              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
-              title="Exportar Tabela"
-              onClick={() => exportCsv("municipios_opm_filtro.csv", finalFiltered.map((m) => ({
-                municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional, comarca: m.comarca, populacao: m.populacao,
-                opm_possui: m.opm_possui, opm_orgaotipo: m.opm_orgaotipo, opm_status_politicas_publicas: m.opm_status_politicas_publicas
-              })))}
-            >
-              <Download className="h-5 w-5" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                  title="Exportar Tabela"
+                >
+                  <Download className="h-5 w-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  const data = finalFiltered.map((m) => ({
+                    municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional, comarca: m.comarca, populacao: m.populacao,
+                    opm_possui: m.opm_possui, opm_orgaotipo: m.opm_orgaotipo, opm_status_politicas_publicas: m.opm_status_politicas_publicas
+                  }));
+                  exportCsv("municipios_opm_filtro.csv", data);
+                }}>
+                  Exportar CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const data = finalFiltered.map((m) => ({
+                    municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional, comarca: m.comarca, populacao: m.populacao,
+                    opm_possui: m.opm_possui, opm_orgaotipo: m.opm_orgaotipo, opm_status_politicas_publicas: m.opm_status_politicas_publicas
+                  }));
+                  exportPdf("municipios_opm_filtro.pdf", "Detalhamento por Municípios (OPM)", data, {
+                    subtitle: "Lista de municípios e o status de implementação dos Organismos de Políticas para Mulheres",
+                    kpis: [
+                      { label: "Total Filtrado", value: data.length },
+                      { label: "Com OPM", value: data.filter(d => d.opm_possui === "SIM").length }
+                    ]
+                  });
+                }}>
+                  Exportar PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -423,7 +461,7 @@ function OpmPanel() {
                 <TableRow className="text-base">
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo <SortIcon column="polo_regional" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
                   <TableHead className="text-right cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('populacao')}>População <SortIcon column="populacao" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')}>OPM <SortIcon column="opm_possui" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_orgaotipo')}>Tipologia <SortIcon column="opm_orgaotipo" /></TableHead>

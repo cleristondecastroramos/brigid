@@ -24,7 +24,7 @@ const groups = [
     label: "Territorial",
     items: [
       { title: "Inteligência Territorial", url: "/territorio", icon: MapIcon },
-      { title: "Base Territorial", url: "/municipios", icon: MapPin },
+      { title: "Municípios", url: "/municipios", icon: MapPin },
     ],
   },
   {
@@ -37,7 +37,7 @@ const groups = [
   {
     label: "Referência",
     items: [
-      { title: "Metodologia dos Índices", url: "/metodologia", icon: BookOpen },
+      { title: "Metodologia de Cálculos", url: "/metodologia", icon: BookOpen },
     ],
   },
 ];

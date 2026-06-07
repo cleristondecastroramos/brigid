@@ -12,8 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RiskBadge, AlertBadge, YesNoBadge } from "@/components/risk-badge";
-import { exportCsv } from "@/lib/export";
+import { exportCsv, exportPdf } from "@/lib/export";
 import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
 export const Route = createFileRoute("/risco")({
@@ -111,47 +112,42 @@ function RiscoPanel() {
 
   return (
     <div className="space-y-5">
-      {/* 1. Header com Título e Contexto + Filtros */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-border/50 bg-muted/20 flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-foreground">Monitoramento Territorial de Risco</h2>
-            <span className="bg-primary/10 text-primary-700 dark:text-primary-300 border border-primary/20 text-xs font-medium px-2 py-0.5 rounded-full">Base de Ocorrências: 2023–2025</span>
+      <Card>
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
+            {hasFilter && (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Filtros ativos</span>
+            )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            Acompanhamento integrado de indicadores de risco, cobertura da rede de proteção e volume de ocorrências de violência de gênero por município.
-          </p>
-        </div>
-        
-        {/* Barra de Filtros compacta */}
-        <div className="flex flex-col md:flex-row md:items-center gap-3 px-5 py-3 bg-background/50">
-          <div className="relative flex-1 md:max-w-sm">
-             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-             <Input 
-                placeholder="Buscar município principal…" 
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative w-full md:w-[500px] shrink-0">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar município…" 
                 value={q} 
                 onChange={(e) => setQ(e.target.value)} 
-                className="pl-9 h-9 border-border/60 bg-background focus-visible:ring-1" 
-             />
-          </div>
+                className="pl-9 h-9" 
+              />
+            </div>
           
-          <div className="flex flex-wrap items-center gap-2 md:ml-auto shrink-0">
+          <div className="flex flex-wrap items-center gap-2 flex-1">
+             <Select value={polo} onValueChange={setPolo}>
+                <SelectTrigger className="w-[280px] h-9 border-border/60"><SelectValue placeholder="Polo Regional" /></SelectTrigger>
+                <SelectContent>
+                   <SelectItem value="__all">Todos os Polos Regionais</SelectItem>
+                   {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+             </Select>
              <Select value={comarca} onValueChange={setComarca}>
-                <SelectTrigger className="w-[180px] border-border/60"><SelectValue placeholder="Comarca" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9 border-border/60"><SelectValue placeholder="Comarca" /></SelectTrigger>
                 <SelectContent>
                    <SelectItem value="__all">Todas as comarcas</SelectItem>
                    {comarcas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
              </Select>
-             <Select value={polo} onValueChange={setPolo}>
-                <SelectTrigger className="w-[180px] border-border/60"><SelectValue placeholder="Polo regional" /></SelectTrigger>
-                <SelectContent>
-                   <SelectItem value="__all">Todos os polos</SelectItem>
-                   {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-             </Select>
              <Select value={faixaPop} onValueChange={(v) => setFaixaPop(v as FaixaPop)}>
-                <SelectTrigger className="w-[180px] border-border/60"><SelectValue placeholder="Faixa pop." /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9 border-border/60"><SelectValue placeholder="Faixa populacional" /></SelectTrigger>
                 <SelectContent>
                    <SelectItem value="__all">Todas as faixas</SelectItem>
                    <SelectItem value="ate_5k">Até 5.000 hab.</SelectItem>
@@ -161,7 +157,7 @@ function RiscoPanel() {
                 </SelectContent>
              </Select>
              <Select value={nivel} onValueChange={setNivel}>
-                <SelectTrigger className="w-[150px] border-border/60"><SelectValue placeholder="Nível de risco" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9 border-border/60"><SelectValue placeholder="Nível de risco" /></SelectTrigger>
                 <SelectContent>
                    <SelectItem value="__all">Todos (risco)</SelectItem>
                    <SelectItem value="BAIXO">Baixo</SelectItem>
@@ -171,13 +167,12 @@ function RiscoPanel() {
                 </SelectContent>
              </Select>
              
-             {hasFilter && (
-                <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
-                  <Eraser className="mr-2 h-4 w-4" /> Limpar
-                </Button>
-             )}
+              <Button variant="outline" size="sm" onClick={clearFilters} disabled={!hasFilter} className="h-9">
+                <Eraser className="mr-2 h-4 w-4" /> Limpar
+              </Button>
+            </div>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* 2. KPIs Estratégicos */}
@@ -301,24 +296,57 @@ function RiscoPanel() {
                         Utilize a <strong className="font-bold">exportação de dados</strong> (CSV) para gerar planilhas e cruzar as informações brutas com outros sistemas internos do MPPI.
                       </p>
                     </div></ChartHelper>
-            <CardTitle className="text-lg font-bold pr-8">Base Analítica e Exportação</CardTitle>
-             <div className="flex items-center gap-2">
-               <Button
-                 size="sm" variant="outline"
-                 onClick={() => exportCsv("risco_feminicidio.csv", filtered.map((m) => ({
-                   municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
-                   comarca: m.comarca, populacao_total: m.populacao, populacao_feminina: m.populacao_feminina || 0,
-                   risco: m.risco_feminicidio_nivel, score: m.risco_feminicidio_score,
-                   taxa_femi_100k: m.taxa_feminicidios_100k, feminicidios: m.feminicidios_consumados_2023_2025,
-                   taxa_tentativas_100k: m.taxa_tentativas_100k, tentativas: m.feminicidios_tentados_2023_2025,
-                   ocorrencias: m.ocorrencias_total_violencia_genero_monitoradas,
-                   opm: m.opm_possui, creas: m.creas_possui, alerta: m.painel_alerta_rede,
-                   atuacao_prioritaria: m.necessita_atuacao_prioritaria,
-                 })))}
-               >
-                 <Download className="mr-2 h-4 w-4" /> Exportar Base
-               </Button>
-             </div>
+            <CardTitle className="text-lg font-bold pr-16">Base Analítica e Exportação</CardTitle>
+            <div className="absolute top-4 right-12 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                    title="Exportar Base"
+                  >
+                    <Download className="h-5 w-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => {
+                    const data = filtered.map((m) => ({
+                      municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
+                      comarca: m.comarca, populacao_total: m.populacao, populacao_feminina: m.populacao_feminina || 0,
+                      risco: m.risco_feminicidio_nivel, score: m.risco_feminicidio_score,
+                      taxa_femi_100k: m.taxa_feminicidios_100k, feminicidios: m.feminicidios_consumados_2023_2025,
+                      taxa_tentativas_100k: m.taxa_tentativas_100k, tentativas: m.feminicidios_tentados_2023_2025,
+                      ocorrencias: m.ocorrencias_total_violencia_genero_monitoradas,
+                      opm: m.opm_possui, creas: m.creas_possui, alerta: m.painel_alerta_rede,
+                      atuacao_prioritaria: m.necessita_atuacao_prioritaria,
+                    }));
+                    exportCsv("risco_feminicidio.csv", data);
+                  }}>
+                    Exportar CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const data = filtered.map((m) => ({
+                      municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
+                      comarca: m.comarca, populacao_total: m.populacao, populacao_feminina: m.populacao_feminina || 0,
+                      risco: m.risco_feminicidio_nivel, score: m.risco_feminicidio_score,
+                      taxa_femi_100k: m.taxa_feminicidios_100k, feminicidios: m.feminicidios_consumados_2023_2025,
+                      taxa_tentativas_100k: m.taxa_tentativas_100k, tentativas: m.feminicidios_tentados_2023_2025,
+                      ocorrencias: m.ocorrencias_total_violencia_genero_monitoradas,
+                      opm: m.opm_possui, creas: m.creas_possui, alerta: m.painel_alerta_rede,
+                      atuacao_prioritaria: m.necessita_atuacao_prioritaria,
+                    }));
+                    exportPdf("risco_feminicidio.pdf", "Base Analítica de Risco de Feminicídio", data, {
+                      subtitle: "Visão consolidada dos indicadores de violência letal e risco territorial",
+                      kpis: [
+                        { label: "Municípios Filtrados", value: data.length },
+                        { label: "Risco Alto/Crítico", value: data.filter(d => d.risco === "ALTO" || d.risco === "CRITICO").length }
+                      ]
+                    });
+                  }}>
+                    Exportar PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
            </CardHeader>
            <CardContent className="flex-1 p-0">
              <div className="h-[650px] md:h-[910px] overflow-auto px-4 py-2">
@@ -328,7 +356,7 @@ function RiscoPanel() {
                      <TableRow>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo <SortIcon column="polo_regional" /></TableHead>
+                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao')}>População (Geral) <SortIcon column="populacao" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao_feminina')}>Pop. Feminina <SortIcon column="populacao_feminina" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_feminicidio_nivel')}>Risco <SortIcon column="risco_feminicidio_nivel" /></TableHead>

@@ -3,9 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { 
   Building2, HeartHandshake, ShieldAlert, Award, 
   MapPin, CheckCircle, AlertCircle, XCircle, Search, 
-  ArrowRight, Users, GraduationCap, HardHat, FileText, ChevronRight, HelpCircle, ArrowUp, ArrowDown
+  ArrowRight, Users, GraduationCap, HardHat, FileText, ChevronRight, HelpCircle, ArrowUp, ArrowDown, Download
 } from "lucide-react";
 import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { exportCsv, exportPdf } from "@/lib/export";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
 import { PiauiMap } from "@/components/piaui-map";
@@ -435,9 +437,9 @@ function DiagnosticoPanel() {
             <div className="flex flex-col gap-0.5">
               <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
               <Select value={selectedPolo} onValueChange={(v) => { setSelectedPolo(v); setSelectedComarca("__all"); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="text-base w-[280px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[280px]"><SelectValue placeholder="Todos os Polos Regionais" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all">Todos os Polos</SelectItem>
+                  <SelectItem value="__all">Todos os Polos Regionais</SelectItem>
                   {polos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -483,7 +485,7 @@ function DiagnosticoPanel() {
             </span>
             <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
             <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "polo" ? "text-primary font-semibold" : "text-muted-foreground", selectedPolo === "__all" && "opacity-40")}>
-              {selectedPolo === "__all" ? "Todos os Polos" : `Polo: ${selectedPolo}`}
+              {selectedPolo === "__all" ? "Todos os Polos Regionais" : `Polo Regional: ${selectedPolo}`}
             </span>
             <ChevronRight className="h-2.5 w-2.5 text-muted-foreground/50" />
             <span className={cn("px-1.5 py-0.5 rounded font-medium transition-colors", activeLevel === "comarca" ? "text-primary font-semibold" : "text-muted-foreground", selectedComarca === "__all" && "opacity-40")}>
@@ -775,17 +777,43 @@ function DiagnosticoPanel() {
                       </p>
                     </div>
                   </ChartHelper>
-                  <CardTitle className="text-lg pr-8">Criticidade por Polos Regionais (Geral)</CardTitle>
-                  <CardDescription className="text-base pr-8">
-                    Polos com menores médias nos índices de estrutura, fluxos e treinamento.
+                  <CardTitle className="text-lg pr-16">Criticidade por Polos Regionais (Geral)</CardTitle>
+                  <CardDescription className="text-base pr-16">
+                    Polos Regionais com menores médias nos índices de estrutura, fluxos e treinamento.
                   </CardDescription>
+                  <div className="absolute top-4 right-12 z-10">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                          title="Exportar Tabela"
+                        >
+                          <Download className="h-5 w-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => exportCsv("criticidade_polos_regionais.csv", rankingLacunas)}>
+                          Exportar CSV
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => exportPdf("criticidade_polos_regionais.pdf", "Criticidade por Polos Regionais", rankingLacunas, {
+                          subtitle: "Ranking dos polos com menores médias nos índices de estrutura, fluxos e treinamento.",
+                          kpis: [
+                            { label: "Polos Analisados", value: rankingLacunas.length },
+                            { label: "Criticidade ALTA", value: rankingLacunas.filter(r => r.status === "ALTA").length }
+                          ]
+                        })}>
+                          Exportar PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="max-h-[500px] overflow-y-auto px-4 pb-4">
                     <Table>
                       <TableHeader className="bg-muted/40">
                         <TableRow>
-                          <TableHead className="py-1 text-base text-black cursor-pointer hover:bg-muted/60 transition-colors" onClick={() => handlePoloSort("polo")}>Polo <PoloSortIcon column="polo" /></TableHead>
+                          <TableHead className="py-1 text-base text-black cursor-pointer hover:bg-muted/60 transition-colors" onClick={() => handlePoloSort("polo")}>Polo Regional <PoloSortIcon column="polo" /></TableHead>
                           <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Estrutura da Rede" onClick={() => handlePoloSort("ier")}>IER <PoloSortIcon column="ier" /></TableHead>
                           <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Maturidade dos Fluxos" onClick={() => handlePoloSort("imf")}>IMF <PoloSortIcon column="imf" /></TableHead>
                           <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Qualificação Técnica" onClick={() => handlePoloSort("iqt")}>IQT <PoloSortIcon column="iqt" /></TableHead>
@@ -835,10 +863,62 @@ function DiagnosticoPanel() {
                       </p>
                     </div>
               </ChartHelper>
-              <CardTitle className="text-lg pr-8">Matriz Territorial de Estrutura por Município</CardTitle>
-              <CardDescription className="text-base pr-8">
-                Visão tabular comparativa detalhando a presença ou ausência de recursos de infraestrutura fundamentais nos municípios selecionados.
+              <CardTitle className="text-lg pr-16">Matriz Territorial de Estrutura por Município</CardTitle>
+              <CardDescription className="text-base pr-16">
+                Visão tabular comparativa detalhando a presença, ausência e status das estruturas físicas, fluxos de atendimento, protocolos operacionais e equipes da rede de proteção.
               </CardDescription>
+              <div className="absolute top-4 right-12 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                      title="Exportar Tabela"
+                    >
+                      <Download className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => {
+                      const data = filteredMunicipios.map(m => ({
+                        municipio: m.municipio, comarca: m.comarca, polo_regional: m.polo_regional,
+                        tem_sala_especializada: m.tem_sala_especializada, tem_recursos_minimos: m.tem_recursos_minimos,
+                        tem_atendimento_psicossocial: m.tem_atendimento_psicossocial, tem_atendimento_juridico: m.tem_atendimento_juridico,
+                        tem_fluxo_formal: m.tem_fluxo_formal, tem_protocolo_local_regional: m.tem_protocolo_local_regional,
+                        tem_articulacao_rede: m.tem_articulacao_rede, tem_equipe_multiprofissional: m.tem_equipe_multiprofissional,
+                        capacitado_perspectiva_genero: m.capacitado_perspectiva_genero, treinamento_especifico_feminicidio: m.treinamento_especifico_feminicidio,
+                        grau_suficiencia_estrutura: m.grau_suficiencia_estrutura, 
+                        ier_score: m.ier_score, imf_score: m.imf_score, iqt_score: m.iqt_score
+                      }));
+                      exportCsv("matriz_estrutura_municipios.csv", data);
+                    }}>
+                      Exportar CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      const data = filteredMunicipios.map(m => ({
+                        municipio: m.municipio, 
+                        comarca: m.comarca, 
+                        polo_regional: m.polo_regional === "São Raimundo Nonato" ? "São Rdo Nonato" : m.polo_regional,
+                        tem_sala_especializada: m.tem_sala_especializada, tem_recursos_minimos: m.tem_recursos_minimos,
+                        tem_atendimento_psicossocial: m.tem_atendimento_psicossocial, tem_atendimento_juridico: m.tem_atendimento_juridico,
+                        tem_fluxo_formal: m.tem_fluxo_formal, tem_protocolo_local_regional: m.tem_protocolo_local_regional,
+                        tem_articulacao_rede: m.tem_articulacao_rede, tem_equipe_multiprofissional: m.tem_equipe_multiprofissional,
+                        capacitado_perspectiva_genero: m.capacitado_perspectiva_genero, treinamento_especifico_feminicidio: m.treinamento_especifico_feminicidio,
+                        grau_suficiencia_estrutura: m.grau_suficiencia_estrutura, 
+                        ier_score: m.ier_score, imf_score: m.imf_score, iqt_score: m.iqt_score
+                      }));
+                      exportPdf("matriz_estrutura_municipios.pdf", "Matriz Territorial de Estrutura", data, {
+                        subtitle: "Visão tabular comparativa da presença ou ausência de recursos de infraestrutura",
+                        kpis: [
+                          { label: "Municípios Avaliados", value: data.length },
+                          { label: "Estrutura Adequada", value: data.filter(d => d.grau_suficiencia_estrutura === "ADEQUADO").length }
+                        ]
+                      });
+                    }}>
+                      Exportar PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="max-h-[600px] overflow-y-auto">
@@ -847,13 +927,20 @@ function DiagnosticoPanel() {
                     <TableRow>
                       <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
                       <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_sala_especializada')}>Sala Esp. <SortIcon column="tem_sala_especializada" /></TableHead>
-                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_recursos_minimos')}>Recursos Mín. <SortIcon column="tem_recursos_minimos" /></TableHead>
-                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atend. Psico <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
-                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_juridico')}>Atend. Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
-                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
-                      <TableHead className="text-base text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
-                      <TableHead className="text-base text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('ier_score')}>Score IER <SortIcon column="ier_score" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_sala_especializada')}>Sala<br/>Especializada <SortIcon column="tem_sala_especializada" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_recursos_minimos')}>Recursos<br/>Mínimos <SortIcon column="tem_recursos_minimos" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atendimento<br/>Psicossocial <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_juridico')}>Atendimento<br/>Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo<br/>Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_local_regional')}>Protocolo<br/>Regional <SortIcon column="tem_protocolo_local_regional" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_articulacao_rede')}>Articulação<br/>em Rede <SortIcon column="tem_articulacao_rede" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_multiprofissional')}>Equipe<br/>Multiprofissional <SortIcon column="tem_equipe_multiprofissional" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitação<br/>em Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento<br/>Feminicídio <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('ier_score')}>Score<br/>IER <SortIcon column="ier_score" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('imf_score')}>Score<br/>IMF <SortIcon column="imf_score" /></TableHead>
+                      <TableHead className="text-base leading-tight text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('iqt_score')}>Score<br/>IQT <SortIcon column="iqt_score" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -885,6 +972,21 @@ function DiagnosticoPanel() {
                           {m.tem_fluxo_formal === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
                         </TableCell>
                         <TableCell className="py-2 text-center">
+                          {m.tem_protocolo_local_regional === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
+                        </TableCell>
+                        <TableCell className="py-2 text-center">
+                          {m.tem_articulacao_rede === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
+                        </TableCell>
+                        <TableCell className="py-2 text-center">
+                          {m.tem_equipe_multiprofissional === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
+                        </TableCell>
+                        <TableCell className="py-2 text-center">
+                          {m.capacitado_perspectiva_genero === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
+                        </TableCell>
+                        <TableCell className="py-2 text-center">
+                          {m.treinamento_especifico_feminicidio === "SIM" ? <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" /> : <XCircle className="h-4 w-4 text-destructive mx-auto" />}
+                        </TableCell>
+                        <TableCell className="py-2 text-center">
                           <span className={cn("px-1.5 py-0.5 rounded text-xs font-semibold", 
                             m.grau_suficiencia_estrutura === "ADEQUADO" ? "bg-success/15 text-[color:var(--color-success)]" :
                             m.grau_suficiencia_estrutura === "PARCIAL" ? "bg-warning/15 text-warning-foreground" :
@@ -894,6 +996,8 @@ function DiagnosticoPanel() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right py-2 font-bold text-base">{m.ier_score}</TableCell>
+                        <TableCell className="text-right py-2 font-bold text-base">{m.imf_score}</TableCell>
+                        <TableCell className="text-right py-2 font-bold text-base">{m.iqt_score}</TableCell>
                       </TableRow>
                       ));
                     })()}
@@ -958,7 +1062,7 @@ function DiagnosticoPanel() {
                     </ul>
                     <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
                       <p className="text-primary-700 dark:text-primary-300 font-medium">
-                        A <strong className="font-bold">Lacuna Institucional (%)</strong> aponta o percentual da demanda que ainda carece de resposta proporcional. Polos com maior déficit ficam no topo com cores de alerta.
+                        A <strong className="font-bold">Lacuna Institucional (%)</strong> aponta o percentual da demanda que ainda carece de resposta proporcional. Polos Regionais com maior déficit ficam no topo com cores de alerta.
                       </p>
                     </div>
                   </ChartHelper>

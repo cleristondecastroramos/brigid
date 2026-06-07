@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Building2, HeartHandshake, AlertTriangle, MapPin, ShieldAlert, Search, X,
@@ -19,6 +19,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { exportCsv, exportXlsx, exportPdf } from "@/lib/export";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ChartHelper } from "@/components/chart-helper";
 
 export const Route = createFileRoute("/territorio")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -34,31 +36,31 @@ type Layer =
   | "alerta";
 
 const COLORS = {
-  withSvc: "oklch(0.62 0.13 175)",
-  withoutSvc: "oklch(0.62 0.2 27)",
-  na: "oklch(0.92 0.01 230)",
+  withSvc: "oklch(0.55 0.13 175)", // green
+  withoutSvc: "oklch(0.35 0.15 300)", // purple
+  na: "oklch(0.92 0.01 230)", // grey
   risk: {
     BAIXO: "oklch(0.55 0.13 175)",
-    MEDIO: "oklch(0.78 0.15 85)",
-    ALTO: "oklch(0.62 0.18 45)",
-    CRITICO: "oklch(0.52 0.22 27)",
+    MEDIO: "oklch(0.7 0.12 300)",
+    ALTO: "oklch(0.5 0.18 300)",
+    CRITICO: "oklch(0.35 0.15 300)",
     NA: "oklch(0.92 0.01 230)"
   } as Record<string, string>,
   alert: {
-    ADEQUADO: "oklch(0.72 0.12 160)",
-    ATENCAO: "oklch(0.78 0.15 85)",
-    CRITICO: "oklch(0.52 0.22 27)",
+    ADEQUADO: "oklch(0.55 0.13 175)",
+    ATENCAO: "oklch(0.7 0.12 300)",
+    CRITICO: "oklch(0.35 0.15 300)",
   } as Record<string, string>,
   priority: {
-    ALTA: "oklch(0.52 0.22 27)",
-    MEDIA: "oklch(0.78 0.15 85)",
-    BAIXA: "oklch(0.72 0.12 160)",
+    ALTA: "oklch(0.35 0.15 300)",
+    MEDIA: "oklch(0.7 0.12 300)",
+    BAIXA: "oklch(0.55 0.13 175)",
   } as Record<string, string>,
   consolidada: {
-    criticoSemRede: "oklch(0.45 0.24 25)",
-    semRede: "oklch(0.62 0.2 27)",
-    parcial: "oklch(0.78 0.15 85)",
-    completo: "oklch(0.62 0.13 175)",
+    criticoSemRede: "oklch(0.35 0.15 300)",
+    semRede: "oklch(0.5 0.15 300)",
+    parcial: "oklch(0.7 0.12 300)",
+    completo: "oklch(0.55 0.13 175)",
   },
 };
 
@@ -135,6 +137,11 @@ function TerritorialIntelligence() {
   const [risco, setRisco] = useState("__all");
   const [selected, setSelected] = useState<Municipio | null>(null);
   const [openSheet, setOpenSheet] = useState(false);
+  const [rankingPage, setRankingPage] = useState(1);
+
+  useEffect(() => {
+    setRankingPage(1);
+  }, [layer, q, comarca, polo, opm, creas, risco]);
 
   const comarcas = useMemo(
     () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) => String(a).localeCompare(String(b), 'pt-BR')),
@@ -180,6 +187,10 @@ function TerritorialIntelligence() {
     [filtered],
   );
 
+  const ITEMS_PER_PAGE = 15;
+  const totalPages = Math.ceil(ranking.length / ITEMS_PER_PAGE);
+  const paginatedRanking = ranking.slice((rankingPage - 1) * ITEMS_PER_PAGE, rankingPage * ITEMS_PER_PAGE);
+
   const colorFn = (m: Municipio | undefined) => colorByLayer(layer, m);
 
   const clearFilters = () => {
@@ -188,7 +199,7 @@ function TerritorialIntelligence() {
   };
 
   const exportRows = () =>
-    filtered.map((m) => ({
+    ranking.map((m) => ({
       municipio: m.municipio,
       codigo_ibge: m.codigo_ibge,
       comarca: m.comarca,
@@ -215,101 +226,132 @@ function TerritorialIntelligence() {
     <div className="space-y-5">
       {/* Header tabs (layers) */}
       <Card>
-        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Layers className="h-5 w-5" />
+        <CardContent className="flex flex-col gap-4 p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Layers className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Inteligência territorial</p>
+                <p className="text-sm font-semibold text-foreground">Camada temática</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Inteligência territorial</p>
-              <p className="text-sm font-semibold text-foreground">Camada temática</p>
-            </div>
+            <Tabs value={layer} onValueChange={(v) => setLayer(v as Layer)}>
+              <TabsList className="flex flex-wrap">
+                <TabsTrigger value="consolidada" className="w-[130px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Consolidada</TabsTrigger>
+                <TabsTrigger value="opm" className="w-[130px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">OPM</TabsTrigger>
+                <TabsTrigger value="creas" className="w-[130px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">CREAS</TabsTrigger>
+                <TabsTrigger value="risco" className="w-[130px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Risco</TabsTrigger>
+                <TabsTrigger value="prioridade" className="w-[130px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Prioridade</TabsTrigger>
+                <TabsTrigger value="alerta" className="w-[130px] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Alerta</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-          <Tabs value={layer} onValueChange={(v) => setLayer(v as Layer)}>
-            <TabsList className="flex flex-wrap">
-              <TabsTrigger value="consolidada">Consolidada</TabsTrigger>
-              <TabsTrigger value="opm">OPM</TabsTrigger>
-              <TabsTrigger value="creas">CREAS</TabsTrigger>
-              <TabsTrigger value="risco">Risco</TabsTrigger>
-              <TabsTrigger value="prioridade">Prioridade</TabsTrigger>
-              <TabsTrigger value="alerta">Alerta</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="h-px bg-border/40" />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-[500px] shrink-0">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar município por nome…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="pl-8 w-full bg-background"
+              />
+            </div>
+            <Select value={polo} onValueChange={setPolo}>
+              <SelectTrigger className="w-[280px] bg-background"><SelectValue placeholder="Polo Regional" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">Todos os Polos Regionais</SelectItem>
+                {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={comarca} onValueChange={setComarca}>
+              <SelectTrigger className="w-[280px] bg-background"><SelectValue placeholder="Comarca" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">Todas as comarcas</SelectItem>
+                {comarcas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={opm} onValueChange={setOpm}>
+              <SelectTrigger className="w-[280px] bg-background"><SelectValue placeholder="OPM" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">OPM (todas)</SelectItem>
+                <SelectItem value="SIM">Com OPM</SelectItem>
+                <SelectItem value="NAO">Sem OPM</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={creas} onValueChange={setCreas}>
+              <SelectTrigger className="w-[280px] bg-background"><SelectValue placeholder="CREAS" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">CREAS (todas)</SelectItem>
+                <SelectItem value="SIM">Com CREAS</SelectItem>
+                <SelectItem value="NAO">Sem CREAS</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={risco} onValueChange={setRisco}>
+              <SelectTrigger className="w-[280px] bg-background"><SelectValue placeholder="Risco" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all">Risco (todos)</SelectItem>
+                <SelectItem value="BAIXO">Baixo</SelectItem>
+                <SelectItem value="MEDIO">Moderado</SelectItem>
+                <SelectItem value="ALTO">Alto</SelectItem>
+                <SelectItem value="CRITICO">Crítico</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="sm" onClick={clearFilters} disabled={!hasFilter} className="h-10">
+              <Eraser className="mr-1.5 h-4 w-4" /> Limpar
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* KPIs (filtered) */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="Municípios" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={MapPin} tone="primary" />
-        <KpiCard label="Com OPM" value={comOPM} hint={pct(comOPM, total)} icon={Building2} tone="success" />
-        <KpiCard label="Com CREAS" value={comCREAS} hint={pct(comCREAS, total)} icon={HeartHandshake} tone="success" />
-        <KpiCard label="Sem OPM e CREAS" value={semAmbos} hint={pct(semAmbos, total)} icon={ShieldAlert} tone="critical" />
-        <KpiCard label="Alerta crítico" value={criticos} hint={pct(criticos, total)} icon={AlertTriangle} tone="critical" />
-        <KpiCard label="Prioritários" value={prioritarios} hint={pct(prioritarios, total)} tone="warning" />
-      </div>
+
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Map + filters */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative min-w-[200px] flex-1">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar município por nome…"
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-                <Select value={comarca} onValueChange={setComarca}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Comarca" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">Todas as comarcas</SelectItem>
-                    {comarcas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={polo} onValueChange={setPolo}>
-                  <SelectTrigger className="w-[180px]"><SelectValue placeholder="Polo regional" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">Todos os polos</SelectItem>
-                    {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={opm} onValueChange={setOpm}>
-                  <SelectTrigger className="w-[140px]"><SelectValue placeholder="OPM" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">OPM (todas)</SelectItem>
-                    <SelectItem value="SIM">Com OPM</SelectItem>
-                    <SelectItem value="NAO">Sem OPM</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={creas} onValueChange={setCreas}>
-                  <SelectTrigger className="w-[140px]"><SelectValue placeholder="CREAS" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">CREAS (todas)</SelectItem>
-                    <SelectItem value="SIM">Com CREAS</SelectItem>
-                    <SelectItem value="NAO">Sem CREAS</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={risco} onValueChange={setRisco}>
-                  <SelectTrigger className="w-[150px]"><SelectValue placeholder="Risco" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all">Risco (todos)</SelectItem>
-                    <SelectItem value="BAIXO">Baixo</SelectItem>
-                    <SelectItem value="MEDIO">Moderado</SelectItem>
-                    <SelectItem value="ALTO">Alto</SelectItem>
-                    <SelectItem value="CRITICO">Crítico</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" size="sm" onClick={clearFilters} disabled={!hasFilter}>
-                  <Eraser className="mr-1.5 h-4 w-4" /> Limpar
-                </Button>
+        {/* Map */}
+        <Card className="flex flex-col h-full">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 relative border-b border-border/40">
+              <ChartHelper>
+                <p>O <strong>Mapa Territorial</strong> permite sobrepor as camadas de cobertura institucional (OPM, CREAS) aos indicadores de risco de feminicídio e criticidade.</p>
+                <ul className="list-disc pl-4 space-y-1 mt-2">
+                  <li><strong className="text-foreground/80">Cores:</strong> Indicam a suficiência ou severidade na camada selecionada. O Roxo indica alerta ou déficit, e o Verde indica suficiência.</li>
+                  <li><strong className="text-foreground/80">Filtros:</strong> Restringem tanto o mapa quanto a exportação de dados no ícone de download.</li>
+                </ul>
+              </ChartHelper>
+              <CardTitle className="text-lg pr-16">Visão Geoespacial do MPPI</CardTitle>
+              <div className="absolute top-4 right-12 z-10">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                      title="Exportar Tabela"
+                    >
+                      <Download className="h-5 w-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => exportCsv(`territorio_${layer}.csv`, exportRows())}>
+                      Exportar CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportPdf(`territorio_${layer}.pdf`, `Recorte Territorial — ${LAYER_TITLES[layer]}`, exportRows(), {
+                      subtitle: `Filtros aplicados. Municípios visíveis: ${filtered.length}`,
+                      kpis: [
+                        { label: "Visíveis no Mapa", value: filtered.length },
+                        { label: "Com OPM e CREAS", value: filtered.filter(m => m.opm_possui === "SIM" && m.creas_possui === "SIM").length }
+                      ]
+                    })}>
+                      Exportar PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </CardHeader>
-            <CardContent>
-              <TerritorialMap height={850}
+
+            <CardContent className="flex-1 p-0 flex flex-col items-center justify-center min-h-[700px]">
+              <TerritorialMap
+                municipios={municipios}
+                height={700}
                 colorFn={colorFn}
                 selectedSlug={selected?.municipio_slug}
                 highlightSlugs={hasFilter ? filteredSlugs : undefined}
@@ -321,59 +363,94 @@ function TerritorialIntelligence() {
             </CardContent>
           </Card>
 
-          {/* Export */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle className="text-base">Exportar recorte territorial</CardTitle>
-                <p className="text-xs text-muted-foreground">{filtered.length} municípios visíveis · camada {LAYER_TITLES[layer]}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => exportCsv(`territorio_${layer}.csv`, exportRows())}>
-                  <Download className="mr-2 h-4 w-4" /> CSV
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => exportXlsx(`territorio_${layer}.xlsx`, exportRows())}>
-                  <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => exportPdf(`territorio_${layer}.pdf`, `Recorte territorial — ${LAYER_TITLES[layer]}`, exportRows())}>
-                  <FileText className="mr-2 h-4 w-4" /> PDF
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-        </div>
-
         {/* Ranking lateral */}
-        <Card className="h-fit lg:sticky lg:top-16">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Ranking territorial</CardTitle>
-            <p className="text-xs text-muted-foreground">Municípios visíveis ordenados por score de risco.</p>
+        <Card className="flex flex-col h-full">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 relative border-b border-border/40">
+            <ChartHelper>
+              <p>O <strong>Ranking Territorial</strong> lista os municípios do recorte atual ordenados pelo seu score de risco (do maior para o menor).</p>
+              <ul className="list-disc pl-4 space-y-1 mt-2">
+                <li><strong className="text-foreground/80">Exportação:</strong> Utilize o ícone de download para exportar a lista visível já ordenada.</li>
+                <li><strong className="text-foreground/80">Interatividade:</strong> Clique em um município para abrir sua ficha detalhada.</li>
+              </ul>
+            </ChartHelper>
+            <div className="flex-1 pr-8">
+              <CardTitle className="text-base">Ranking territorial</CardTitle>
+              <p className="text-xs text-muted-foreground">Municípios visíveis ordenados por score de risco.</p>
+            </div>
+            <div className="absolute top-4 right-12 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                    title="Exportar Ranking"
+                  >
+                    <Download className="h-5 w-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => exportCsv(`ranking_territorial_${layer}.csv`, exportRows())}>
+                    Exportar CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportPdf(`ranking_territorial_${layer}.pdf`, `Ranking Territorial — ${LAYER_TITLES[layer]}`, exportRows(), {
+                    subtitle: `Filtros aplicados. Total de municípios no ranking: ${ranking.length}`
+                  })}>
+                    Exportar PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </CardHeader>
-          <CardContent className="max-h-[640px] overflow-y-auto p-2">
+          <CardContent className="flex-1 overflow-y-auto p-2">
             {ranking.length === 0 ? (
               <p className="p-4 text-sm text-muted-foreground">Nenhum município no recorte atual.</p>
             ) : (
               <ul className="divide-y divide-border">
-                {ranking.slice(0, 60).map((m, i) => (
-                  <li key={m.codigo_ibge}>
-                    <button
-                      onClick={() => openMunicipio(m)}
-                      className="flex w-full items-center justify-between gap-2 px-2 py-2 text-left hover:bg-accent/40"
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="w-5 shrink-0 text-xs tabular-nums text-muted-foreground">{i + 1}</span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{m.municipio}</p>
-                          <p className="truncate text-[11px] text-muted-foreground">{m.polo_regional} · score {m.risco_feminicidio_score}</p>
+                {paginatedRanking.map((m, i) => {
+                  const absoluteIndex = (rankingPage - 1) * ITEMS_PER_PAGE + i;
+                  return (
+                    <li key={m.codigo_ibge}>
+                      <button
+                        onClick={() => openMunicipio(m)}
+                        className="flex w-full items-center justify-between gap-2 px-2 py-2 text-left hover:bg-accent/40"
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="w-5 shrink-0 text-xs tabular-nums text-muted-foreground">{absoluteIndex + 1}</span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-foreground">{m.municipio}</p>
+                            <p className="truncate text-[11px] text-muted-foreground">{m.polo_regional} · score {m.risco_feminicidio_score}</p>
+                          </div>
                         </div>
-                      </div>
-                      <RiskBadge level={m.risco_feminicidio_nivel} />
-                    </button>
-                  </li>
-                ))}
+                        <RiskBadge level={m.risco_feminicidio_nivel} />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border/40 p-3 bg-muted/20">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setRankingPage(p => Math.max(1, p - 1))}
+                disabled={rankingPage === 1}
+              >
+                Anterior
+              </Button>
+              <span className="text-xs font-medium text-muted-foreground">
+                Pág. {rankingPage} de {totalPages}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setRankingPage(p => Math.min(totalPages, p + 1))}
+                disabled={rankingPage === totalPages}
+              >
+                Próxima
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
 
@@ -404,7 +481,7 @@ function TerritorialIntelligence() {
 
                 <Section title="Vínculo institucional">
                   <Row k="Comarca" v={selected.comarca || "—"} />
-                  <Row k="Polo regional" v={selected.polo_regional || "—"} />
+                  <Row k="Polo Regional" v={selected.polo_regional || "—"} />
                   <Row k="Status monitoramento" v={selected.status_monitoramento || "—"} />
                 </Section>
 

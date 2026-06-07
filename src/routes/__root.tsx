@@ -87,7 +87,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/creas": "Cobertura de CREAS",
   "/risco": "Risco de Feminicídio",
   "/territorio": "Inteligência Territorial",
-  "/municipios": "Base Territorial",
+  "/municipios": "Municípios",
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
   "/pesos": "Ponderação e Simulação de Pesos",

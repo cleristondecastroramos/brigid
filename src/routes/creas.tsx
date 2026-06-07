@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { YesNoBadge } from "@/components/risk-badge";
-import { exportCsv } from "@/lib/export";
+import { exportCsv, exportPdf } from "@/lib/export";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 export const Route = createFileRoute("/creas")({
@@ -121,42 +122,35 @@ function CreasPanel() {
     <div className="space-y-6">
       {/* Barra de Filtros */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
-              {hasFilter && (
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  Filtros ativos
-                </span>
-              )}
+        <CardContent className="p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
+            {hasFilter && (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Filtros ativos</span>
+            )}
+          </div>
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative w-full md:w-[500px] shrink-0">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Buscar município…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9 h-9" />
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative min-w-[200px] flex-1">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar município…"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
+            <div className="flex flex-wrap items-center gap-2 flex-1">
+              <Select value={polo} onValueChange={setPolo}>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Polo Regional" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todos os Polos Regionais</SelectItem>
+                  {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <Select value={comarca} onValueChange={setComarca}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Comarca" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Comarca" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as comarcas</SelectItem>
                   {comarcas.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={polo} onValueChange={setPolo}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Polo regional" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all">Todos os polos</SelectItem>
-                  {polos.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
               <Select value={faixaPop} onValueChange={(v) => setFaixaPop(v as FaixaPop)}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Faixa populacional" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Faixa populacional" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as faixas</SelectItem>
                   <SelectItem value="ate_5k">Até 5.000 hab.</SelectItem>
@@ -166,14 +160,14 @@ function CreasPanel() {
                 </SelectContent>
               </Select>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-[140px]"><SelectValue placeholder="Situação" /></SelectTrigger>
+                <SelectTrigger className="w-[280px] h-9"><SelectValue placeholder="Situação" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos (status)</SelectItem>
                   <SelectItem value="SIM">Com CREAS</SelectItem>
                   <SelectItem value="NAO">Sem CREAS</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" onClick={clearFilters} disabled={!hasFilter}>
+              <Button variant="outline" size="sm" onClick={clearFilters} disabled={!hasFilter} className="h-9">
                 <Eraser className="mr-2 h-4 w-4" /> Limpar
               </Button>
             </div>
@@ -229,16 +223,42 @@ function CreasPanel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">Lista nominal do déficit (&gt; 20 mil hab.):</p>
-                  <Button
-                    size="sm" variant="outline"
-                    className="border-warning text-warning-foreground hover:bg-warning/10"
-                    onClick={() => exportCsv("municipios_acima_20k_sem_creas.csv", semList.map((m) => ({
-                      municipio: m.municipio, codigo_ibge: m.codigo_ibge, populacao: m.populacao,
-                      comarca: m.comarca, polo_regional: m.polo_regional, prioridade: m.prioridade_implantacao_creas
-                    })))}
-                  >
-                    <Download className="mr-2 h-4 w-4" /> Exportar lista de déficit
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="sm" variant="outline"
+                        className="border-warning text-warning-foreground hover:bg-warning/10"
+                      >
+                        <Download className="mr-2 h-4 w-4" /> Exportar lista de déficit
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => {
+                        const data = semList.map((m) => ({
+                          municipio: m.municipio, codigo_ibge: m.codigo_ibge, populacao: m.populacao,
+                          comarca: m.comarca, polo_regional: m.polo_regional, prioridade: m.prioridade_implantacao_creas
+                        }));
+                        exportCsv("municipios_acima_20k_sem_creas.csv", data);
+                      }}>
+                        Exportar CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => {
+                        const data = semList.map((m) => ({
+                          municipio: m.municipio, codigo_ibge: m.codigo_ibge, populacao: m.populacao,
+                          comarca: m.comarca, polo_regional: m.polo_regional, prioridade: m.prioridade_implantacao_creas
+                        }));
+                        exportPdf("municipios_acima_20k_sem_creas.pdf", "Déficit de CREAS (> 20 mil hab.)", data, {
+                          subtitle: "Lista nominal de municípios acima de 20 mil habitantes sem CREAS implantado",
+                          kpis: [
+                            { label: "Municípios no Déficit", value: data.length },
+                            { label: "População Desassistida", value: data.reduce((acc, r) => acc + (Number(r.populacao) || 0), 0).toLocaleString("pt-BR") }
+                          ]
+                        });
+                      }}>
+                        Exportar PDF
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {semList.map(m => (
@@ -349,25 +369,54 @@ function CreasPanel() {
                         Cruze os dados de <strong className="font-bold">Profissionais Capacitados</strong> e avalie se a estrutura física está acompanhada de preparo técnico.
                       </p>
                     </div></ChartHelper>
-            <CardTitle className="text-lg pr-16">Municípios — detalhamento</CardTitle>
+            <CardTitle className="text-lg pr-16">Detalhamento por Municípios</CardTitle>
           <div className="absolute top-4 right-12 z-10">
-            <button
-              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
-              title={`Exportar Tabela (${filtroKpi === "com" ? "Com CREAS" : filtroKpi === "sem" ? "Sem CREAS" : filtroKpi === "altaPrio" ? "Prioridade ALTA" : "Filtro atual"})`}
-              onClick={() => {
-                const filename = filtroKpi === "com" ? "municipios_com_creas.csv" :
-                                 filtroKpi === "sem" ? "municipios_sem_creas.csv" :
-                                 filtroKpi === "altaPrio" ? "municipios_prioridade_alta.csv" :
-                                 "municipios_filtro_atual.csv";
-                exportCsv(filename, filtered.map((m) => ({
-                  municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
-                  comarca: m.comarca, populacao: m.populacao, creas_possui: m.creas_possui,
-                  risco: m.risco_feminicidio_nivel, alerta: m.painel_alerta_rede,
-                })));
-              }}
-            >
-              <Download className="h-5 w-5" />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                  title={`Exportar Tabela (${filtroKpi === "com" ? "Com CREAS" : filtroKpi === "sem" ? "Sem CREAS" : filtroKpi === "altaPrio" ? "Prioridade ALTA" : "Filtro atual"})`}
+                >
+                  <Download className="h-5 w-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => {
+                  const filename = filtroKpi === "com" ? "municipios_com_creas.csv" :
+                                   filtroKpi === "sem" ? "municipios_sem_creas.csv" :
+                                   filtroKpi === "altaPrio" ? "municipios_prioridade_alta.csv" :
+                                   "municipios_filtro_atual.csv";
+                  const data = filtered.map((m) => ({
+                    municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
+                    comarca: m.comarca, populacao: m.populacao, creas_possui: m.creas_possui,
+                    risco: m.risco_feminicidio_nivel, alerta: m.painel_alerta_rede,
+                  }));
+                  exportCsv(filename, data);
+                }}>
+                  Exportar CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  const filename = filtroKpi === "com" ? "municipios_com_creas.pdf" :
+                                   filtroKpi === "sem" ? "municipios_sem_creas.pdf" :
+                                   filtroKpi === "altaPrio" ? "municipios_prioridade_alta.pdf" :
+                                   "municipios_filtro_atual.pdf";
+                  const data = filtered.map((m) => ({
+                    municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
+                    comarca: m.comarca, populacao: m.populacao, creas_possui: m.creas_possui,
+                    risco: m.risco_feminicidio_nivel, alerta: m.painel_alerta_rede,
+                  }));
+                  exportPdf(filename, "Detalhamento por Municípios (CREAS)", data, {
+                    subtitle: `Filtro ativo: ${filtroKpi === "com" ? "Com CREAS" : filtroKpi === "sem" ? "Sem CREAS" : filtroKpi === "altaPrio" ? "Prioridade ALTA" : "Todos"}`,
+                    kpis: [
+                      { label: "Total Filtrado", value: data.length },
+                      { label: "Com CREAS", value: data.filter(d => d.creas_possui === "SIM").length }
+                    ]
+                  });
+                }}>
+                  Exportar PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -382,7 +431,7 @@ function CreasPanel() {
                     <div className="flex items-center">Comarca <SortIcon col="comarca" /></div>
                   </TableHead>
                   <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("polo_regional")}>
-                    <div className="flex items-center">Polo <SortIcon col="polo_regional" /></div>
+                    <div className="flex items-center">Polo Regional <SortIcon col="polo_regional" /></div>
                   </TableHead>
                   <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("populacao")}>
                     <div className="flex items-center justify-end">População <SortIcon col="populacao" /></div>
