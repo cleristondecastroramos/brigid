@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { municipiosQueryOptions } from "@/lib/csv-data";
 import { useApp } from "@/context/AppContext";
+import { supabase } from "@/lib/supabase";
 import { Search, Save, Pencil, ArrowUpDown, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,13 +67,15 @@ function GestaoBaseMunicipal() {
 
   const updateMutation = useMutation({
     mutationFn: async (m: Partial<Municipio>) => {
-      const res = await fetch(`http://localhost:3001/municipios/${m.id ?? m.codigo_ibge}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(m),
-      });
-      if (!res.ok) throw new Error("Erro ao atualizar município");
-      return res.json();
+      const { data, error } = await supabase
+        .from('municipios')
+        .update(m)
+        .eq('codigo_ibge', m.codigo_ibge)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["municipios"] });
@@ -81,7 +84,7 @@ function GestaoBaseMunicipal() {
     },
     onError: (err) => {
       console.error(err);
-      toast.error("Erro ao salvar! Verifique se o servidor backend (json-server) está rodando.");
+      toast.error("Erro ao salvar no banco de dados.");
     }
   });
 
@@ -179,24 +182,24 @@ function GestaoBaseMunicipal() {
 
       // Auto-calculate Totals and Flags for Consumado
       if (field.startsWith("consumado_")) {
-        next.feminicidios_total_2023_2026 = 
+        next.feminicidios_consumados_2024_2025 = 
           (Number(next.consumado_2023) || 0) + 
           (Number(next.consumado_2024) || 0) + 
           (Number(next.consumado_2025) || 0) + 
           (Number(next.consumado_2026) || 0);
           
-        next.indicador_tem_feminicidio_consumado = next.feminicidios_total_2023_2026 > 0 ? "SIM" : "NAO";
+        next.indicador_tem_feminicidio_consumado = next.feminicidios_consumados_2024_2025 > 0 ? "SIM" : "NAO";
       }
       
       // Auto-calculate Totals and Flags for Tentativas
       if (field.startsWith("tentado_")) {
-        next.tentativas_total_2023_2026 = 
+        next.feminicidios_tentados_2024_2025 = 
           (Number(next.tentado_2023) || 0) + 
           (Number(next.tentado_2024) || 0) + 
           (Number(next.tentado_2025) || 0) + 
           (Number(next.tentado_2026) || 0);
           
-        next.indicador_tem_tentativa_feminicidio = next.tentativas_total_2023_2026 > 0 ? "SIM" : "NAO";
+        next.indicador_tem_tentativa_feminicidio = next.feminicidios_tentados_2024_2025 > 0 ? "SIM" : "NAO";
       }
       
       return next;
@@ -244,11 +247,11 @@ function GestaoBaseMunicipal() {
                   <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("creas_possui")}>
                     <div className="flex items-center">CREAS <SortIcon column="creas_possui" /></div>
                   </th>
-                  <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("feminicidios_total_2023_2026")}>
-                    <div className="flex items-center">Feminicídios <SortIcon column="feminicidios_total_2023_2026" /></div>
+                  <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("feminicidios_consumados_2024_2025")}>
+                    <div className="flex items-center">Feminicídios <SortIcon column="feminicidios_consumados_2024_2025" /></div>
                   </th>
-                  <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("tentativas_total_2023_2026")}>
-                    <div className="flex items-center">Tentativas <SortIcon column="tentativas_total_2023_2026" /></div>
+                  <th className="px-4 py-3 font-medium cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors" onClick={() => handleSort("feminicidios_tentados_2024_2025")}>
+                    <div className="flex items-center">Tentativas <SortIcon column="feminicidios_tentados_2024_2025" /></div>
                   </th>
                   <th className="px-4 py-3 font-medium text-right">Ação</th>
                 </tr>
@@ -269,8 +272,8 @@ function GestaoBaseMunicipal() {
                         {m.creas_possui || "NAO"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{m.feminicidios_total_2023_2026}</td>
-                    <td className="px-4 py-3">{m.tentativas_total_2023_2026}</td>
+                    <td className="px-4 py-3">{m.feminicidios_consumados_2023_2025}</td>
+                    <td className="px-4 py-3">{m.feminicidios_tentados_2023_2025}</td>
                     <td className="px-4 py-3 text-right">
                       <Dialog open={editingId === (m.id ?? m.codigo_ibge)} onOpenChange={(open) => !open && setEditingId(null)}>
                         <DialogTrigger asChild>
@@ -286,13 +289,12 @@ function GestaoBaseMunicipal() {
                           
                           <div className="px-6 py-4">
                             <Tabs defaultValue="infra" className="w-full">
-                              <TabsList className="grid w-full grid-cols-7 mb-4 bg-muted/65 p-1 rounded-lg">
+                              <TabsList className="grid w-full grid-cols-6 mb-4 bg-muted/65 p-1 rounded-lg">
                                 <TabsTrigger value="infra" className="text-xs">Infra</TabsTrigger>
                                 <TabsTrigger value="fluxos" className="text-xs">Fluxos</TabsTrigger>
                                 <TabsTrigger value="seguranca" className="text-xs">Segurança</TabsTrigger>
                                 <TabsTrigger value="assistencia" className="text-xs">Social</TabsTrigger>
-                                <TabsTrigger value="consumados" className="text-xs">Consumados</TabsTrigger>
-                                <TabsTrigger value="tentativas" className="text-xs">Tentativas</TabsTrigger>
+                                <TabsTrigger value="violencia" className="text-xs">Violência</TabsTrigger>
                                 <TabsTrigger value="alertas" className="text-xs">Alertas</TabsTrigger>
                               </TabsList>
                               
@@ -352,12 +354,20 @@ function GestaoBaseMunicipal() {
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                  <div className="grid gap-2 col-span-2">
+                                  <div className="grid gap-2">
                                     <FieldLabel tooltip="A população atual do município segundo os últimos dados demográficos oficiais.">População</FieldLabel>
                                     <Input 
                                       type="number" 
                                       value={editData.populacao || ""} 
                                       onChange={(e) => handleChange("populacao", parseInt(e.target.value) || 0)} 
+                                    />
+                                  </div>
+                                  <div className="grid gap-2">
+                                    <FieldLabel tooltip="A população feminina residente no município (IBGE). Utilizada como denominador da Taxa de Incidência de Risco.">Pop. Feminina</FieldLabel>
+                                    <Input 
+                                      type="number" 
+                                      value={editData.populacao_feminina || ""} 
+                                      onChange={(e) => handleChange("populacao_feminina", parseInt(e.target.value) || 0)} 
                                     />
                                   </div>
                                   <div className="grid gap-2 col-span-2">
@@ -480,6 +490,15 @@ function GestaoBaseMunicipal() {
                                       </SelectContent>
                                     </Select>
                                   </div>
+                                  <div className="grid gap-1.5">
+                                    <FieldLabel tooltip="Quantidade de treinamentos/capacitações realizadas no município sobre o tema (Período: 2024-2025).">Qtd. Capacitações</FieldLabel>
+                                    <Input 
+                                      type="number" 
+                                      className="h-8 text-xs" 
+                                      value={editData.qtd_capacitacoes_realizadas ?? ""} 
+                                      onChange={(e) => handleChange("qtd_capacitacoes_realizadas", parseInt(e.target.value) || 0)} 
+                                    />
+                                  </div>
                                   <div className="grid gap-1.5 col-span-2">
                                     <FieldLabel tooltip="Problemas práticos que dificultam o fluxo de investigação, perícia ou acolhimento.">Gargalos Identificados (Múltiplas Escolhas)</FieldLabel>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 border border-border rounded-md p-3 max-h-[160px] overflow-y-auto bg-card">
@@ -514,6 +533,7 @@ function GestaoBaseMunicipal() {
                                         );
                                       })}
                                     </div>
+
                                   </div>
                                 </div>
                               </TabsContent>
@@ -560,66 +580,79 @@ function GestaoBaseMunicipal() {
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent value="consumados" className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de óbitos decorrentes de feminicídio consumado em 2023.">Consumados 2023</FieldLabel>
-                                    <Input type="number" value={editData.consumado_2023 ?? 0} onChange={(e) => handleChange("consumado_2023", parseInt(e.target.value) || 0)} />
-                                  </div>
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de óbitos decorrentes de feminicídio consumado em 2024.">Consumados 2024</FieldLabel>
-                                    <Input type="number" value={editData.consumado_2024 ?? 0} onChange={(e) => handleChange("consumado_2024", parseInt(e.target.value) || 0)} />
-                                  </div>
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de óbitos decorrentes de feminicídio consumado em 2025.">Consumados 2025</FieldLabel>
-                                    <Input type="number" value={editData.consumado_2025 ?? 0} onChange={(e) => handleChange("consumado_2025", parseInt(e.target.value) || 0)} />
-                                  </div>
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de óbitos decorrentes de feminicídio consumado em 2026.">Consumados 2026</FieldLabel>
-                                    <Input type="number" value={editData.consumado_2026 ?? 0} onChange={(e) => handleChange("consumado_2026", parseInt(e.target.value) || 0)} />
-                                  </div>
-                                  <div className="grid gap-2 col-span-2 border-t pt-4 mt-2 border-border">
-                                    <FieldLabel tooltip="Soma de todos os feminicídios consumados no período monitorado.">Feminicídios Total (2023-2026)</FieldLabel>
+                                  <div className="grid gap-1.5">
+                                    <FieldLabel tooltip="Quantidade de profissionais locais que participaram das capacitações (Período: 2024-2025).">Profissionais Capacitados</FieldLabel>
                                     <Input 
                                       type="number" 
-                                      className="bg-accent/30 font-medium"
-                                      value={editData.feminicidios_total_2023_2026 ?? 0} 
-                                      onChange={(e) => handleChange("feminicidios_total_2023_2026", parseInt(e.target.value) || 0)} 
+                                      className="h-8 text-xs" 
+                                      value={editData.profissionais_capacitados ?? ""} 
+                                      onChange={(e) => handleChange("profissionais_capacitados", parseInt(e.target.value) || 0)} 
                                     />
-                                    <p className="text-xs text-muted-foreground mt-1">Este total é calculado automaticamente a partir dos anos, mas pode ser sobreposto caso desejado.</p>
+                                  </div>
+                                  <div className="grid gap-1.5">
+                                    <FieldLabel tooltip="Data em que ocorreu a última formação continuada para os agentes da rede local.">Última Capacitação</FieldLabel>
+                                    <Input 
+                                      type="date" 
+                                      className="h-8 text-xs" 
+                                      value={editData.data_ultima_capacitacao || ""} 
+                                      onChange={(e) => handleChange("data_ultima_capacitacao", e.target.value)} 
+                                    />
                                   </div>
                                 </div>
                               </TabsContent>
 
-                              <TabsContent value="tentativas" className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de tentativas registradas de feminicídio em 2023.">Tentados 2023</FieldLabel>
-                                    <Input type="number" value={editData.tentado_2023 ?? 0} onChange={(e) => handleChange("tentado_2023", parseInt(e.target.value) || 0)} />
+                              <TabsContent value="violencia" className="space-y-6">
+                                {/* Bloco Oficial */}
+                                <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <h3 className="font-semibold text-primary">Dados considerados no score oficial (2023–2025)</h3>
+                                    <span className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">Oficial</span>
                                   </div>
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de tentativas registradas de feminicídio em 2024.">Tentados 2024</FieldLabel>
-                                    <Input type="number" value={editData.tentado_2024 ?? 0} onChange={(e) => handleChange("tentado_2024", parseInt(e.target.value) || 0)} />
+                                  <p className="text-xs text-muted-foreground mb-4">O score oficial de risco considera os registros de 2023, 2024 e 2025.</p>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Consumados 2023">Consumados 2023</FieldLabel>
+                                      <Input type="number" value={editData.consumado_2023 ?? 0} onChange={(e) => handleChange("consumado_2023", parseInt(e.target.value) || 0)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Tentados 2023">Tentados 2023</FieldLabel>
+                                      <Input type="number" value={editData.tentado_2023 ?? 0} onChange={(e) => handleChange("tentado_2023", parseInt(e.target.value) || 0)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Consumados 2024">Consumados 2024</FieldLabel>
+                                      <Input type="number" value={editData.consumado_2024 ?? 0} onChange={(e) => handleChange("consumado_2024", parseInt(e.target.value) || 0)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Tentados 2024">Tentados 2024</FieldLabel>
+                                      <Input type="number" value={editData.tentado_2024 ?? 0} onChange={(e) => handleChange("tentado_2024", parseInt(e.target.value) || 0)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Consumados 2025">Consumados 2025</FieldLabel>
+                                      <Input type="number" value={editData.consumado_2025 ?? 0} onChange={(e) => handleChange("consumado_2025", parseInt(e.target.value) || 0)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Tentados 2025">Tentados 2025</FieldLabel>
+                                      <Input type="number" value={editData.tentado_2025 ?? 0} onChange={(e) => handleChange("tentado_2025", parseInt(e.target.value) || 0)} />
+                                    </div>
                                   </div>
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de tentativas registradas de feminicídio em 2025.">Tentados 2025</FieldLabel>
-                                    <Input type="number" value={editData.tentado_2025 ?? 0} onChange={(e) => handleChange("tentado_2025", parseInt(e.target.value) || 0)} />
+                                </div>
+
+                                {/* Bloco Parcial */}
+                                <div className="border border-border/60 rounded-lg p-4 bg-muted/30">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <h3 className="font-semibold text-foreground">Monitoramento parcial (fora do score oficial)</h3>
+                                    <span className="bg-warning/20 text-warning text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide">Em aberto</span>
                                   </div>
-                                  <div className="grid gap-2">
-                                    <FieldLabel tooltip="Número de tentativas registradas de feminicídio em 2026.">Tentados 2026</FieldLabel>
-                                    <Input type="number" value={editData.tentado_2026 ?? 0} onChange={(e) => handleChange("tentado_2026", parseInt(e.target.value) || 0)} />
-                                  </div>
-                                  <div className="grid gap-2 col-span-2 border-t pt-4 mt-2 border-border">
-                                    <FieldLabel tooltip="Soma de todas as tentativas de feminicídio no período.">Tentativas Total (2023-2026)</FieldLabel>
-                                    <Input 
-                                      type="number" 
-                                      className="bg-accent/30 font-medium"
-                                      value={editData.tentativas_total_2023_2026 ?? 0} 
-                                      onChange={(e) => handleChange("tentativas_total_2023_2026", parseInt(e.target.value) || 0)} 
-                                    />
+                                  <p className="text-xs text-muted-foreground mb-4">Dados de 2026 são parciais e não compõem o score oficial atual.</p>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Consumados 2026">Consumados 2026</FieldLabel>
+                                      <Input type="number" value={editData.consumado_2026 ?? 0} onChange={(e) => handleChange("consumado_2026", parseInt(e.target.value) || 0)} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                      <FieldLabel tooltip="Tentados 2026">Tentados 2026</FieldLabel>
+                                      <Input type="number" value={editData.tentado_2026 ?? 0} onChange={(e) => handleChange("tentado_2026", parseInt(e.target.value) || 0)} />
+                                    </div>
                                   </div>
                                 </div>
                               </TabsContent>

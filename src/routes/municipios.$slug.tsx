@@ -56,11 +56,12 @@ function MunicipioDetail() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="População" value={m.populacao.toLocaleString("pt-BR")} icon={Users} tone="primary" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <KpiCard label="População (Geral)" value={m.populacao.toLocaleString("pt-BR")} icon={Users} tone="primary" />
+        <KpiCard label="Pop. Feminina" value={(m.populacao_feminina || 0).toLocaleString("pt-BR")} icon={Users} tone="primary" />
         <KpiCard label="Score de risco" value={m.risco_feminicidio_score} hint={m.risco_feminicidio_nivel} tone={m.risco_feminicidio_nivel === "CRITICO" ? "critical" : "default"} />
-        <KpiCard label="Feminicídios 2023–26" value={m.feminicidios_total_2023_2026} tone="critical" />
-        <KpiCard label="Tentativas 2023–26" value={m.tentativas_total_2023_2026} tone="warning" />
+        <KpiCard label="Feminicídios 2023–26" value={m.feminicidios_consumados_2023_2025} tone="critical" />
+        <KpiCard label="Tentativas 2023–26" value={m.feminicidios_tentados_2023_2025} tone="warning" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -95,14 +96,14 @@ function MunicipioDetail() {
               <Row k="Consumados 2024" v={m.consumado_2024} />
               <Row k="Consumados 2025" v={m.consumado_2025} />
               <Row k="Consumados 2026" v={m.consumado_2026} />
-              <Row k="Total consumados" v={<strong>{m.feminicidios_total_2023_2026}</strong>} />
+              <Row k="Total consumados" v={<strong>{m.feminicidios_consumados_2023_2025}</strong>} />
             </div>
             <div className="space-y-2 text-sm">
               <Row k="Tentados 2023" v={m.tentado_2023} />
               <Row k="Tentados 2024" v={m.tentado_2024} />
               <Row k="Tentados 2025" v={m.tentado_2025} />
               <Row k="Tentados 2026" v={m.tentado_2026} />
-              <Row k="Total tentativas" v={<strong>{m.tentativas_total_2023_2026}</strong>} />
+              <Row k="Total tentativas" v={<strong>{m.feminicidios_tentados_2023_2025}</strong>} />
             </div>
             <div className="md:col-span-2 space-y-2 text-sm border-t border-border pt-3">
               <Row k="Ocorrências monitoradas" v={m.ocorrencias_total_violencia_genero_monitoradas} />

@@ -42,9 +42,9 @@ const DEFAULT_WEIGHTS: Weights = {
 };
 
 const DEFAULT_THRESHOLDS: Thresholds = {
-  medio: 10,
-  alto: 25,
-  critico: 40,
+  medio: 140,
+  alto: 270,
+  critico: 390,
 };
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);

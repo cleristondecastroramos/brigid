@@ -22,7 +22,7 @@ export const Route = createFileRoute("/risco")({
 });
 
 const RISK_COLORS: Record<string, string> = {
-  BAIXO: "oklch(0.65 0.15 150)",
+  BAIXO: "oklch(0.55 0.13 175)",
   MEDIO: "oklch(0.7 0.12 300)",
   ALTO: "oklch(0.5 0.18 300)",
   CRITICO: "oklch(0.35 0.15 300)",
@@ -70,13 +70,12 @@ function RiscoPanel() {
   }), [municipios, q, comarca, polo, faixaPop, nivel]);
 
   const filtered = useMemo(() => baseFiltered.filter((m) => {
-    if (filtroKpi === "feminicidios") return m.feminicidios_total_2023_2026 > 0;
-    if (filtroKpi === "tentativas") return m.tentativas_total_2023_2026 > 0;
-    if (filtroKpi === "ocorrencias") return m.ocorrencias_total_violencia_genero_monitoradas > 0;
-    if (filtroKpi === "criticos") return m.painel_alerta_rede === "CRITICO";
-    if (filtroKpi === "semOPMcomFem") return m.opm_possui !== "SIM" && m.feminicidios_total_2023_2026 > 0;
-    if (filtroKpi === "semCREAScomFem") return m.creas_possui !== "SIM" && m.feminicidios_total_2023_2026 > 0;
-    if (filtroKpi === "semAmbosCriticos") return m.opm_possui !== "SIM" && m.creas_possui !== "SIM" && (m.feminicidios_total_2023_2026 > 0 || m.painel_alerta_rede === "CRITICO");
+    if (filtroKpi === "feminicidios") return m.feminicidios_consumados_2023_2025 > 0;
+    if (filtroKpi === "tentativas") return m.feminicidios_tentados_2023_2025 > 0;
+    if (filtroKpi === "criticos") return m.risco_feminicidio_nivel === "CRITICO";
+    if (filtroKpi === "semOPMcomFem") return m.opm_possui !== "SIM" && m.risco_feminicidio_nivel === "CRITICO";
+    if (filtroKpi === "semCREAScomFem") return m.creas_possui !== "SIM" && m.risco_feminicidio_nivel === "CRITICO";
+    if (filtroKpi === "semAmbosCriticos") return m.opm_possui !== "SIM" && m.creas_possui !== "SIM" && m.risco_feminicidio_nivel === "CRITICO";
     return true;
   }).sort((a, b) => {
     const valA = a[sortColumn];
@@ -90,14 +89,13 @@ function RiscoPanel() {
   }), [baseFiltered, filtroKpi, sortColumn, sortDirection]);
 
   const total = baseFiltered.length;
-  const feminicidios = baseFiltered.reduce((s, m) => s + m.feminicidios_total_2023_2026, 0);
-  const tentativas = baseFiltered.reduce((s, m) => s + m.tentativas_total_2023_2026, 0);
-  const ocorrencias = baseFiltered.reduce((s, m) => s + m.ocorrencias_total_violencia_genero_monitoradas, 0);
-  const criticos = baseFiltered.filter((m) => m.painel_alerta_rede === "CRITICO").length;
+  const feminicidios = baseFiltered.reduce((s, m) => s + m.feminicidios_consumados_2023_2025, 0);
+  const tentativas = baseFiltered.reduce((s, m) => s + m.feminicidios_tentados_2023_2025, 0);
+  const criticos = baseFiltered.filter((m) => m.risco_feminicidio_nivel === "CRITICO").length;
 
-  const semOPMcomFem = baseFiltered.filter((m) => m.opm_possui !== "SIM" && m.feminicidios_total_2023_2026 > 0).length;
-  const semCREAScomFem = baseFiltered.filter((m) => m.creas_possui !== "SIM" && m.feminicidios_total_2023_2026 > 0).length;
-  const semAmbosCriticos = baseFiltered.filter((m) => m.opm_possui !== "SIM" && m.creas_possui !== "SIM" && (m.feminicidios_total_2023_2026 > 0 || m.painel_alerta_rede === "CRITICO")).length;
+  const semOPMcomFem = baseFiltered.filter((m) => m.opm_possui !== "SIM" && m.risco_feminicidio_nivel === "CRITICO").length;
+  const semCREAScomFem = baseFiltered.filter((m) => m.creas_possui !== "SIM" && m.risco_feminicidio_nivel === "CRITICO").length;
+  const semAmbosCriticos = baseFiltered.filter((m) => m.opm_possui !== "SIM" && m.creas_possui !== "SIM" && m.risco_feminicidio_nivel === "CRITICO").length;
 
   const colorFn = (m: any) => {
     if (!m) return "oklch(0.95 0 0)";
@@ -116,7 +114,10 @@ function RiscoPanel() {
       {/* 1. Header com Título e Contexto + Filtros */}
       <Card className="border-border/60 bg-card/60 backdrop-blur-sm shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-border/50 bg-muted/20 flex flex-col gap-1">
-          <h2 className="text-lg font-bold text-foreground">Monitoramento Territorial de Risco</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-foreground">Monitoramento Territorial de Risco</h2>
+            <span className="bg-primary/10 text-primary-700 dark:text-primary-300 border border-primary/20 text-xs font-medium px-2 py-0.5 rounded-full">Base de Ocorrências: 2023–2025</span>
+          </div>
           <p className="text-sm text-muted-foreground">
             Acompanhamento integrado de indicadores de risco, cobertura da rede de proteção e volume de ocorrências de violência de gênero por município.
           </p>
@@ -180,14 +181,13 @@ function RiscoPanel() {
       </Card>
 
       {/* 2. KPIs Estratégicos */}
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
-         <KpiCard label="Feminicídios (23-26)" value={feminicidios} icon={Skull} tone="critical" onClick={() => handleKpiClick("feminicidios")} isActive={filtroKpi === "feminicidios"} />
-         <KpiCard label="Tentativas (23-26)" value={tentativas} icon={AlertTriangle} tone="warning" onClick={() => handleKpiClick("tentativas")} isActive={filtroKpi === "tentativas"} />
-         <KpiCard label="Ocorrências" value={ocorrencias} icon={TrendingUp} tone="primary" onClick={() => handleKpiClick("ocorrencias")} isActive={filtroKpi === "ocorrencias"} />
-         <KpiCard label="Alerta crítico" value={criticos} hint={`${pct(criticos, total)} do total`} icon={ShieldAlert} tone="critical" onClick={() => handleKpiClick("criticos")} isActive={filtroKpi === "criticos"} />
-         <KpiCard label="S/ OPM c/ Fem." value={semOPMcomFem} tone="critical" onClick={() => handleKpiClick("semOPMcomFem")} isActive={filtroKpi === "semOPMcomFem"} />
-         <KpiCard label="S/ CREAS c/ Fem." value={semCREAScomFem} tone="critical" onClick={() => handleKpiClick("semCREAScomFem")} isActive={filtroKpi === "semCREAScomFem"} />
-         <KpiCard label="Crítico S/ Rede" value={semAmbosCriticos} tone="critical" onClick={() => handleKpiClick("semAmbosCriticos")} isActive={filtroKpi === "semAmbosCriticos"} />
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+         <KpiCard label="Feminicídios (24-25)" value={feminicidios} hint="casos consumados no recorte" icon={Skull} tone="critical" onClick={() => handleKpiClick("feminicidios")} isActive={filtroKpi === "feminicidios"} />
+         <KpiCard label="Tentativas (24-25)" value={tentativas} hint="casos tentados no recorte" icon={AlertTriangle} tone="warning" onClick={() => handleKpiClick("tentativas")} isActive={filtroKpi === "tentativas"} />
+         <KpiCard label="Municípios em risco crítico" value={criticos} hint={`${pct(criticos, total)} do total filtrado`} icon={ShieldAlert} tone="critical" onClick={() => handleKpiClick("criticos")} isActive={filtroKpi === "criticos"} />
+         <KpiCard label="Críticos sem OPM" value={semOPMcomFem} hint="municípios críticos sem Organismo de Políticas para as Mulheres" tooltip="OPM = estrutura governamental local de políticas para as mulheres, como secretaria, coordenadoria, departamento ou órgão equivalente." tone="critical" onClick={() => handleKpiClick("semOPMcomFem")} isActive={filtroKpi === "semOPMcomFem"} />
+         <KpiCard label="Críticos sem CREAS" value={semCREAScomFem} hint="municípios críticos sem CREAS" tone="critical" onClick={() => handleKpiClick("semCREAScomFem")} isActive={filtroKpi === "semCREAScomFem"} />
+         <KpiCard label="Críticos sem rede mínima" value={semAmbosCriticos} hint="municípios críticos sem proteção institucional mínima" tone="critical" onClick={() => handleKpiClick("semAmbosCriticos")} isActive={filtroKpi === "semAmbosCriticos"} />
       </div>
 
       {/* 3. Mapa e Ranking (2 colunas) */}
@@ -204,11 +204,14 @@ function RiscoPanel() {
                 </ul>
                 <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2 text-[11px] md:text-xs">
                   <p className="text-primary-700 dark:text-primary-300 font-medium mb-1.5">
-                    O Índice de Risco utiliza um <strong className="font-bold">modelo híbrido ponderado</strong>. Ele corrige a distorção gerada por volumes absolutos altos em grandes cidades, dando 70% de peso à <strong className="font-bold">Taxa Relativa</strong> (por 100 mil) e 30% ao <strong className="font-bold">Volume Absoluto</strong>. A esse cálculo, soma-se o bônus de vulnerabilidade por ausência de OPM e CREAS.
+                    O Índice de Risco utiliza uma <strong className="font-bold">Modelagem Híbrida Ponderada baseada em Risco de Desastres (Risco = Ameaça × Vulnerabilidade)</strong>. A <strong className="font-bold">Ameaça</strong> é a incidência relativa ponderada pela população feminina local. A <strong className="font-bold">Vulnerabilidade</strong> atua como multiplicador, agravado pela ausência de rede estrutural (OPM/CREAS). 
                   </p>
-                  <p className="text-primary-700/80 dark:text-primary-300/80 italic">
-                    * Nota metodológica: O denominador atual provisório utiliza a População Total do município. O sistema já está preparado arquiteturalmente para migrar para População Feminina assim que os dados estiverem disponíveis na base oficial.
+                  <p className="text-primary-700 dark:text-primary-300 font-medium mb-1.5 border-t border-primary/20 pt-1.5">
+                    <strong className="font-bold">Nota metodológica:</strong> A metodologia vigente do risco utiliza como janela oficial os anos de 2023, 2024 e 2025. Dados de 2026 são armazenados como monitoramento parcial até consolidação do período.
                   </p>
+                  <div className="bg-background/50 p-2 rounded text-[10px] font-mono text-muted-foreground mt-2 border">
+                    Score = [1 + (TaxaFemi × PesoF) + (TaxaTent × PesoT)] × [1 + (S/OPM ? PesoO/100 : 0) + (S/CREAS ? PesoC/100 : 0)]
+                  </div>
                 </div>
               </ChartHelper>
               <CardTitle className="text-base text-foreground pr-8">Distribuição Geográfica do Risco</CardTitle>
@@ -217,15 +220,14 @@ function RiscoPanel() {
               <PiauiMap height={850}
                 colorFn={colorFn}
                 legend={[
-                  { label: "Baixo", color: RISK_COLORS.BAIXO },
-                  { label: "Médio", color: RISK_COLORS.MEDIO },
-                  { label: "Alto", color: RISK_COLORS.ALTO },
-                  { label: "Crítico", color: RISK_COLORS.CRITICO },
-                  { label: "Fora do filtro", color: "oklch(0.95 0 0)" },
+                  { label: "Baixo (< 140)", color: RISK_COLORS.BAIXO },
+                  { label: "Médio (≥ 140)", color: RISK_COLORS.MEDIO },
+                  { label: "Alto (≥ 270)", color: RISK_COLORS.ALTO },
+                  { label: "Crítico (≥ 390)", color: RISK_COLORS.CRITICO },
                 ]}
               />
 
-              <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+              <div className="absolute bottom-16 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
                 <p className="text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição por risco</p>
                 <div className="flex-1">
                   <ResponsiveContainer width="100%" height="100%">
@@ -305,10 +307,10 @@ function RiscoPanel() {
                  size="sm" variant="outline"
                  onClick={() => exportCsv("risco_feminicidio.csv", filtered.map((m) => ({
                    municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
-                   comarca: m.comarca, populacao: m.populacao,
+                   comarca: m.comarca, populacao_total: m.populacao, populacao_feminina: m.populacao_feminina || 0,
                    risco: m.risco_feminicidio_nivel, score: m.risco_feminicidio_score,
-                   taxa_femi_100k: m.taxa_feminicidios_100k, feminicidios: m.feminicidios_total_2023_2026,
-                   taxa_tentativas_100k: m.taxa_tentativas_100k, tentativas: m.tentativas_total_2023_2026,
+                   taxa_femi_100k: m.taxa_feminicidios_100k, feminicidios: m.feminicidios_consumados_2023_2025,
+                   taxa_tentativas_100k: m.taxa_tentativas_100k, tentativas: m.feminicidios_tentados_2023_2025,
                    ocorrencias: m.ocorrencias_total_violencia_genero_monitoradas,
                    opm: m.opm_possui, creas: m.creas_possui, alerta: m.painel_alerta_rede,
                    atuacao_prioritaria: m.necessita_atuacao_prioritaria,
@@ -327,22 +329,23 @@ function RiscoPanel() {
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo <SortIcon column="polo_regional" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao')}>População <SortIcon column="populacao" /></TableHead>
+                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao')}>População (Geral) <SortIcon column="populacao" /></TableHead>
+                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao_feminina')}>Pop. Feminina <SortIcon column="populacao_feminina" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_feminicidio_nivel')}>Risco <SortIcon column="risco_feminicidio_nivel" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('risco_feminicidio_score')}>Score <SortIcon column="risco_feminicidio_score" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('taxa_feminicidios_100k')}>
                           <div className="flex flex-col items-end">
                              <span>Feminicídios <SortIcon column="taxa_feminicidios_100k" /></span>
-                             <span className="text-[10px] font-normal opacity-70">Taxa 100k (Abs)</span>
+                             <span className="text-[10px] font-normal opacity-70">Taxa p/ 100k mulheres</span>
                           </div>
                        </TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('taxa_tentativas_100k')}>
                           <div className="flex flex-col items-end">
                              <span>Tentativas <SortIcon column="taxa_tentativas_100k" /></span>
-                             <span className="text-[10px] font-normal opacity-70">Taxa 100k (Abs)</span>
+                             <span className="text-[10px] font-normal opacity-70">Taxa p/ 100k mulheres</span>
                           </div>
                        </TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')}>OPM <SortIcon column="opm_possui" /></TableHead>
+                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')} title="Organismo de Políticas para as Mulheres">OPM <SortIcon column="opm_possui" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('creas_possui')}>CREAS <SortIcon column="creas_possui" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('painel_alerta_rede')}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
                        <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('necessita_atuacao_prioritaria')}>Prioritária <SortIcon column="necessita_atuacao_prioritaria" /></TableHead>
@@ -359,15 +362,16 @@ function RiscoPanel() {
                          <TableCell className="text-muted-foreground">{m.comarca}</TableCell>
                          <TableCell className="text-muted-foreground">{m.polo_regional}</TableCell>
                          <TableCell className="text-right tabular-nums text-muted-foreground">{m.populacao.toLocaleString("pt-BR")}</TableCell>
+                         <TableCell className="text-right tabular-nums text-foreground font-medium">{(m.populacao_feminina || 0).toLocaleString("pt-BR")}</TableCell>
                          <TableCell><RiskBadge level={m.risco_feminicidio_nivel} /></TableCell>
-                         <TableCell className="text-right tabular-nums">{m.risco_feminicidio_score}</TableCell>
+                         <TableCell className="text-right tabular-nums">{m.risco_feminicidio_score.toFixed(1)}</TableCell>
                          <TableCell className="text-right tabular-nums">
                             <span className="font-semibold">{m.taxa_feminicidios_100k}</span>
-                            <span className="text-[10px] text-muted-foreground ml-1">({m.feminicidios_total_2023_2026})</span>
+                            <span className="text-[10px] text-muted-foreground ml-1">({m.feminicidios_consumados_2023_2025})</span>
                          </TableCell>
                          <TableCell className="text-right tabular-nums">
                             <span className="font-semibold">{m.taxa_tentativas_100k}</span>
-                            <span className="text-[10px] text-muted-foreground ml-1">({m.tentativas_total_2023_2026})</span>
+                            <span className="text-[10px] text-muted-foreground ml-1">({m.feminicidios_tentados_2023_2025})</span>
                          </TableCell>
                          <TableCell><YesNoBadge value={m.opm_possui} /></TableCell>
                          <TableCell><YesNoBadge value={m.creas_possui} /></TableCell>

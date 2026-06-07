@@ -31,8 +31,8 @@ export interface Municipio {
   tentado_2024: number;
   tentado_2025: number;
   tentado_2026: number;
-  feminicidios_total_2023_2026: number;
-  tentativas_total_2023_2026: number;
+  feminicidios_consumados_2023_2025: number;
+  feminicidios_tentados_2023_2025: number;
   ocorrencias_total_violencia_genero_monitoradas: number;
   indicador_tem_feminicidio_consumado: SimNao;
   indicador_tem_tentativa_feminicidio: SimNao;
@@ -64,8 +64,8 @@ export interface Municipio {
   grau_suficiencia_estrutura?: "ADEQUADO" | "PARCIAL" | "INSUFICIENTE" | string;
 
   // Painel 2 - Violência de Gênero, Investigação e Perícias
-  feminicidios_consumados_2024_2025?: number;
-  feminicidios_tentados_2024_2025?: number;
+  feminicidios_consumados_2023_2025?: number;
+  feminicidios_tentados_2023_2025?: number;
   tem_protocolo_investigacao?: SimNao;
   tem_protocolo_pericial?: SimNao;
   capacitado_perspectiva_genero?: SimNao;
@@ -86,5 +86,21 @@ export interface Municipio {
   ier_score?: number; // Índice de Estrutura da Rede (0-10)
   imf_score?: number; // Índice de Maturidade dos Fluxos (0-10)
   iqt_score?: number; // Índice de Qualificação Técnica (0-10)
+
+  // Eventos aninhados após migração do banco
+  eventos_feminicidio?: EventoFeminicidio[];
+}
+
+export interface EventoFeminicidio {
+  id?: string;
+  municipio_id: string;
+  ano_fato: number;
+  tipo_evento: "CONSUMADO" | "TENTADO" | string;
+  quantidade: number;
+  origem_dado?: string;
+  status_periodo: "historico_fechado" | "janela_oficial" | "parcial_corrente" | string;
+  considera_no_score: boolean;
+  versao_metodologia: string;
+  updated_at?: string;
 }
 

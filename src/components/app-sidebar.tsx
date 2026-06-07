@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, HeartHandshake, AlertTriangle,
-  MapPin, ListChecks, FileText, Map as MapIcon, LogOut, Sliders
+  MapPin, ListChecks, FileText, Map as MapIcon, LogOut, Sliders, BookOpen
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -32,6 +32,12 @@ const groups = [
     items: [
       { title: "Gestão do Projeto", url: "/gestao", icon: ListChecks },
       { title: "Relatórios", url: "/relatorios", icon: FileText },
+    ],
+  },
+  {
+    label: "Referência",
+    items: [
+      { title: "Metodologia dos Índices", url: "/metodologia", icon: BookOpen },
     ],
   },
 ];

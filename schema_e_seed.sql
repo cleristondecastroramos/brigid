@@ -46,7 +46,8 @@ CREATE TABLE municipios (
     fonte_base_risco TEXT,
     observacoes_sistema TEXT,
     ultima_atualizacao_referencia TEXT,
-    id TEXT
+    id TEXT,
+    gargalos_identificados TEXT
 );
 
 -- CREATE TABLE entregas_estrategicas

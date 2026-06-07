@@ -191,6 +191,7 @@ export function PiauiMap({ colorFn, height = 520, legend, title }: PiauiMapProps
               <div className="mt-1 space-y-0.5 text-muted-foreground">
                 <p>OPM: <span className={cn("font-medium", hover.m.opm_possui === "SIM" ? "text-[color:var(--color-success)]" : "text-destructive")}>{hover.m.opm_possui || "—"}</span></p>
                 <p>CREAS: <span className={cn("font-medium", hover.m.creas_possui === "SIM" ? "text-[color:var(--color-success)]" : "text-destructive")}>{hover.m.creas_possui || "—"}</span></p>
+                <p>Score: <span className="font-medium">{hover.m.risco_feminicidio_score.toFixed(1)}</span></p>
                 <p>Risco: <span className="font-medium">{hover.m.risco_feminicidio_nivel}</span></p>
                 <p>Alerta: <span className="font-medium">{hover.m.painel_alerta_rede}</span></p>
               </div>

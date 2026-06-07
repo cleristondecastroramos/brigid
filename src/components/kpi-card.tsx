@@ -6,6 +6,7 @@ interface KpiCardProps {
   label: string;
   value: string | number;
   hint?: string;
+  tooltip?: string;
   icon?: LucideIcon;
   tone?: "default" | "success" | "warning" | "critical" | "primary";
   className?: string;
@@ -21,10 +22,11 @@ const toneStyles: Record<string, string> = {
   critical: "bg-destructive/15 text-destructive",
 };
 
-export function KpiCard({ label, value, hint, icon: Icon, tone = "default", className, onClick, isActive }: KpiCardProps) {
+export function KpiCard({ label, value, hint, tooltip, icon: Icon, tone = "default", className, onClick, isActive }: KpiCardProps) {
   return (
     <Card 
       onClick={onClick}
+      title={tooltip}
       className={cn(
         "border-border/70 transition-colors", 
         onClick && "cursor-pointer hover:bg-accent/40",

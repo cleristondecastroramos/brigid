@@ -15,8 +15,16 @@ def generate_schema():
     if not municipios:
         return ""
     
-    # Analyze the first complete record to build schema
-    sample = municipios[0]
+    # Analyze ALL records to build a complete schema
+    all_keys = {}
+    for m in municipios:
+        for k, v in m.items():
+            if k not in all_keys or all_keys[k] == "NULL":
+                if v is not None:
+                    all_keys[k] = get_sql_type(v)
+                else:
+                    if k not in all_keys:
+                        all_keys[k] = "TEXT" # fallback
     
     sql = ""
     sql += "-- DROP TABLES IF THEY EXIST\n"
@@ -26,14 +34,10 @@ def generate_schema():
     # 1. MUNICIPIOS
     sql += "-- CREATE TABLE municipios\n"
     sql += "CREATE TABLE municipios (\n"
-    for k, v in sample.items():
-        if k == "codigo_ibge" or k == "id":
-            if k == "codigo_ibge":
-                sql += f"    {k} TEXT PRIMARY KEY,\n"
-            else:
-                sql += f"    {k} TEXT,\n"
+    for k, sql_type in all_keys.items():
+        if k == "codigo_ibge":
+            sql += f"    {k} TEXT PRIMARY KEY,\n"
         else:
-            sql_type = get_sql_type(v)
             sql += f"    {k} {sql_type},\n"
             
     # Remove last comma

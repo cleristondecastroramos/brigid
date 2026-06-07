@@ -38,10 +38,11 @@ const COLORS = {
   withoutSvc: "oklch(0.62 0.2 27)",
   na: "oklch(0.92 0.01 230)",
   risk: {
-    BAIXO: "oklch(0.72 0.12 160)",
+    BAIXO: "oklch(0.55 0.13 175)",
     MEDIO: "oklch(0.78 0.15 85)",
     ALTO: "oklch(0.62 0.18 45)",
     CRITICO: "oklch(0.52 0.22 27)",
+    NA: "oklch(0.92 0.01 230)"
   } as Record<string, string>,
   alert: {
     ADEQUADO: "oklch(0.72 0.12 160)",
@@ -174,7 +175,7 @@ function TerritorialIntelligence() {
       [...filtered].sort(
         (a, b) =>
           b.risco_feminicidio_score - a.risco_feminicidio_score ||
-          b.feminicidios_total_2023_2026 - a.feminicidios_total_2023_2026,
+          b.feminicidios_consumados_2023_2025 - a.feminicidios_consumados_2023_2025,
       ),
     [filtered],
   );
@@ -199,8 +200,8 @@ function TerritorialIntelligence() {
       score: m.risco_feminicidio_score,
       alerta: m.painel_alerta_rede,
       prioritario: m.necessita_atuacao_prioritaria,
-      feminicidios_2023_2026: m.feminicidios_total_2023_2026,
-      tentativas_2023_2026: m.tentativas_total_2023_2026,
+      feminicidios_2023_2026: m.feminicidios_consumados_2023_2025,
+      tentativas_2023_2026: m.feminicidios_tentados_2023_2025,
       ocorrencias_monitoradas: m.ocorrencias_total_violencia_genero_monitoradas,
     }));
 
@@ -418,8 +419,8 @@ function TerritorialIntelligence() {
                 <Section title="Risco e ocorrências">
                   <Row k="Nível de risco" v={<RiskBadge level={selected.risco_feminicidio_nivel} />} />
                   <Row k="Score" v={<strong>{selected.risco_feminicidio_score}</strong>} />
-                  <Row k="Feminicídios 2023–26" v={selected.feminicidios_total_2023_2026} />
-                  <Row k="Tentativas 2023–26" v={selected.tentativas_total_2023_2026} />
+                  <Row k="Feminicídios 2023–26" v={selected.feminicidios_consumados_2023_2025} />
+                  <Row k="Tentativas 2023–26" v={selected.feminicidios_tentados_2023_2025} />
                   <Row k="Ocorrências monitoradas" v={selected.ocorrencias_total_violencia_genero_monitoradas} />
                   <Row k="Alerta da rede" v={<AlertBadge level={selected.painel_alerta_rede} />} />
                 </Section>

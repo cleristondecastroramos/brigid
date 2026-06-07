@@ -21,7 +21,7 @@ export const Route = createFileRoute("/creas")({
 });
 
 const COLOR_WITH = "oklch(0.55 0.13 175)";
-const COLOR_WITHOUT = "oklch(0.65 0.2 27)";
+const COLOR_WITHOUT = "var(--color-primary)";
 const COLOR_NA = "oklch(0.92 0.01 230)";
 
 function CreasPanel() {
@@ -69,14 +69,14 @@ function CreasPanel() {
   const filtered = useMemo(() => baseFiltered.filter((m) => {
     if (filtroKpi === "com") return m.creas_possui === "SIM";
     if (filtroKpi === "sem") return m.creas_possui !== "SIM";
-    if (filtroKpi === "altaPrio") return m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA";
+    if (filtroKpi === "altaPrio") return m.creas_possui !== "SIM" && Number(m.populacao) > 10000;
     return true;
   }), [baseFiltered, filtroKpi]);
 
   const total = baseFiltered.length;
   const com = baseFiltered.filter((m) => m.creas_possui === "SIM").length;
   const sem = total - com;
-  const altaPrio = baseFiltered.filter((m) => m.creas_possui !== "SIM" && m.prioridade_implantacao_creas === "ALTA").length;
+  const altaPrio = baseFiltered.filter((m) => m.creas_possui !== "SIM" && Number(m.populacao) > 10000).length;
 
   const semList = filtered.filter((m) => m.creas_possui !== "SIM");
 
@@ -185,7 +185,7 @@ function CreasPanel() {
         <KpiCard label="Municípios (Recorte)" value={total} hint={hasFilter ? "Filtrado" : "Universo"} icon={HeartHandshake} tone="primary" onClick={() => setFiltroKpi(null)} isActive={filtroKpi === null} />
         <KpiCard label="Com CREAS" value={com} hint={pct(com, total)} tone="success" onClick={() => handleKpiClick("com")} isActive={filtroKpi === "com"} />
         <KpiCard label="Sem CREAS" value={sem} hint={pct(sem, total)} tone="critical" onClick={() => handleKpiClick("sem")} isActive={filtroKpi === "sem"} />
-        <KpiCard label="Prioridade ALTA" value={altaPrio} hint="Para implantação" tone="warning" onClick={() => handleKpiClick("altaPrio")} isActive={filtroKpi === "altaPrio"} />
+        <KpiCard label="Prioridade ALTA" value={altaPrio} hint="Sem CREAS e pop. > 10.000 hab." tone="warning" onClick={() => handleKpiClick("altaPrio")} isActive={filtroKpi === "altaPrio"} />
       </div>
 
       {isDestaque20k && (
@@ -270,7 +270,7 @@ function CreasPanel() {
                   </p>
                 </div>
               </ChartHelper>
-              <CardTitle className="text-base pr-8">Cobertura territorial de CREAS</CardTitle>
+              <CardTitle className="text-lg pr-8">Cobertura territorial de CREAS</CardTitle>
             </CardHeader>
             <CardContent className="relative">
             <PiauiMap height={850}
@@ -349,23 +349,32 @@ function CreasPanel() {
                         Cruze os dados de <strong className="font-bold">Profissionais Capacitados</strong> e avalie se a estrutura física está acompanhada de preparo técnico.
                       </p>
                     </div></ChartHelper>
-            <CardTitle className="text-base pr-8">Municípios — detalhamento</CardTitle>
-          <Button
-            size="sm" variant="outline"
-            onClick={() => exportCsv("municipios_sem_creas.csv", semList.map((m) => ({
-              municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
-              comarca: m.comarca, populacao: m.populacao, prioridade: m.prioridade_implantacao_creas,
-              risco: m.risco_feminicidio_nivel, alerta: m.painel_alerta_rede,
-            })))}
-          >
-            <Download className="mr-2 h-4 w-4" /> Exportar sem CREAS (Filtro atual)
-          </Button>
+            <CardTitle className="text-lg pr-16">Municípios — detalhamento</CardTitle>
+          <div className="absolute top-4 right-12 z-10">
+            <button
+              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+              title={`Exportar Tabela (${filtroKpi === "com" ? "Com CREAS" : filtroKpi === "sem" ? "Sem CREAS" : filtroKpi === "altaPrio" ? "Prioridade ALTA" : "Filtro atual"})`}
+              onClick={() => {
+                const filename = filtroKpi === "com" ? "municipios_com_creas.csv" :
+                                 filtroKpi === "sem" ? "municipios_sem_creas.csv" :
+                                 filtroKpi === "altaPrio" ? "municipios_prioridade_alta.csv" :
+                                 "municipios_filtro_atual.csv";
+                exportCsv(filename, filtered.map((m) => ({
+                  municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional,
+                  comarca: m.comarca, populacao: m.populacao, creas_possui: m.creas_possui,
+                  risco: m.risco_feminicidio_nivel, alerta: m.painel_alerta_rede,
+                })));
+              }}
+            >
+              <Download className="h-5 w-5" />
+            </button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="overflow-x-auto rounded-md border border-border">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="text-base">
                   <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("municipio")}>
                     <div className="flex items-center">Município <SortIcon col="municipio" /></div>
                   </TableHead>
@@ -381,17 +390,11 @@ function CreasPanel() {
                   <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("creas_possui")}>
                     <div className="flex items-center">CREAS <SortIcon col="creas_possui" /></div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("creas_status")}>
-                    <div className="flex items-center">Status <SortIcon col="creas_status" /></div>
-                  </TableHead>
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("prioridade_implantacao_creas")}>
-                    <div className="flex items-center">Prioridade implantação <SortIcon col="prioridade_implantacao_creas" /></div>
-                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedData.slice(0, 80).map((m) => (
-                  <TableRow key={m.codigo_ibge}>
+                  <TableRow key={m.codigo_ibge} className="text-base">
                     <TableCell>
                       <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="font-medium text-foreground hover:underline">
                         {m.municipio}
@@ -401,14 +404,12 @@ function CreasPanel() {
                     <TableCell className="text-muted-foreground">{m.polo_regional}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">{m.populacao.toLocaleString("pt-BR")}</TableCell>
                     <TableCell><YesNoBadge value={m.creas_possui} /></TableCell>
-                    <TableCell className="text-muted-foreground">{m.creas_status || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{m.prioridade_implantacao_creas || "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-          <p className="text-xs text-muted-foreground">Exibindo {Math.min(filtered.length, 80)} de {filtered.length} resultados.</p>
+          <p className="text-sm text-muted-foreground">Exibindo {Math.min(filtered.length, 80)} de {filtered.length} resultados.</p>
         </CardContent>
           </Card>
         </div>

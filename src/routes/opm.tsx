@@ -21,10 +21,9 @@ export const Route = createFileRoute("/opm")({
   component: OpmPanel,
 });
 
-const COLOR_WITH = "oklch(0.35 0.15 300)";
-const COLOR_WITHOUT = "oklch(0.6 0 0)";
-const COLOR_PENDING = "oklch(0.65 0.15 300)";
-const COLOR_NA = "oklch(0.95 0 0)";
+const COLOR_WITH = "oklch(0.55 0.13 175)";
+const COLOR_WITHOUT = "var(--color-primary)";
+const COLOR_NA = "oklch(0.92 0.01 230)";
 
 function OpmPanel() {
   const { data: municipios } = useMunicipios();
@@ -37,6 +36,7 @@ function OpmPanel() {
   const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [filtroKpi, setFiltroKpi] = useState<string | null>(null);
+  const [selectedTipologia, setSelectedTipologia] = useState<string | null>(null);
 
   const handleKpiClick = (filtro: string) => {
     setFiltroKpi(prev => prev === filtro ? null : filtro);
@@ -66,31 +66,40 @@ function OpmPanel() {
     return true;
   }), [municipios, q, comarca, polo, faixaPop, status, tipo]);
 
-  const filtered = useMemo(() => baseFiltered.filter((m) => {
+  const filteredByKpi = useMemo(() => baseFiltered.filter((m) => {
     if (filtroKpi === "com") return m.opm_possui === "SIM";
     if (filtroKpi === "sem") return m.opm_possui === "NAO";
     if (filtroKpi === "pendentes") return m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE";
     return true;
-  }).sort((a, b) => {
-    const valA = a[sortColumn];
-    const valB = b[sortColumn];
-    if (valA === valB) return 0;
-    const modifier = sortDirection === "asc" ? 1 : -1;
-    if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB, 'pt-BR') * modifier;
-    return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
-  }), [baseFiltered, filtroKpi, sortColumn, sortDirection]);
+  }), [baseFiltered, filtroKpi]);
 
-  const total = baseFiltered.length;
-  const com = baseFiltered.filter((m) => m.opm_possui === "SIM").length;
-  const sem = baseFiltered.filter((m) => m.opm_possui === "NAO").length;
-  const pendentes = baseFiltered.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE").length;
+  const finalFiltered = useMemo(() => {
+    const arr = selectedTipologia 
+      ? filteredByKpi.filter(m => m.opm_possui === "SIM" && (m.opm_orgaotipo === selectedTipologia || (selectedTipologia === "A Verificar" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE")))
+      : filteredByKpi;
 
-  const semList = filtered.filter((m) => m.opm_possui !== "SIM");
-  const pendentesList = filtered.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE");
+    return arr.sort((a, b) => {
+      const valA = a[sortColumn];
+      const valB = b[sortColumn];
+      if (valA === valB) return 0;
+      const modifier = sortDirection === "asc" ? 1 : -1;
+      if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB, 'pt-BR') * modifier;
+      return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
+    });
+  }, [filteredByKpi, selectedTipologia, sortColumn, sortDirection]);
 
-  // Chart Data
+  const kpiSource = selectedTipologia ? baseFiltered.filter(m => m.opm_possui === "SIM" && (m.opm_orgaotipo === selectedTipologia || (selectedTipologia === "A Verificar" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE"))) : baseFiltered;
+  const total = kpiSource.length;
+  const com = kpiSource.filter((m) => m.opm_possui === "SIM").length;
+  const sem = kpiSource.filter((m) => m.opm_possui === "NAO").length;
+  const pendentes = kpiSource.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE").length;
+
+  const semList = finalFiltered.filter((m) => m.opm_possui !== "SIM");
+  const pendentesList = finalFiltered.filter((m) => m.opm_possui === "SIM" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE");
+
+  // Chart Data (always based on filteredByKpi so chart doesn't filter itself)
   const chartData = useMemo(() => {
-    const counts = {
+    const counts: Record<string, number> = {
       "Secretaria": 0,
       "Coordenadoria": 0,
       "Diretoria": 0,
@@ -100,8 +109,10 @@ function OpmPanel() {
       "A Verificar": 0
     };
     
-    filtered.forEach(m => {
+    let totalComOpm = 0;
+    filteredByKpi.forEach(m => {
       if (m.opm_possui === "SIM") {
+        totalComOpm++;
         const t = m.opm_orgaotipo;
         if (t === "Secretaria") counts["Secretaria"]++;
         else if (t === "Coordenadoria") counts["Coordenadoria"]++;
@@ -113,23 +124,41 @@ function OpmPanel() {
       }
     });
 
-    return Object.entries(counts).map(([nome, valor]) => ({ nome, valor })).filter(d => d.valor > 0).sort((a, b) => b.valor - a.valor);
-  }, [filtered]);
+    return Object.entries(counts)
+      .map(([nome, valor]) => {
+        const percent = totalComOpm > 0 ? (valor / totalComOpm) * 100 : 0;
+        return { 
+          nome, 
+          valor, 
+          percent,
+          qtdLabel: `Quantidade: ${valor} municípios`,
+          pctLabel: `Participação: ${percent.toFixed(1).replace('.', ',')}%`
+        };
+      })
+      .filter(d => d.valor > 0)
+      .sort((a, b) => b.valor - a.valor);
+  }, [filteredByKpi]);
 
   const colorFn = (m: any) => {
     if (!m) return COLOR_NA;
-    const isFilteredIn = filtered.some(fm => fm.codigo_ibge === m.codigo_ibge);
+    
+    const isFilteredIn = filteredByKpi.some(fm => fm.codigo_ibge === m.codigo_ibge);
     if (!isFilteredIn) return COLOR_NA;
     
+    if (selectedTipologia) {
+       const isMatch = m.opm_possui === "SIM" && (m.opm_orgaotipo === selectedTipologia || (selectedTipologia === "A Verificar" && m.opm_orgaotipo === "A_VERIFICAR_DETALHE"));
+       if (!isMatch) return COLOR_NA; // Dimmed state
+    }
+    
     if (m.opm_possui === "SIM") {
-      return m.opm_orgaotipo === "A_VERIFICAR_DETALHE" ? COLOR_PENDING : COLOR_WITH;
+      return COLOR_WITH;
     }
     return COLOR_WITHOUT;
   };
 
-  const hasFilter = q !== "" || comarca !== "__all" || polo !== "__all" || faixaPop !== "__all" || status !== "__all" || tipo !== "__all";
+  const hasFilter = q !== "" || comarca !== "__all" || polo !== "__all" || faixaPop !== "__all" || status !== "__all" || tipo !== "__all" || selectedTipologia !== null;
   const clearFilters = () => {
-    setQ(""); setComarca("__all"); setPolo("__all"); setFaixaPop("__all"); setStatus("__all"); setTipo("__all");
+    setQ(""); setComarca("__all"); setPolo("__all"); setFaixaPop("__all"); setStatus("__all"); setTipo("__all"); setSelectedTipologia(null);
   };
 
   return (
@@ -138,7 +167,7 @@ function OpmPanel() {
         <CardContent className="p-4">
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
+              <span className="text-base font-semibold text-foreground">Filtros de Análise:</span>
               {hasFilter && (
                 <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">Filtros ativos</span>
               )}
@@ -207,41 +236,39 @@ function OpmPanel() {
         <Card className="lg:col-span-1">
           <CardHeader className="pb-2 relative">
             <ChartHelper>
-              <p>
+              <p className="text-base">
                 Monitora a implantação de Organismos de Políticas para as Mulheres (OPMs) no território.
               </p>
-              <ul className="list-disc pl-4 space-y-1">
+              <ul className="list-disc pl-4 space-y-1 text-base">
                 <li><strong className="text-foreground/80">Qualificado:</strong> OPM instituído por lei, com dotação orçamentária e equipe mínima.</li>
                 <li><strong className="text-foreground/80">Sem OPM:</strong> Inexistência formal do órgão ou estrutura inadequada (desativado).</li>
               </ul>
               <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
-                <p className="text-primary-700 dark:text-primary-300 font-medium">
+                <p className="text-primary-700 dark:text-primary-300 font-medium text-base">
                   A ausência de OPM prejudica a articulação de políticas públicas de gênero na base municipal e fragiliza a prevenção à violência.
                 </p>
               </div>
             </ChartHelper>
-            <CardTitle className="text-base pr-8">Cobertura territorial de OPMs</CardTitle>
+            <CardTitle className="text-lg pr-8">Cobertura territorial de OPMs</CardTitle>
           </CardHeader>
           <CardContent className="relative">
             <PiauiMap height={850}
               colorFn={colorFn}
               legend={[
-                { label: "Com OPM (Qualificado)", color: COLOR_WITH },
-                { label: "Com OPM (Pendente Detalhe)", color: COLOR_PENDING },
+                { label: "Com OPM", color: COLOR_WITH },
                 { label: "Sem OPM", color: COLOR_WITHOUT },
-                { label: "Fora do filtro", color: COLOR_NA },
+                { label: "Sem dado / Fora do filtro", color: COLOR_NA },
               ]}
             />
 
             <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
-              <p className="text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição por cobertura</p>
+              <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição por cobertura</p>
               <div className="flex-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={[
-                        { name: "Qualificado", total: com - pendentes, color: COLOR_WITH },
-                        { name: "Pendente Det.", total: pendentes, color: COLOR_PENDING },
+                        { name: "Com OPM", total: com, color: COLOR_WITH },
                         { name: "Sem OPM", total: sem, color: COLOR_WITHOUT }
                       ].filter(d => d.total > 0)}
                       dataKey="total"
@@ -261,7 +288,7 @@ function OpmPanel() {
                             fill={fill} 
                             textAnchor={x > cx ? 'start' : 'end'} 
                             dominantBaseline="central" 
-                            fontSize={10} 
+                            fontSize={12} 
                             fontWeight={600}
                           >
                             {`${name} ${(percent * 100).toFixed(0)}%`}
@@ -273,8 +300,7 @@ function OpmPanel() {
                       strokeWidth={2}
                     >
                       {[
-                        { name: "Qualificado", total: com - pendentes, color: COLOR_WITH },
-                        { name: "Pendente Det.", total: pendentes, color: COLOR_PENDING },
+                        { name: "Com OPM", total: com, color: COLOR_WITH },
                         { name: "Sem OPM", total: sem, color: COLOR_WITHOUT }
                       ].filter(d => d.total > 0).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -282,7 +308,7 @@ function OpmPanel() {
                     </Pie>
                     <Tooltip 
                       formatter={(value: number) => [value, "Municípios"]}
-                      contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 11 }} 
+                      contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 13 }} 
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -294,28 +320,64 @@ function OpmPanel() {
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-2 relative">
-            <ChartHelper><p>
+            <ChartHelper><p className="text-base">
                       Classifica as estruturas de políticas para mulheres (OPMs) com base no seu nível hierárquico na prefeitura.
                     </p>
-                    <ul className="list-disc pl-4 space-y-1">
+                    <ul className="list-disc pl-4 space-y-1 text-base">
                       <li><strong className="text-foreground/80">Secretaria:</strong> Maior orçamento e autonomia.</li>
                       <li><strong className="text-foreground/80">Coordenação:</strong> Estruturas menores, geralmente subordinadas.</li>
                     </ul>
                     <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
-                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium text-base">
                         Identifique a <strong className="font-bold">Tipologia</strong> para direcionar recomendações sobre o fortalecimento da autonomia gerencial.
                       </p>
                     </div></ChartHelper>
-            <CardTitle className="text-base pr-8">Distribuição por Tipologia</CardTitle></CardHeader>
-            <CardContent className="h-[300px]">
+            <CardTitle className="text-lg pr-8 flex items-center justify-between">
+              Distribuição por Tipologia
+              {selectedTipologia && (
+                <Button variant="ghost" size="sm" onClick={() => setSelectedTipologia(null)} className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground">
+                  <Eraser className="mr-1 h-3 w-3" /> Limpar seleção
+                </Button>
+              )}
+            </CardTitle></CardHeader>
+            <CardContent style={{ height: Math.max(300, chartData.length * 80 + 50) }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }} layout="vertical">
+                <BarChart data={chartData} margin={{ top: 20, right: 180, left: 10, bottom: 20 }} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
                   <XAxis type="number" hide />
-                  <YAxis dataKey="nome" type="category" tick={{ fontSize: 11 }} width={90} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="valor" fill="var(--color-primary)" radius={[0, 4, 4, 0]} barSize={24}>
-                    <LabelList dataKey="valor" position="right" style={{ fill: "var(--color-foreground)", fontSize: 11, fontWeight: 500 }} />
+                  <YAxis dataKey="nome" type="category" tick={{ fontSize: 13, fill: "var(--color-foreground)" }} width={110} axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    cursor={{ fill: "var(--color-accent)", opacity: 0.2 }}
+                    content={() => null}
+                  />
+                  <Bar 
+                    dataKey="valor" 
+                    radius={[0, 4, 4, 0]} 
+                    barSize={48}
+                    className="cursor-pointer transition-opacity"
+                    onClick={(data) => setSelectedTipologia(prev => prev === data.nome ? null : data.nome)}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={selectedTipologia === entry.nome ? "var(--color-primary)" : (selectedTipologia ? "var(--color-muted)" : "var(--color-primary)")} 
+                        style={{ outline: 'none' }}
+                      />
+                    ))}
+                    <LabelList 
+                      dataKey="valor" 
+                      content={(props: any) => {
+                        const { x, y, width, height, index } = props;
+                        const d = chartData[index];
+                        if (!d) return null;
+                        return (
+                          <text x={x + width + 12} y={y + height / 2} fill="var(--color-foreground)" fontSize={13} dominantBaseline="middle">
+                            <tspan x={x + width + 12} dy="-0.5em" fontWeight="600">{d.qtdLabel}</tspan>
+                            <tspan x={x + width + 12} dy="1.4em" fill="var(--color-muted-foreground)" fontSize={12}>{d.pctLabel}</tspan>
+                          </text>
+                        );
+                      }} 
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -328,31 +390,37 @@ function OpmPanel() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 relative">
-            <ChartHelper><p>
+            <ChartHelper><p className="text-base">
                       Visão analítica individual dos municípios quanto à implementação e funcionamento dos órgãos de política para mulheres.
                     </p>
-                    <ul className="list-disc pl-4 space-y-1">
+                    <ul className="list-disc pl-4 space-y-1 text-base">
                       <li><strong className="text-foreground/80">Base Legal:</strong> Leis de criação aprovadas.</li>
                       <li><strong className="text-foreground/80">Qualificação:</strong> Atendimento aos critérios mínimos de operação.</li>
                     </ul>
                     <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
-                      <p className="text-primary-700 dark:text-primary-300 font-medium">
+                      <p className="text-primary-700 dark:text-primary-300 font-medium text-base">
                         Utilize a <strong className="font-bold">Exportação de Planilha</strong> para fundamentar inquéritos voltados à regularização de OPMs inativas.
                       </p>
                     </div></ChartHelper>
-            <CardTitle className="text-base pr-8">Municípios — detalhamento</CardTitle>
-          <Button size="sm" variant="outline" onClick={() => exportCsv("municipios_opm_filtro.csv", filtered.map((m) => ({
-            municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional, comarca: m.comarca, populacao: m.populacao,
-            opm_possui: m.opm_possui, opm_orgaotipo: m.opm_orgaotipo, opm_status_politicas_publicas: m.opm_status_politicas_publicas
-          })))}>
-            <Download className="mr-2 h-4 w-4" /> Exportar Tabela
-          </Button>
+            <CardTitle className="text-lg pr-16">Municípios — detalhamento</CardTitle>
+          <div className="absolute top-4 right-12 z-10">
+            <button
+              className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+              title="Exportar Tabela"
+              onClick={() => exportCsv("municipios_opm_filtro.csv", finalFiltered.map((m) => ({
+                municipio: m.municipio, codigo_ibge: m.codigo_ibge, polo_regional: m.polo_regional, comarca: m.comarca, populacao: m.populacao,
+                opm_possui: m.opm_possui, opm_orgaotipo: m.opm_orgaotipo, opm_status_politicas_publicas: m.opm_status_politicas_publicas
+              })))}
+            >
+              <Download className="h-5 w-5" />
+            </button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="overflow-x-auto rounded-md border border-border">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="text-base">
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo <SortIcon column="polo_regional" /></TableHead>
@@ -360,12 +428,11 @@ function OpmPanel() {
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')}>OPM <SortIcon column="opm_possui" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_orgaotipo')}>Tipologia <SortIcon column="opm_orgaotipo" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_status_politicas_publicas')}>Políticas Efetivas <SortIcon column="opm_status_politicas_publicas" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui_estrutura_ativa')}>Estrutura Ativa <SortIcon column="opm_possui_estrutura_ativa" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.slice(0, 80).map((m) => (
-                  <TableRow key={m.codigo_ibge}>
+                {finalFiltered.slice(0, 80).map((m) => (
+                  <TableRow key={m.codigo_ibge} className="text-base">
                     <TableCell><Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="font-medium text-foreground hover:underline">{m.municipio}</Link></TableCell>
                     <TableCell className="text-muted-foreground">{m.comarca}</TableCell>
                     <TableCell className="text-muted-foreground">{m.polo_regional}</TableCell>
@@ -373,13 +440,12 @@ function OpmPanel() {
                     <TableCell><YesNoBadge value={m.opm_possui} /></TableCell>
                     <TableCell className="text-muted-foreground">{m.opm_orgaotipo || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{m.opm_status_politicas_publicas || "—"}</TableCell>
-                    <TableCell><YesNoBadge value={m.opm_possui_estrutura_ativa} /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-          <p className="text-xs text-muted-foreground">Exibindo {Math.min(filtered.length, 80)} de {filtered.length} resultados.</p>
+          <p className="text-sm text-muted-foreground">Exibindo {Math.min(finalFiltered.length, 80)} de {finalFiltered.length} resultados.</p>
         </CardContent>
       </Card>
     </div>

@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { municipiosQueryOptions } from "./csv-data";
 import { useApp } from "@/context/AppContext";
+import { RISK_MODEL_CONFIG } from "./config";
 import type { Municipio } from "./types";
 
 export function getHash(str: string): number {
@@ -16,26 +17,44 @@ export function useMunicipios() {
   const { weights, thresholds } = useApp();
 
   const data: Municipio[] = rawMunicipios.map((m) => {
-    // 1. Calcular Taxas Relativas (por 100 mil habitantes/mulheres)
-    // Se a base já tiver populacao_feminina, usa ela. Caso contrário, usa populacao total como denominador provisório.
+    // 1. Extrair Casos Oficiais pela RISK_MODEL_CONFIG
+    const code = m.codigo_ibge || "2200000";
+    const h = getHash(code);
+
+    const eventos = m.eventos_feminicidio || [];
+    const oficiais = eventos.filter(e => e.considera_no_score && RISK_MODEL_CONFIG.anosOficiais.includes(e.ano_fato));
+    const historicos = eventos.filter(e => RISK_MODEL_CONFIG.anosHistoricos.includes(e.ano_fato));
+    const parciais = eventos.filter(e => e.status_periodo === 'parcial_corrente');
+
+    const feminicidios_consumados_2023_2025 = oficiais.filter(e => e.tipo_evento === 'CONSUMADO').reduce((sum, e) => sum + e.quantidade, 0);
+    const feminicidios_tentados_2023_2025 = oficiais.filter(e => e.tipo_evento === 'TENTADO').reduce((sum, e) => sum + e.quantidade, 0);
+
+    // Save segmented data back to object
+    (m as any).oficiais = oficiais;
+    (m as any).historicos = historicos;
+    (m as any).parciais = parciais;
+    m.feminicidios_consumados_2023_2025 = feminicidios_consumados_2023_2025;
+    m.feminicidios_tentados_2023_2025 = feminicidios_tentados_2023_2025;
+
+    // 2. Calcular Taxas Relativas Ponderadas (por 100 mil mulheres)
     const populacao_denominador = m.populacao_feminina || m.populacao;
-    const taxa_feminicidios_100k = (m.feminicidios_total_2023_2026 / populacao_denominador) * 100000;
-    const taxa_tentativas_100k = (m.tentativas_total_2023_2026 / populacao_denominador) * 100000;
+    const taxa_feminicidios_100k = (feminicidios_consumados_2023_2025 / populacao_denominador) * 100000;
+    const taxa_tentativas_100k = (feminicidios_tentados_2023_2025 / populacao_denominador) * 100000;
 
-    // 2. Calcular o Score Dinâmico Híbrido de Feminicídio
-    // O índice composto suaviza o impacto em municípios muito pequenos: 70% peso da taxa, 30% peso do volume absoluto
-    const fatorFemi = (taxa_feminicidios_100k * 0.7) + (m.feminicidios_total_2023_2026 * 0.3);
-    const fatorTent = (taxa_tentativas_100k * 0.7) + (m.tentativas_total_2023_2026 * 0.3);
+    // 3. Modelagem Híbrida: Risco = Ameaça × Vulnerabilidade
+    // Ameaça: Soma ponderada das taxas relativas (com baseline de 1.0 para manter o agravo da vulnerabilidade mesmo com 0 casos)
+    const ameaca = 1.0 + (taxa_feminicidios_100k * weights.pesoFeminicidios) + (taxa_tentativas_100k * weights.pesoTentativas);
 
-    let score =
-      (fatorFemi * weights.pesoFeminicidios) +
-      (fatorTent * weights.pesoTentativas) +
-      (m.opm_possui !== "SIM" ? weights.pesoOPM : 0) +
-      (m.creas_possui !== "SIM" ? weights.pesoCREAS : 0);
+    // Vulnerabilidade: Fator multiplicador base 1.0 + agravantes estruturais
+    // A falta de equipamentos soma percentuais ao risco (ex: peso = 20 significa +0.2 de agravante)
+    const agravante_opm = m.opm_possui !== "SIM" ? (weights.pesoOPM / 100) : 0;
+    const agravante_creas = m.creas_possui !== "SIM" ? (weights.pesoCREAS / 100) : 0;
+    const vulnerabilidade = 1.0 + agravante_opm + agravante_creas;
 
+    let score = ameaca * vulnerabilidade;
     score = Math.round(score * 10) / 10;
 
-    // 2. Classificar a faixa de risco com base nos limites (thresholds)
+    // 4. Classificar a faixa de risco com base nos limites (thresholds)
     let nivel = "BAIXO";
     if (score >= thresholds.critico) {
       nivel = "CRITICO";
@@ -45,13 +64,10 @@ export function useMunicipios() {
       nivel = "MEDIO";
     }
 
-    // 3. Atuação prioritária dinâmica
+    // 5. Atuação prioritária dinâmica
     const necessita_atuacao_prioritaria = (nivel === "ALTO" || nivel === "CRITICO") ? "SIM" : "NAO";
 
-    // 4. Seeding determinístico de novos campos se não estiverem presentes no db.json
-    const code = m.codigo_ibge || "2200000";
-    const h = getHash(code);
-
+    // 6. Seeding determinístico de novos campos se não estiverem presentes no db.json
     const tem_fluxo_formal = m.tem_fluxo_formal ?? (h % 3 === 0 ? "SIM" : "NAO");
     const tem_protocolo_local_regional = m.tem_protocolo_local_regional ?? (h % 4 === 0 ? "SIM" : "NAO");
     const tem_atendimento_psicossocial = m.tem_atendimento_psicossocial ?? (h % 2 === 0 ? "SIM" : "NAO");
@@ -63,8 +79,6 @@ export function useMunicipios() {
     const grau_suficiencia_estrutura = m.grau_suficiencia_estrutura ?? 
       (h % 3 === 0 ? "ADEQUADO" : h % 3 === 1 ? "PARCIAL" : "INSUFICIENTE");
 
-    const feminicidios_consumados_2024_2025 = m.feminicidios_consumados_2024_2025 ?? (h % 3);
-    const feminicidios_tentados_2024_2025 = m.feminicidios_tentados_2024_2025 ?? (h % 5);
     const tem_protocolo_investigacao = m.tem_protocolo_investigacao ?? (h % 3 === 0 ? "SIM" : "NAO");
     const tem_protocolo_pericial = m.tem_protocolo_pericial ?? (h % 4 === 0 ? "SIM" : "NAO");
     const capacitado_perspectiva_genero = m.capacitado_perspectiva_genero ?? (h % 2 === 0 ? "SIM" : "NAO");
@@ -125,8 +139,8 @@ export function useMunicipios() {
       tem_recursos_minimos,
       grau_suficiencia_estrutura,
 
-      feminicidios_consumados_2024_2025,
-      feminicidios_tentados_2024_2025,
+      feminicidios_consumados_2023_2025,
+      feminicidios_tentados_2023_2025,
       tem_protocolo_investigacao,
       tem_protocolo_pericial,
       capacitado_perspectiva_genero,

@@ -53,7 +53,7 @@ function PesosConfigPanel() {
         risco_original: original?.risco_feminicidio_nivel ?? "BAIXO",
       }
     })
-    .sort((a, b) => b.risco_feminicidio_score - a.risco_feminicidio_score || b.feminicidios_total_2023_2026 - a.feminicidios_total_2023_2026)
+    .sort((a, b) => b.risco_feminicidio_score - a.risco_feminicidio_score || b.feminicidios_consumados_2023_2025 - a.feminicidios_consumados_2023_2025)
     .slice(0, 10)
     .sort((a, b) => {
       let valA, valB;

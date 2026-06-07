@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ChartHelper } from "@/components/chart-helper";
 import { cn } from "@/lib/utils";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, PieChart, Pie, Cell, LabelList } from "recharts";
 
 export const Route = createFileRoute("/diagnostico")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/diagnostico")({
 
 const COLOR_OK = "oklch(0.55 0.13 175)";
 const COLOR_WARN = "oklch(0.8 0.15 85)";
-const COLOR_CRIT = "oklch(0.65 0.2 27)";
+const COLOR_CRIT = "var(--color-primary)";
 const COLOR_GRAY = "oklch(0.92 0.01 230)";
 const COLOR_DARK_PURPLE = "oklch(0.35 0.15 300)";
 
@@ -91,7 +91,9 @@ function DiagnosticoPanel() {
   const [q, setQ] = useState("");
   const [sortColumn, setSortColumn] = useState<keyof typeof municipios[0]>("municipio");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [mapMode, setMapMode] = useState<"IER" | "IMF" | "IQT">("IER");
   const [assistenciaPage, setAssistenciaPage] = useState(1);
+  const [estruturaPage, setEstruturaPage] = useState(1);
   const handleSort = (col: keyof typeof municipios[0]) => {
     if (sortColumn === col) setSortDirection(prev => prev === "asc" ? "desc" : "asc");
     else { setSortColumn(col); setSortDirection("asc"); }
@@ -100,6 +102,18 @@ function DiagnosticoPanel() {
   const SortIcon = ({ column }: { column: keyof typeof municipios[0] }) => {
     if (sortColumn !== column) return null;
     return sortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
+  };
+
+  const [poloSortColumn, setPoloSortColumn] = useState<"polo" | "ier" | "imf" | "iqt" | "_mediaRaw">("_mediaRaw");
+  const [poloSortDirection, setPoloSortDirection] = useState<"asc" | "desc">("asc");
+  const handlePoloSort = (col: "polo" | "ier" | "imf" | "iqt" | "_mediaRaw") => {
+    if (poloSortColumn === col) setPoloSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    else { setPoloSortColumn(col); setPoloSortDirection("asc"); }
+  };
+  
+  const PoloSortIcon = ({ column }: { column: "polo" | "ier" | "imf" | "iqt" | "_mediaRaw" }) => {
+    if (poloSortColumn !== column) return null;
+    return poloSortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
   };
 
   const comarcas = useMemo(() => {
@@ -202,8 +216,8 @@ function DiagnosticoPanel() {
     const jur = filteredMunicipios.filter(m => m.tem_atendimento_juridico === "SIM").length;
     const articulacao = filteredMunicipios.filter(m => m.tem_articulacao_rede === "SIM").length;
 
-    const femCons = filteredMunicipios.reduce((acc, m) => acc + (m.feminicidios_consumados_2024_2025 ?? 0), 0);
-    const femTent = filteredMunicipios.reduce((acc, m) => acc + (m.feminicidios_tentados_2024_2025 ?? 0), 0);
+    const femCons = filteredMunicipios.reduce((acc, m) => acc + (m.feminicidios_consumados_2023_2025 ?? 0), 0);
+    const femTent = filteredMunicipios.reduce((acc, m) => acc + (m.feminicidios_tentados_2023_2025 ?? 0), 0);
     const protInv = filteredMunicipios.filter(m => m.tem_protocolo_investigacao === "SIM").length;
     const protPer = filteredMunicipios.filter(m => m.tem_protocolo_pericial === "SIM").length;
     const capPersp = filteredMunicipios.filter(m => m.capacitado_perspectiva_genero === "SIM").length;
@@ -264,14 +278,27 @@ function DiagnosticoPanel() {
       const mediaGeral = (ier + imf + iqt) / 3;
       return {
         polo: p.name,
-        ier: Number(ier.toFixed(1)),
-        imf: Number(imf.toFixed(1)),
-        iqt: Number(iqt.toFixed(1)),
-        media: Number(mediaGeral.toFixed(1)),
+        ier: ier.toFixed(1),
+        imf: imf.toFixed(1),
+        iqt: iqt.toFixed(1),
+        media: mediaGeral.toFixed(1),
+        _mediaRaw: mediaGeral,
         prioridade: mediaGeral < 4 ? "CRÍTICA" : mediaGeral < 6.5 ? "MÉDIA" : "ESTÁVEL"
       };
-    }).sort((a, b) => a.media - b.media); // Ordem crescente: piores médias primeiro
-  }, [municipios]);
+    }).sort((a, b) => {
+      let valA: any = a[poloSortColumn];
+      let valB: any = b[poloSortColumn];
+      
+      if (poloSortColumn !== "polo") {
+        valA = Number(valA);
+        valB = Number(valB);
+      }
+      
+      if (valA < valB) return poloSortDirection === "asc" ? -1 : 1;
+      if (valA > valB) return poloSortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [municipios, poloSortColumn, poloSortDirection]);
 
   // Cruzamento do Painel 2: Ocorrências vs Capacitação (exibir por polo ordenado por déficit percentual)
   const poloCruzamentoData = useMemo(() => {
@@ -281,7 +308,7 @@ function DiagnosticoPanel() {
       if (!poloStats[m.polo_regional]) {
         poloStats[m.polo_regional] = { polo: m.polo_regional, ocorrencias: 0, capacitacoes: 0 };
       }
-      poloStats[m.polo_regional].ocorrencias += (m.feminicidios_consumados_2024_2025 ?? 0) + (m.feminicidios_tentados_2024_2025 ?? 0);
+      poloStats[m.polo_regional].ocorrencias += (m.feminicidios_consumados_2023_2025 ?? 0) + (m.feminicidios_tentados_2023_2025 ?? 0);
       poloStats[m.polo_regional].capacitacoes += m.qtd_capacitacoes_realizadas ?? 0;
     });
     return Object.values(poloStats).map(p => {
@@ -310,10 +337,10 @@ function DiagnosticoPanel() {
     const isIncluded = filteredMunicipios.some(fm => fm.codigo_ibge === m.codigo_ibge);
     if (!isIncluded) return "oklch(0.96 0.005 240)"; // dim if filtered out
 
-    if (tab === "infra") {
+    if (mapMode === "IER") {
       const score = m.ier_score ?? 0;
       return score >= 7 ? COLOR_OK : score >= 4 ? COLOR_WARN : COLOR_CRIT;
-    } else if (tab === "violencia") {
+    } else if (mapMode === "IQT") {
       const score = m.iqt_score ?? 0;
       return score >= 7 ? COLOR_OK : score >= 4 ? COLOR_WARN : COLOR_CRIT;
     } else {
@@ -324,8 +351,8 @@ function DiagnosticoPanel() {
 
   const mapLegend = useMemo(() => {
     let labelSuf = "Pontuação";
-    if (tab === "infra") labelSuf = "Estrutura (IER)";
-    else if (tab === "violencia") labelSuf = "Qualificação (IQT)";
+    if (mapMode === "IER") labelSuf = "Estrutura (IER)";
+    else if (mapMode === "IQT") labelSuf = "Qualificação (IQT)";
     else labelSuf = "Maturidade (IMF)";
 
     return [
@@ -333,7 +360,7 @@ function DiagnosticoPanel() {
       { label: `Regular / Média (4 a 6.9) — ${labelSuf}`, color: COLOR_WARN },
       { label: `Insuficiente / Crítica (< 4) — ${labelSuf}`, color: COLOR_CRIT }
     ];
-  }, [tab]);
+  }, [mapMode]);
 
   return (
     <div className="space-y-4">
@@ -342,9 +369,9 @@ function DiagnosticoPanel() {
         {/* Linha 1 — KPIs + Filtros */}
         <div className="flex items-center gap-0 border-b border-border/50">
           {/* Bloco: KPI cards premium */}
-          <div className="flex" style={{maxWidth: "54%", width: "54%"}}>
+          <div className="flex" style={{ width: "calc(50% - 10px)" }}>
             {/* IER — Estrutura da Rede */}
-            <div className="relative flex items-center gap-3 px-4 py-3 flex-1 border-r border-border/40 overflow-hidden group hover:bg-primary/[0.03] transition-colors">
+            <div onClick={() => setMapMode("IER")} className={cn("relative flex items-center gap-3 px-4 py-2 flex-1 border border-black/20 dark:border-white/20 rounded-lg m-1.5 shadow-sm overflow-hidden group hover:bg-primary/[0.05] transition-colors cursor-pointer", mapMode === "IER" && "bg-primary/[0.08] border-black/40 dark:border-white/40")}>
               <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary rounded-r-full" />
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
                 <Building2 className="h-4 w-4 text-primary" />
@@ -352,7 +379,7 @@ function DiagnosticoPanel() {
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">Estrutura da Rede</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-2xl font-black text-primary leading-none tabular-nums">{stats.ierMedio}</span>
+                  <span className="text-2xl font-black text-primary leading-none tabular-nums">{stats.ierMedio.toFixed(1)}</span>
                   <span className="text-base text-muted-foreground font-medium">/10</span>
                   <span className="ml-auto text-base font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">IER</span>
                 </div>
@@ -363,7 +390,7 @@ function DiagnosticoPanel() {
             </div>
 
             {/* IMF — Maturidade dos Fluxos */}
-            <div className="relative flex items-center gap-3 px-4 py-3 flex-1 border-r border-border/40 overflow-hidden group hover:bg-[color:var(--color-success)]/[0.03] transition-colors">
+            <div onClick={() => setMapMode("IMF")} className={cn("relative flex items-center gap-3 px-4 py-2 flex-1 border border-black/20 dark:border-white/20 rounded-lg m-1.5 shadow-sm overflow-hidden group hover:bg-[color:var(--color-success)]/[0.05] transition-colors cursor-pointer", mapMode === "IMF" && "bg-[color:var(--color-success)]/[0.08] border-black/40 dark:border-white/40")}>
               <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[color:var(--color-success)] rounded-r-full" />
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-success)]/10 shrink-0">
                 <HeartHandshake className="h-4 w-4 text-[color:var(--color-success)]" />
@@ -371,7 +398,7 @@ function DiagnosticoPanel() {
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">Maturidade dos Fluxos</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-2xl font-black text-[color:var(--color-success)] leading-none tabular-nums">{stats.imfMedio}</span>
+                  <span className="text-2xl font-black text-[color:var(--color-success)] leading-none tabular-nums">{stats.imfMedio.toFixed(1)}</span>
                   <span className="text-base text-muted-foreground font-medium">/10</span>
                   <span className="ml-auto text-base font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">IMF</span>
                 </div>
@@ -382,7 +409,7 @@ function DiagnosticoPanel() {
             </div>
 
             {/* IQT — Qualificação Técnica */}
-            <div className="relative flex items-center gap-3 px-4 py-3 flex-1 overflow-hidden group hover:bg-warning/[0.03] transition-colors">
+            <div onClick={() => setMapMode("IQT")} className={cn("relative flex items-center gap-3 px-4 py-2 flex-1 border border-black/20 dark:border-white/20 rounded-lg m-1.5 shadow-sm overflow-hidden group hover:bg-warning/[0.05] transition-colors cursor-pointer", mapMode === "IQT" && "bg-warning/[0.08] border-black/40 dark:border-white/40")}>
               <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-warning rounded-r-full" />
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 shrink-0">
                 <GraduationCap className="h-4 w-4 text-warning-foreground" />
@@ -390,7 +417,7 @@ function DiagnosticoPanel() {
               <div className="flex flex-col min-w-0 flex-1">
                 <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">Qualificação Técnica</span>
                 <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-2xl font-black text-warning-foreground leading-none tabular-nums">{stats.iqtMedio}</span>
+                  <span className="text-2xl font-black text-warning-foreground leading-none tabular-nums">{stats.iqtMedio.toFixed(1)}</span>
                   <span className="text-base text-muted-foreground font-medium">/10</span>
                   <span className="ml-auto text-base font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">IQT</span>
                 </div>
@@ -401,12 +428,14 @@ function DiagnosticoPanel() {
             </div>
           </div>
 
+          <div style={{ width: "calc(4% + 10px)" }} />
+
           {/* Bloco: Filtros alinhados à direita */}
           <div className="flex items-center gap-3 px-4 py-2 border-l border-border/50 shrink-0 flex-1">
             <div className="flex flex-col gap-0.5">
               <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Polo Regional</label>
               <Select value={selectedPolo} onValueChange={(v) => { setSelectedPolo(v); setSelectedComarca("__all"); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="text-base w-[170px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[280px]"><SelectValue placeholder="Todos os Polos" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Polos</SelectItem>
                   {polos.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
@@ -417,7 +446,7 @@ function DiagnosticoPanel() {
             <div className="flex flex-col gap-0.5">
               <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Comarca</label>
               <Select value={selectedComarca} onValueChange={(v) => { setSelectedComarca(v); setSelectedMunicipio("__all"); }}>
-                <SelectTrigger className="text-base w-[170px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[280px]"><SelectValue placeholder="Todas as Comarcas" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todas as Comarcas</SelectItem>
                   {comarcas.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
@@ -428,7 +457,7 @@ function DiagnosticoPanel() {
             <div className="flex flex-col gap-0.5">
               <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">Município</label>
               <Select value={selectedMunicipio} onValueChange={handleSelectMunicipio}>
-                <SelectTrigger className="text-base w-[185px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
+                <SelectTrigger className="text-base w-[280px]"><SelectValue placeholder="Todos os Municípios" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all">Todos os Municípios</SelectItem>
                   {municipiosDropdown.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
@@ -502,134 +531,166 @@ function DiagnosticoPanel() {
             PAINEL 1: FLUXOS E INFRAESTRUTURA DE ATENDIMENTO
             ======================================================== */}
         <TabsContent value="infra" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Mapa Temático de Estrutura */}
-            <Card className="lg:col-span-1">
-              <CardHeader className="pb-3 relative">
-                <ChartHelper>
-                  <p>
-                      Mapeia o nível de prontidão estrutural dos municípios para atendimento a vítimas.
-                    </p>
-                    <ul className="list-disc pl-4 space-y-1">
-                      <li><strong className="text-foreground/80">Adequada / Alta:</strong> Rede com capacidade satisfatória instalada.</li>
-                      <li><strong className="text-foreground/80">Insufic. / Crítica:</strong> Alta vulnerabilidade estrutural local.</li>
-                    </ul>
-                    <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-2">
-                      <p className="text-primary-700 dark:text-primary-300 font-medium">
-                        O <strong className="font-bold">IER (Índice de Estrutura da Rede)</strong> guia a priorização de vistorias técnicas e cobranças administrativas do MPPI.
-                      </p>
-                    </div>
-                </ChartHelper>
-                <CardTitle className="text-lg flex items-center justify-between pr-8">
-                  <span>Mapa Temático de Estrutura da Rede (IER)</span>
-                  <span className="text-base font-normal text-muted-foreground">
-                    Exibindo {filteredMunicipios.length} municípios
-                  </span>
-                </CardTitle>
-                <CardDescription className="text-base">
-                  A cor do município no mapa representa o grau de adequação do Índice de Estrutura da Rede (IER). Clicar no município abre a ficha detalhada.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                <PiauiMap 
-                  colorFn={mapColorFn} 
-                  legend={mapLegend} 
-                  height={850}
-                />
-                
-                <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
-                  <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição das classificações</p>
-                  <div className="flex-1">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: "Adequada / Alta", total: filteredMunicipios.filter(m => {
-                                let score = 0;
-                                if (tab === "infra") score = m.ier_score ?? 0;
-                                else if (tab === "violencia") score = m.iqt_score ?? 0;
-                                else score = m.imf_score ?? 0;
-                                return score >= 7;
-                              }).length, color: COLOR_OK },
-                            { name: "Regular / Média", total: filteredMunicipios.filter(m => {
-                                let score = 0;
-                                if (tab === "infra") score = m.ier_score ?? 0;
-                                else if (tab === "violencia") score = m.iqt_score ?? 0;
-                                else score = m.imf_score ?? 0;
-                                return score >= 4 && score < 7;
-                              }).length, color: COLOR_WARN },
-                            { name: "Insufic. / Crítica", total: filteredMunicipios.filter(m => {
-                                let score = 0;
-                                if (tab === "infra") score = m.ier_score ?? 0;
-                                else if (tab === "violencia") score = m.iqt_score ?? 0;
-                                else score = m.imf_score ?? 0;
-                                return score < 4;
-                              }).length, color: COLOR_CRIT }
-                          ].filter(d => d.total > 0)}
-                          dataKey="total"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={35}
-                          outerRadius={55}
-                          label={({ cx, cy, midAngle, outerRadius, percent, name, fill }) => {
-                            const RADIAN = Math.PI / 180;
-                            const radius = outerRadius * 1.3;
-                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                            return (
-                              <text 
-                                x={x} y={y} 
-                                fill={fill} 
-                                textAnchor={x > cx ? 'start' : 'end'} 
-                                dominantBaseline="central" 
-                                fontSize={10} 
-                                fontWeight={600}
-                              >
-                                {`${name} ${(percent * 100).toFixed(0)}%`}
-                              </text>
-                            );
-                          }}
-                          labelLine={false}
-                          stroke="var(--color-background)"
-                          strokeWidth={2}
-                        >
-                          {[
-                            { name: "Adequada / Alta", total: filteredMunicipios.filter(m => {
-                                let score = 0;
-                                if (tab === "infra") score = m.ier_score ?? 0;
-                                else if (tab === "violencia") score = m.iqt_score ?? 0;
-                                else score = m.imf_score ?? 0;
-                                return score >= 7;
-                              }).length, color: COLOR_OK },
-                            { name: "Regular / Média", total: filteredMunicipios.filter(m => {
-                                let score = 0;
-                                if (tab === "infra") score = m.ier_score ?? 0;
-                                else if (tab === "violencia") score = m.iqt_score ?? 0;
-                                else score = m.imf_score ?? 0;
-                                return score >= 4 && score < 7;
-                              }).length, color: COLOR_WARN },
-                            { name: "Insufic. / Crítica", total: filteredMunicipios.filter(m => {
-                                let score = 0;
-                                if (tab === "infra") score = m.ier_score ?? 0;
-                                else if (tab === "violencia") score = m.iqt_score ?? 0;
-                                else score = m.imf_score ?? 0;
-                                return score < 4;
-                              }).length, color: COLOR_CRIT }
-                          ].filter(d => d.total > 0).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: number) => [value, "Municípios"]}
-                          contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 11 }} 
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Mapa Temático */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="pb-3 relative">
+            <ChartHelper>
+              {mapMode === "IER" && (
+                <>
+                  <p className="mb-2"><strong>Índice de Estrutura da Rede (IER)</strong></p>
+                  <p className="text-sm mb-3">Avalia a capacidade física e material da rede de proteção à mulher no município, com nota de 0 a 10.</p>
+                  <ul className="list-disc pl-4 space-y-1 text-sm">
+                    <li><strong className="text-foreground/80">Sala Especializada (30%):</strong> +3 pts se possuir ambiente exclusivo.</li>
+                    <li><strong className="text-foreground/80">Recursos Mínimos (30%):</strong> +3 pts se dispuser de insumos fundamentais.</li>
+                    <li><strong className="text-foreground/80">Suficiência da Estrutura (40%):</strong> +4 pts (Adequado), +2 pts (Parcial), +0 pts (Insuficiente).</li>
+                  </ul>
+                  <div className="bg-primary/10 p-2.5 rounded-md border border-primary/20 mt-3 text-xs">
+                    O IER mapeia o nível de prontidão estrutural e guia a priorização de vistorias técnicas do MPPI.
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </>
+              )}
+              {mapMode === "IMF" && (
+                <>
+                  <p className="mb-2"><strong>Índice de Maturidade dos Fluxos (IMF)</strong></p>
+                  <p className="text-sm mb-3">Avalia a formalização e articulação dos protocolos de atendimento da rede, com nota de 0 a 10.</p>
+                  <ul className="list-disc pl-4 space-y-1 text-sm">
+                    <li><strong className="text-foreground/80">Fluxo Formal (30%):</strong> +3 pts se possuir diretrizes oficiais de encaminhamento.</li>
+                    <li><strong className="text-foreground/80">Protocolo Regional (30%):</strong> +3 pts se aderir a um protocolo padronizado.</li>
+                    <li><strong className="text-foreground/80">Articulação em Rede (40%):</strong> +4 pts se houver articulação integrada de saúde e segurança.</li>
+                  </ul>
+                  <div className="bg-[color:var(--color-success)]/10 p-2.5 rounded-md border border-[color:var(--color-success)]/20 mt-3 text-xs">
+                    O IMF ajuda a identificar deficiências na articulação interinstitucional.
+                  </div>
+                </>
+              )}
+              {mapMode === "IQT" && (
+                <>
+                  <p className="mb-2"><strong>Índice de Qualificação Técnica (IQT)</strong></p>
+                  <p className="text-sm mb-3">Avalia a expertise e preparo dos profissionais da rede no atendimento às vítimas, com nota de 0 a 10.</p>
+                  <ul className="list-disc pl-4 space-y-1 text-sm">
+                    <li><strong className="text-foreground/80">Equipe Multiprofissional (30%):</strong> +3 pts se possuir equipe técnica diversificada.</li>
+                    <li><strong className="text-foreground/80">Capacitação em Gênero (35%):</strong> +3.5 pts se houver formação na perspectiva de gênero.</li>
+                    <li><strong className="text-foreground/80">Treinamento Feminicídio (35%):</strong> +3.5 pts se houver treinamento específico de resposta ao feminicídio.</li>
+                  </ul>
+                  <div className="bg-warning/10 p-2.5 rounded-md border border-warning/20 mt-3 text-xs text-warning-foreground">
+                    O IQT direciona a promoção de cursos de aperfeiçoamento e capacitação.
+                  </div>
+                </>
+              )}
+            </ChartHelper>
+            <CardTitle className="text-lg flex items-center justify-between pr-8">
+              <span>
+                Mapa Temático de {mapMode === "IER" ? "Estrutura da Rede (IER)" : mapMode === "IMF" ? "Maturidade dos Fluxos (IMF)" : "Qualificação Técnica (IQT)"}
+              </span>
+              <span className="text-base font-normal text-muted-foreground">
+                Exibindo {filteredMunicipios.length} municípios
+              </span>
+            </CardTitle>
+            <CardDescription className="text-base">
+              A cor do município no mapa representa o grau de adequação do índice. Clique para interagir e visualizar a distribuição.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="relative">
+            <PiauiMap 
+              colorFn={mapColorFn} 
+              legend={mapLegend} 
+              height={850}
+            />
+            
+            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+              <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Distribuição das classificações</p>
+              <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Adequada / Alta", total: filteredMunicipios.filter(m => {
+                            let score = 0;
+                            if (mapMode === "IER") score = m.ier_score ?? 0;
+                            else if (mapMode === "IQT") score = m.iqt_score ?? 0;
+                            else score = m.imf_score ?? 0;
+                            return score >= 7;
+                          }).length, color: COLOR_OK },
+                        { name: "Regular / Média", total: filteredMunicipios.filter(m => {
+                            let score = 0;
+                            if (mapMode === "IER") score = m.ier_score ?? 0;
+                            else if (mapMode === "IQT") score = m.iqt_score ?? 0;
+                            else score = m.imf_score ?? 0;
+                            return score >= 4 && score < 7;
+                          }).length, color: COLOR_WARN },
+                        { name: "Insufic. / Crítica", total: filteredMunicipios.filter(m => {
+                            let score = 0;
+                            if (mapMode === "IER") score = m.ier_score ?? 0;
+                            else if (mapMode === "IQT") score = m.iqt_score ?? 0;
+                            else score = m.imf_score ?? 0;
+                            return score < 4;
+                          }).length, color: COLOR_CRIT }
+                      ].filter(d => d.total > 0)}
+                      dataKey="total"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={35}
+                      outerRadius={55}
+                      label={({ cx, cy, midAngle, outerRadius, percent, name, fill }) => {
+                        const RADIAN = Math.PI / 180;
+                        const radius = outerRadius * 1.3;
+                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        return (
+                          <text 
+                            x={x} y={y} 
+                            fill={fill} 
+                            textAnchor={x > cx ? 'start' : 'end'} 
+                            dominantBaseline="central" 
+                            fontSize={10} 
+                            fontWeight={600}
+                          >
+                            {`${name} ${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        );
+                      }}
+                      labelLine={false}
+                      stroke="var(--color-background)"
+                      strokeWidth={2}
+                    >
+                      {[
+                        { name: "Adequada / Alta", total: filteredMunicipios.filter(m => {
+                            let score = 0;
+                            if (mapMode === "IER") score = m.ier_score ?? 0;
+                            else if (mapMode === "IQT") score = m.iqt_score ?? 0;
+                            else score = m.imf_score ?? 0;
+                            return score >= 7;
+                          }).length, color: COLOR_OK },
+                        { name: "Regular / Média", total: filteredMunicipios.filter(m => {
+                            let score = 0;
+                            if (mapMode === "IER") score = m.ier_score ?? 0;
+                            else if (mapMode === "IQT") score = m.iqt_score ?? 0;
+                            else score = m.imf_score ?? 0;
+                            return score >= 4 && score < 7;
+                          }).length, color: COLOR_WARN },
+                        { name: "Insufic. / Crítica", total: filteredMunicipios.filter(m => {
+                            let score = 0;
+                            if (mapMode === "IER") score = m.ier_score ?? 0;
+                            else if (mapMode === "IQT") score = m.iqt_score ?? 0;
+                            else score = m.imf_score ?? 0;
+                            return score < 4;
+                          }).length, color: COLOR_CRIT }
+                      ].filter(d => d.total > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [value, "Municípios"]}
+                      contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 11 }} 
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
             {/* Quadro de Cobertura e Ranking */}
             <div className="space-y-6 lg:col-span-1">
@@ -724,8 +785,11 @@ function DiagnosticoPanel() {
                     <Table>
                       <TableHeader className="bg-muted/40">
                         <TableRow>
-                          <TableHead className="py-1 text-base text-black">Polo</TableHead>
-                          <TableHead className="py-1 text-base text-right text-black">Média</TableHead>
+                          <TableHead className="py-1 text-base text-black cursor-pointer hover:bg-muted/60 transition-colors" onClick={() => handlePoloSort("polo")}>Polo <PoloSortIcon column="polo" /></TableHead>
+                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Estrutura da Rede" onClick={() => handlePoloSort("ier")}>IER <PoloSortIcon column="ier" /></TableHead>
+                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Maturidade dos Fluxos" onClick={() => handlePoloSort("imf")}>IMF <PoloSortIcon column="imf" /></TableHead>
+                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Qualificação Técnica" onClick={() => handlePoloSort("iqt")}>IQT <PoloSortIcon column="iqt" /></TableHead>
+                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" onClick={() => handlePoloSort("_mediaRaw")}>Média Geral <PoloSortIcon column="_mediaRaw" /></TableHead>
                           <TableHead className="py-1 text-base text-center text-black">Status</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -733,7 +797,10 @@ function DiagnosticoPanel() {
                         {rankingLacunas.map((r) => (
                           <TableRow key={r.polo} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleSelectPolo(r.polo)}>
                             <TableCell className="py-2 text-base font-medium">{r.polo}</TableCell>
-                            <TableCell className="py-2 text-base text-right font-bold">{r.media}</TableCell>
+                            <TableCell className="py-2 text-base text-right font-medium text-muted-foreground">{r.ier}</TableCell>
+                            <TableCell className="py-2 text-base text-right font-medium text-muted-foreground">{r.imf}</TableCell>
+                            <TableCell className="py-2 text-base text-right font-medium text-muted-foreground">{r.iqt}</TableCell>
+                            <TableCell className="py-2 text-base text-right font-bold text-primary">{r.media}</TableCell>
                             <TableCell className="py-2 text-base text-center">
                               <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-semibold", 
                                 r.prioridade === "CRÍTICA" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning-foreground"
@@ -749,7 +816,7 @@ function DiagnosticoPanel() {
                 </CardContent>
               </Card>
             </div>
-          </div>
+      </div>
 
           {/* Matriz de presenca/ausencia de serviços */}
           <Card>
@@ -790,7 +857,11 @@ function DiagnosticoPanel() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredMunicipios.slice(0, 15).map(m => (
+                    {(() => {
+                      const totalEstruturaPages = Math.ceil(filteredMunicipios.length / 20) || 1;
+                      const safeEstruturaPage = Math.min(estruturaPage, totalEstruturaPages);
+                      const estruturaPaginated = filteredMunicipios.slice((safeEstruturaPage - 1) * 20, safeEstruturaPage * 20);
+                      return estruturaPaginated.map(m => (
                       <TableRow key={m.codigo_ibge} className="hover:bg-muted/50">
                         <TableCell className="font-semibold text-base py-2 text-foreground">
                           <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="hover:underline text-primary">
@@ -824,15 +895,40 @@ function DiagnosticoPanel() {
                         </TableCell>
                         <TableCell className="text-right py-2 font-bold text-base">{m.ier_score}</TableCell>
                       </TableRow>
-                    ))}
+                      ));
+                    })()}
                   </TableBody>
                 </Table>
               </div>
-              {filteredMunicipios.length > 15 && (
-                <p className="text-sm text-muted-foreground mt-2 text-center">
-                  Exibindo 15 de {filteredMunicipios.length} municípios cadastrados no recorte. Use a pesquisa ou filtros no topo para detalhar.
-                </p>
-              )}
+              {(() => {
+                const totalEstruturaPages = Math.ceil(filteredMunicipios.length / 20) || 1;
+                const safeEstruturaPage = Math.min(estruturaPage, totalEstruturaPages);
+                if (totalEstruturaPages <= 1) return null;
+                return (
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-muted/10 mt-2 rounded-b-lg">
+                    <div className="text-base text-muted-foreground">
+                      Exibindo {(safeEstruturaPage - 1) * 20 + 1} a {Math.min(safeEstruturaPage * 20, filteredMunicipios.length)} de {filteredMunicipios.length} municípios
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" size="sm" className="text-base"
+                        onClick={() => setEstruturaPage(p => Math.max(1, p - 1))}
+                        disabled={safeEstruturaPage === 1}
+                      >
+                        Anterior
+                      </Button>
+                      <span className="text-base font-medium px-2">Página {safeEstruturaPage} de {totalEstruturaPages}</span>
+                      <Button 
+                        variant="outline" size="sm" className="text-base"
+                        onClick={() => setEstruturaPage(p => Math.min(totalEstruturaPages, p + 1))}
+                        disabled={safeEstruturaPage === totalEstruturaPages}
+                      >
+                        Próxima
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
@@ -842,15 +938,15 @@ function DiagnosticoPanel() {
             ======================================================== */}
         <TabsContent value="violencia" className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-            <KpiCard label="Feminicídios Consumados (Recorte)" value={stats.totalFeminicidiosConsumados} hint="2024-2025 consolidado" tone="critical" icon={ShieldAlert} />
-            <KpiCard label="Feminicídios Tentados (Recorte)" value={stats.totalFeminicidiosTentados} hint="2024-2025 consolidado" tone="warning" icon={ShieldAlert} />
+            <KpiCard label="Feminicídios Consumados (Recorte)" value={stats.totalFeminicidiosConsumados} hint="2023-2025 consolidado" tone="critical" icon={ShieldAlert} />
+            <KpiCard label="Feminicídios Tentados (Recorte)" value={stats.totalFeminicidiosTentados} hint="2023-2025 consolidado" tone="warning" icon={ShieldAlert} />
             <KpiCard label="Protocolo de Investigação" value={stats.pctProtInvestigacao} hint="Mapeado na polícia" tone="primary" icon={FileText} />
             <KpiCard label="Total de Capacitações" value={stats.totalCapacitacoes} hint="Realizadas na segurança" tone="success" icon={GraduationCap} />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Gráfico de Correlação: Volume de Ocorrências vs Capacitação */}
-            <Card className="lg:col-span-2 flex flex-col">
+            <Card className="flex flex-col">
               <CardHeader className="pb-3 border-b border-border/50 relative">
                   <ChartHelper>
                     <p>
@@ -873,34 +969,40 @@ function DiagnosticoPanel() {
               </CardHeader>
               <CardContent className="h-[800px] flex items-center justify-center pt-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    layout="vertical" 
-                    data={poloCruzamentoData} 
-                    margin={{ top: 10, right: 30, left: 80, bottom: 10 }}
-                    onClick={(e) => {
-                      if (e && e.activeLabel) {
-                        handleSelectPolo(e.activeLabel);
-                      }
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={true} vertical={true} />
-                    <XAxis type="number" domain={[0, 100]} hide />
-                    <YAxis 
-                      type="category" 
-                      dataKey="polo" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fontSize: 13, fontWeight: 600, fill: "var(--color-foreground)" }} 
-                      width={120} 
-                    />
-                    <Tooltip content={<LacunaTooltip />} cursor={{ fill: "var(--color-muted)", opacity: 0.4 }} />
-                    <Bar 
-                      dataKey="lacuna_percentual" 
-                      name="Lacuna Institucional (%)" 
-                      radius={[0, 4, 4, 0]} 
-                      barSize={18}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
+                    <BarChart 
+                      layout="vertical" 
+                      data={poloCruzamentoData} 
+                      margin={{ top: 10, right: 60, left: 20, bottom: 10 }}
+                      onClick={(e) => {
+                        if (e && e.activeLabel) {
+                          handleSelectPolo(e.activeLabel);
+                        }
+                      }}
                     >
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={true} vertical={true} />
+                      <XAxis type="number" domain={[0, 100]} hide />
+                      <YAxis 
+                        type="category" 
+                        dataKey="polo" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 14, fontWeight: 700, fill: "var(--color-foreground)" }} 
+                        width={180} 
+                      />
+                      <Tooltip content={<LacunaTooltip />} cursor={{ fill: "var(--color-muted)", opacity: 0.4 }} />
+                      <Bar 
+                        dataKey="lacuna_percentual" 
+                        name="Lacuna Institucional (%)" 
+                        radius={[0, 4, 4, 0]} 
+                        barSize={32}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <LabelList 
+                          dataKey="lacuna_percentual" 
+                          position="right" 
+                          formatter={(val: number) => `${val.toFixed(1)}%`} 
+                          style={{ fill: "var(--color-foreground)", fontSize: 14, fontWeight: 700 }} 
+                        />
                       {poloCruzamentoData.map((entry, index) => (
                         <Cell 
                           key={`cell-${index}`} 
@@ -914,7 +1016,7 @@ function DiagnosticoPanel() {
             </Card>
 
             {/* Lista de Gargalos Técnicos Identificados */}
-            <Card>
+            <Card className="flex flex-col">
               <CardHeader className="pb-2 relative">
                 <ChartHelper>
                   <p>
@@ -943,17 +1045,17 @@ function DiagnosticoPanel() {
                     listGargalos.map((m, idx) => (
                       <div key={m.codigo_ibge} className="border-b border-border/40 pb-2 last:border-0">
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-base font-semibold text-foreground">{m.municipio}</span>
-                            <span className="text-sm text-muted-foreground">{m.polo_regional}</span>
+                            <span className="text-lg font-bold text-foreground">{m.municipio}</span>
+                            <span className="text-base font-medium text-muted-foreground">{m.polo_regional}</span>
                           </div>
-                          <div className="text-sm text-destructive flex flex-col gap-1.5">
+                          <div className="text-base text-destructive flex flex-col gap-2">
                             {m.gargalos_identificados?.split(";").map((g, i) => {
                               const text = g.trim();
                               if (!text) return null;
                               return (
-                                <div key={i} className="flex items-start gap-1.5 bg-destructive/5 px-2 py-1.5 rounded border border-destructive/10">
-                                  <span className="mt-0.5 text-[10px]">🔴</span>
-                                  <span className="italic leading-snug">{text}</span>
+                                <div key={i} className="flex items-start gap-2 bg-destructive/5 px-3 py-2 rounded-md border border-destructive/10 shadow-sm">
+                                  <span className="mt-0.5 text-[12px]">🔴</span>
+                                  <span className="italic leading-relaxed font-medium">{text}</span>
                                 </div>
                               );
                             })}
@@ -991,12 +1093,12 @@ function DiagnosticoPanel() {
                   <TableHeader className="bg-muted/70 sticky top-0 z-10">
                     <TableRow>
                       <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_investigacao')}>Prot. Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_pericial')}>Prot. Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Qtd. Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_investigacao')}>Protocolo de<br/>Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_pericial')}>Protocolo<br/>Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado em<br/>Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento<br/>Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Quantidade de<br/>Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
+                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência<br/>Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1017,7 +1119,7 @@ function DiagnosticoPanel() {
                         </TableCell>
                         <TableCell className="py-2 text-center text-base font-medium">{m.qtd_capacitacoes_realizadas}</TableCell>
                         <TableCell className="py-2 text-center">
-                          <span className={cn("px-1.5 py-0.5 rounded text-xs font-semibold", 
+                          <span className={cn("px-2.5 py-1 rounded-md text-sm font-bold shadow-sm", 
                             m.grau_aderencia_protocolo === "ALTO" ? "bg-success/15 text-[color:var(--color-success)]" :
                             m.grau_aderencia_protocolo === "MEDIO" ? "bg-warning/15 text-warning-foreground" :
                             "bg-destructive/15 text-destructive"
@@ -1140,10 +1242,10 @@ function DiagnosticoPanel() {
                       <TableRow>
                         <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
                         <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('creas_possui')}>CREAS Ativo <SortIcon column="creas_possui" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('articulacao_creas_rede')}>Articulação CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('profissionais_capacitados')}>Prof. Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
-                        <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('data_ultima_capacitacao')}>Última Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe<br/>Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('articulacao_creas_rede')}>Articulação<br/>do CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
+                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('profissionais_capacitados')}>Profissionais<br/>Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
+                        <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('data_ultima_capacitacao')}>Última<br/>Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
