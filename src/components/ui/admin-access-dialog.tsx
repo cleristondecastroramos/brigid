@@ -85,14 +85,14 @@ export default function AdminAccessDialog() {
       }}>
         <DialogContent className="sm:max-w-[400px] border border-purple-100 dark:border-purple-950 bg-background/98 backdrop-blur-md rounded-2xl p-0 overflow-hidden shadow-2xl">
           {/* Header styled with the brand color */}
-          <DialogHeader className="bg-gradient-to-r from-purple-800 to-indigo-950 text-white p-5 border-none flex flex-col text-left">
+          <DialogHeader className="bg-gradient-to-r from-[#2e1065] via-[#3b0764] to-[#1e0a3c] text-white p-5 border-none flex flex-col text-left">
             <span className="text-[10px] uppercase font-bold tracking-widest text-purple-200/80">Segunda Camada de Segurança</span>
             <DialogTitle className="text-white text-lg font-bold mt-1">Autenticação Administrativa</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleAdminLogin} className="p-6 space-y-5">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Informe as credenciais da comarca ou do Ministério Público para liberar a edição da base e ferramentas de simulação.
+              Informe as credenciais de acesso para liberar a edição da base e ferramentas de simulação.
             </p>
 
             {errorMsg && (
@@ -147,7 +147,7 @@ export default function AdminAccessDialog() {
 
               <button
                 type="submit"
-                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-md hover:shadow cursor-pointer"
+                className="px-4 py-2 bg-[#2e1065] hover:bg-[#1e0a3c] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-md hover:shadow cursor-pointer"
               >
                 <span>Confirmar</span>
                 <ArrowRight className="h-3.5 w-3.5" />

@@ -23,7 +23,7 @@ function LandingPage() {
   return (
     <div className="flex min-h-dvh w-full flex-col lg:flex-row bg-[#FAFAFC] overflow-x-hidden selection:bg-purple-100 font-sans">
       {/* Left Column: Institutional and presentation content */}
-      <div className="relative flex w-full flex-col justify-between bg-gradient-to-br from-[#1a0525] via-[#2a0845] to-[#1e0a3c] px-8 py-12 md:p-16 lg:w-1/2 overflow-hidden border-b lg:border-b-0 lg:border-r border-purple-900/30">
+      <div className="relative flex w-full flex-col justify-between bg-gradient-to-br from-[#1a0525] via-[#2a0845] to-[#1e0a3c] px-6 py-12 md:px-10 md:py-16 lg:w-1/2 overflow-hidden border-b lg:border-b-0 lg:border-r border-purple-900/30">
         {/* Decorative background visual elements */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <HeroWave />
@@ -32,7 +32,7 @@ function LandingPage() {
           <div className="absolute -right-[10%] bottom-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[130px]" />
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-xl flex-1 flex-col justify-between gap-12 lg:gap-16">
+        <div className="relative z-10 flex w-full max-w-xl flex-1 flex-col justify-between gap-12 lg:gap-16">
           {/* Header info */}
           <header className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
             <img src={logoMPPI} alt="MPPI" className="h-10 md:h-12 w-auto bg-white/95 p-2 shadow-sm rounded-sm animate-fade-in object-contain" />
@@ -106,7 +106,7 @@ function LandingPage() {
           <div className="w-full flex flex-col items-center gap-4">
             <button
               onClick={handleAccess}
-              className="group relative flex w-full items-center justify-center gap-3 py-4 md:py-5 px-8 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-700 text-white rounded-2xl font-semibold text-base shadow-[0_8px_20px_rgb(107,33,168,0.2)] hover:shadow-[0_8px_25px_rgb(107,33,168,0.3)] hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
+              className="group relative flex w-full items-center justify-center gap-3 py-4 md:py-5 px-8 bg-gradient-to-r from-[#2e1065] via-[#3b0764] to-[#1e0a3c] text-white rounded-2xl font-semibold text-base shadow-[0_8px_20px_rgb(59,7,100,0.3)] hover:shadow-[0_8px_25px_rgb(59,7,100,0.4)] hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-700 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
             >
               <span className="tracking-wide">Acessar o sistema</span>
               <ArrowRight className="h-5 w-5 transform group-hover:translate-x-1.5 transition-transform duration-300 opacity-90" />
