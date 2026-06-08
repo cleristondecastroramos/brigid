@@ -71,8 +71,8 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
             <span className="text-base font-bold tracking-[0.15em] text-sidebar-foreground">BRIGID</span>
-            <span className="text-[8px] tracking-wider text-sidebar-foreground/70 leading-tight uppercase font-semibold">
-              Feminicídio Zero · MPPI
+            <span className="text-[8px] tracking-wider text-sidebar-foreground/70 leading-tight uppercase font-semibold whitespace-nowrap">
+              Projeto Feminicídio Zero
             </span>
           </div>
         </div>

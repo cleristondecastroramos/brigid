@@ -14,15 +14,64 @@ function Manual() {
   return (
     <div className="max-w-4xl mx-auto pb-20 animate-in fade-in duration-500 print:max-w-none print:pb-0">
       
+      <style>{`
+        @media print {
+          @page {
+            margin-bottom: 20mm;
+          }
+          @page :first {
+            margin-bottom: 0mm;
+          }
+          #print-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            border-top: 1px solid #cbd5e1;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            font-size: 10px;
+            color: #64748b;
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            z-index: 10;
+          }
+          /* Numeração nativa de página via margens do navegador (se suportado) */
+          @page {
+            @bottom-right {
+              content: "Página " counter(page);
+              font-family: sans-serif;
+              font-size: 10px;
+              color: #64748b;
+            }
+          }
+          @page :first {
+            @bottom-right {
+              content: normal;
+            }
+          }
+        }
+      `}</style>
+
+      {/* RODAPÉ DE IMPRESSÃO FIXO */}
+      <div id="print-footer" className="hidden">
+        <span className="font-medium">BRÍGID — Base de Referência Integrada para Gestão, Inteligência e Dados | Do Projeto Feminicídio Zero - CAOCRIM/MPPI</span>
+        {/* Span reservado, a numeração fixa que mostrava '0' foi removida. O navegador deve gerenciar as páginas. */}
+        <span id="print-page-number"></span>
+      </div>
+
       {/* CAPA DE IMPRESSÃO */}
-      <div className="hidden print:flex min-h-screen flex-col items-center justify-center text-center px-12 break-after-page">
+      {/* O fundo branco e z-index ocultam o rodapé fixo apenas na capa */}
+      <div className="hidden print:flex min-h-screen flex-col items-center justify-center text-center px-12 break-after-page relative bg-white z-50">
         <div className="mb-12 flex flex-col items-center">
           <div className="h-40 w-40 mb-8 rounded-full border-4 border-slate-900 flex items-center justify-center overflow-hidden bg-white shadow-xl">
             <img src="/logo_brigid.png" alt="BRIGID Logo" className="h-32 w-32 object-contain" />
           </div>
           <h1 className="text-5xl font-extrabold uppercase tracking-widest text-slate-900 mb-6 border-b-4 border-slate-900 pb-4 inline-block">BRÍGID</h1>
-          <h2 className="text-3xl font-semibold text-slate-800 leading-snug">Sistema de Monitoramento Integrado<br/>e Prevenção ao Feminicídio</h2>
-          <p className="text-xl text-slate-600 mt-10 uppercase tracking-widest font-medium">Manual Técnico e Tutorial de Uso</p>
+          <h2 className="text-3xl font-semibold text-slate-800 leading-snug">Base de Referência Integrada para Gestão,<br/>Inteligência e Dados</h2>
+          <p className="text-xl text-slate-600 mt-10 uppercase tracking-widest font-bold">Do Projeto Feminicídio Zero - CAOCRIM/MPPI</p>
+          <p className="text-lg text-slate-500 mt-4 uppercase tracking-widest font-medium">Manual Técnico e Tutorial de Uso</p>
         </div>
         <div className="mt-32 pt-12 border-t border-slate-300 w-full">
           <p className="text-slate-800 font-bold text-2xl uppercase tracking-wider">Ministério Público do Estado do Piauí</p>
