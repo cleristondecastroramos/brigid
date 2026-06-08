@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { geoMercator, geoPath } from "d3-geo";
 import { Link } from "@tanstack/react-router";
-import { geoQueryOptions } from "@/lib/csv-data";
+import { geoQueryOptions } from "@/lib/data-fetching";
 import { useMunicipios } from "@/lib/useMunicipios";
 import type { Municipio } from "@/lib/types";
 import { cn } from "@/lib/utils";

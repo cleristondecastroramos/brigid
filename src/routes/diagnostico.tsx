@@ -5,7 +5,7 @@ import {
   MapPin, CheckCircle, AlertCircle, XCircle, Search, 
   ArrowRight, Users, GraduationCap, HardHat, FileText, ChevronRight, HelpCircle, ArrowUp, ArrowDown, Download
 } from "lucide-react";
-import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { municipiosQueryOptions, pct } from "@/lib/data-fetching";
 import { exportCsv, exportPdf } from "@/lib/export";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useMunicipios } from "@/lib/useMunicipios";

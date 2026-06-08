@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { municipiosQueryOptions } from "./csv-data";
+import { municipiosQueryOptions } from "./data-fetching";
 import { useApp } from "@/context/AppContext";
 import { RISK_MODEL_CONFIG } from "./config";
 import type { Municipio } from "./types";

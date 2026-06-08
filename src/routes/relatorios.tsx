@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, FileText, ShieldAlert, BarChart3, CheckCircle2, ChevronRight, Filter } from "lucide-react";
-import { municipiosQueryOptions } from "@/lib/csv-data";
+import { municipiosQueryOptions } from "@/lib/data-fetching";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMunicipios } from "@/lib/useMunicipios";
-import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { municipiosQueryOptions, pct } from "@/lib/data-fetching";
 import {
   Building2,
   HeartHandshake,

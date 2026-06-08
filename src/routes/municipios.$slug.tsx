@@ -6,7 +6,7 @@ import {
   CheckCircle2, FileText, TrendingUp, TrendingDown, Minus,
   Activity, Shield, Target, Info,
 } from "lucide-react";
-import { municipiosQueryOptions } from "@/lib/csv-data";
+import { municipiosQueryOptions } from "@/lib/data-fetching";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskBadge, AlertBadge, YesNoBadge } from "@/components/risk-badge";

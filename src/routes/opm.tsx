@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, Building2, Search, Eraser, AlertCircle, ArrowUp, ArrowDown } from "lucide-react";
-import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { municipiosQueryOptions, pct } from "@/lib/data-fetching";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { KpiCard } from "@/components/kpi-card";
 import { ChartHelper } from "@/components/chart-helper";

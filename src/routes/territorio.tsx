@@ -4,7 +4,7 @@ import {
   Building2, HeartHandshake, AlertTriangle, MapPin, ShieldAlert, Search, X,
   Download, FileSpreadsheet, FileText, Eraser, ArrowRight, Layers,
 } from "lucide-react";
-import { municipiosQueryOptions, pct } from "@/lib/csv-data";
+import { municipiosQueryOptions, pct } from "@/lib/data-fetching";
 import { useMunicipios } from "@/lib/useMunicipios";
 import type { Municipio } from "@/lib/types";
 import { KpiCard } from "@/components/kpi-card";

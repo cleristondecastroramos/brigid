@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { municipiosQueryOptions } from "@/lib/csv-data";
+import { municipiosQueryOptions } from "@/lib/data-fetching";
 import { useApp } from "@/context/AppContext";
 import { supabase } from "@/lib/supabase";
 import { Search, Save, Pencil, ArrowUpDown, ChevronDown, ChevronUp, HelpCircle } from "lucide-react";

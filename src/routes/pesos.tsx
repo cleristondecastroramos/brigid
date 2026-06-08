@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/context/AppContext";
 import { useMunicipios } from "@/lib/useMunicipios";
-import { municipiosQueryOptions } from "@/lib/csv-data";
+import { municipiosQueryOptions } from "@/lib/data-fetching";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

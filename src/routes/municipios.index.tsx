@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, ChevronDown, ChevronUp, MapPin, Building2, AlertTriangle, FileText, ChevronRight, ShieldAlert, HeartHandshake } from "lucide-react";
-import { municipiosQueryOptions } from "@/lib/csv-data";
+import { municipiosQueryOptions } from "@/lib/data-fetching";
 import { useMunicipios } from "@/lib/useMunicipios";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
