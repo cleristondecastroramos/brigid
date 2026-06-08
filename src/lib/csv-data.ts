@@ -10,7 +10,7 @@ const NUMERIC_FIELDS: Array<keyof Municipio> = [
   "populacao", "populacao_feminina", "consumado", "tentado",
   "consumado_2023", "consumado_2024", "consumado_2025", "consumado_2026",
   "tentado_2023", "tentado_2024", "tentado_2025", "tentado_2026",
-  "feminicidios_consumados_2024_2025", "feminicidios_tentados_2024_2025",
+  "feminicidios_consumados_2023_2025", "feminicidios_tentados_2023_2025",
   "ocorrencias_total_violencia_genero_monitoradas", "risco_feminicidio_score",
 ];
 

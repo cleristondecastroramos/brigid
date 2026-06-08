@@ -201,24 +201,24 @@ function GestaoBaseMunicipal() {
 
       // Auto-calculate Totals and Flags for Consumado
       if (field.startsWith("consumado_")) {
-        next.feminicidios_consumados_2024_2025 = 
+        next.feminicidios_consumados_2023_2025 = 
           (Number(next.consumado_2023) || 0) + 
           (Number(next.consumado_2024) || 0) + 
           (Number(next.consumado_2025) || 0) + 
           (Number(next.consumado_2026) || 0);
           
-        next.indicador_tem_feminicidio_consumado = next.feminicidios_consumados_2024_2025 > 0 ? "SIM" : "NAO";
+        next.indicador_tem_feminicidio_consumado = next.feminicidios_consumados_2023_2025 > 0 ? "SIM" : "NAO";
       }
       
       // Auto-calculate Totals and Flags for Tentativas
       if (field.startsWith("tentado_")) {
-        next.feminicidios_tentados_2024_2025 = 
+        next.feminicidios_tentados_2023_2025 = 
           (Number(next.tentado_2023) || 0) + 
           (Number(next.tentado_2024) || 0) + 
           (Number(next.tentado_2025) || 0) + 
           (Number(next.tentado_2026) || 0);
           
-        next.indicador_tem_tentativa_feminicidio = next.feminicidios_tentados_2024_2025 > 0 ? "SIM" : "NAO";
+        next.indicador_tem_tentativa_feminicidio = next.feminicidios_tentados_2023_2025 > 0 ? "SIM" : "NAO";
       }
       
       return next;
@@ -280,11 +280,11 @@ function GestaoBaseMunicipal() {
                   <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center" onClick={() => handleSort("creas_possui")}>
                     <div className="flex items-center justify-center gap-1.5">CREAS <SortIcon column="creas_possui" /></div>
                   </th>
-                  <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center" onClick={() => handleSort("feminicidios_consumados_2024_2025")}>
-                    <div className="flex items-center justify-center gap-1.5">Feminicídios <SortIcon column="feminicidios_consumados_2024_2025" /></div>
+                  <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center" onClick={() => handleSort("feminicidios_consumados_2023_2025")}>
+                    <div className="flex items-center justify-center gap-1.5">Feminicídios <SortIcon column="feminicidios_consumados_2023_2025" /></div>
                   </th>
-                  <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center" onClick={() => handleSort("feminicidios_tentados_2024_2025")}>
-                    <div className="flex items-center justify-center gap-1.5">Tentativas <SortIcon column="feminicidios_tentados_2024_2025" /></div>
+                  <th className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center" onClick={() => handleSort("feminicidios_tentados_2023_2025")}>
+                    <div className="flex items-center justify-center gap-1.5">Tentativas <SortIcon column="feminicidios_tentados_2023_2025" /></div>
                   </th>
                   <th className="px-4 py-3 font-semibold text-right">Ação</th>
                 </tr>

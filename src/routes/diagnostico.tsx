@@ -799,7 +799,7 @@ function DiagnosticoPanel() {
                           subtitle: "Ranking dos polos com menores médias nos índices de estrutura, fluxos e treinamento.",
                           kpis: [
                             { label: "Polos Analisados", value: rankingLacunas.length },
-                            { label: "Criticidade ALTA", value: rankingLacunas.filter(r => r.status === "ALTA").length }
+                            { label: "Criticidade ALTA", value: rankingLacunas.filter(r => r.prioridade === "CRÍTICA").length }
                           ]
                         })}>
                           Exportar PDF

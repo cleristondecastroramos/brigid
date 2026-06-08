@@ -64,8 +64,6 @@ export interface Municipio {
   grau_suficiencia_estrutura?: "ADEQUADO" | "PARCIAL" | "INSUFICIENTE" | string;
 
   // Painel 2 - Violência de Gênero, Investigação e Perícias
-  feminicidios_consumados_2023_2025?: number;
-  feminicidios_tentados_2023_2025?: number;
   tem_protocolo_investigacao?: SimNao;
   tem_protocolo_pericial?: SimNao;
   capacitado_perspectiva_genero?: SimNao;

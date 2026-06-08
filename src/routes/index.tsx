@@ -35,7 +35,7 @@ function LandingPage() {
         <div className="relative z-10 flex w-full max-w-xl flex-1 flex-col justify-between gap-12 lg:gap-16">
           {/* Header info */}
           <header className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-            <img src={logoMPPI} alt="MPPI" className="h-10 md:h-12 w-auto bg-white/95 p-2 shadow-sm rounded-sm animate-fade-in object-contain" />
+            <img src={logoMPPI} alt="MPPI" className="h-16 md:h-20 w-auto bg-white/95 p-2 shadow-sm rounded-sm animate-fade-in object-contain" />
             <div className="hidden sm:block h-8 w-[1px] bg-purple-300/20" />
             <span className="text-xs md:text-sm font-semibold tracking-[0.15em] text-purple-200/90 uppercase leading-snug">
               Projeto Feminicídio Zero <br className="hidden sm:block" />
