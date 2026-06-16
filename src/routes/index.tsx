@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 import HeroWave from "@/components/ui/dynamic-wave-canvas-background";
 import { AnimatedText } from "@/components/ui/animated-text";
+import { VisitorCounter } from "@/components/VisitorCounter";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -80,6 +81,7 @@ function LandingPage() {
               Ministério Público do Estado do Piauí <br />
               Centro de Apoio Operacional de Apoio às Promotorias Criminais
             </p>
+            <VisitorCounter />
           </footer>
         </div>
       </div>

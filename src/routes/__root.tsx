@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet, createRootRouteWithContext, HeadContent, Scripts, useRouterState, Link, useNavigate,
+  Outlet, createRootRouteWithContext, useRouterState, Link, useNavigate,
 } from "@tanstack/react-router";
 import { Suspense, useState, useEffect } from "react";
 import { Sun, Moon, ShieldCheck } from "lucide-react";
@@ -8,7 +8,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-import appCss from "../styles.css?url";
+
 import logo from "@/assets/logo-mppi.png";
 import { AppProvider, useApp } from "@/context/AppContext";
 import AdminAccessDialog from "@/components/ui/admin-access-dialog";
@@ -44,40 +44,10 @@ function ErrorComponent({ error }: { error: Error }) {
 const FAVICON = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><path d='M24 3 L42 9 V24 C42 34 34 42 24 45 C14 42 6 34 6 24 V9 Z' fill='%236B21A8'/><text x='24' y='31' text-anchor='middle' font-family='Georgia,serif' font-size='22' font-weight='700' fill='white'>B</text></svg>";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "BRIGID — Projeto Feminicídio Zero · MPPI" },
-      { name: "description", content: "BRIGID — Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
-      { property: "og:title", content: "BRIGID — Projeto Feminicídio Zero · MPPI" },
-      { name: "twitter:title", content: "BRIGID — Projeto Feminicídio Zero · MPPI" },
-      { property: "og:description", content: "BRIGID — Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
-      { name: "twitter:description", content: "BRIGID — Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero do Ministério Público do Estado do Piauí." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/845f4ec6-068c-435f-a453-96edc6ea4fa8/id-preview-f8939776--fc77f402-cf02-4fc9-b32b-6cad993cd230.lovable.app-1779992982141.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/845f4ec6-068c-435f-a453-96edc6ea4fa8/id-preview-f8939776--fc77f402-cf02-4fc9-b32b-6cad993cd230.lovable.app-1779992982141.png" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:type", content: "website" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: FAVICON },
-    ],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="pt-BR">
-      <head><HeadContent /></head>
-      <body>{children}<Scripts /></body>
-    </html>
-  );
-}
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Apresentação do Sistema",
