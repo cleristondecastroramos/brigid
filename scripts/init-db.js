@@ -6,11 +6,21 @@ const csvPath = path.resolve("src/data/base_mppi_caocrim.csv");
 const dbPath = path.resolve("db.json");
 
 const NUMERIC_FIELDS = [
-  "populacao", "consumado", "tentado",
-  "consumado_2023", "consumado_2024", "consumado_2025", "consumado_2026",
-  "tentado_2023", "tentado_2024", "tentado_2025", "tentado_2026",
-  "feminicidios_total_2023_2026", "tentativas_total_2023_2026",
-  "ocorrencias_total_violencia_genero_monitoradas", "risco_feminicidio_score",
+  "populacao",
+  "consumado",
+  "tentado",
+  "consumado_2023",
+  "consumado_2024",
+  "consumado_2025",
+  "consumado_2026",
+  "tentado_2023",
+  "tentado_2024",
+  "tentado_2025",
+  "tentado_2026",
+  "feminicidios_total_2023_2026",
+  "tentativas_total_2023_2026",
+  "ocorrencias_total_violencia_genero_monitoradas",
+  "risco_feminicidio_score",
 ];
 
 const csvText = fs.readFileSync(csvPath, "utf-8");
@@ -18,7 +28,11 @@ const csvText = fs.readFileSync(csvPath, "utf-8");
 const parsed = Papa.parse(csvText, {
   header: true,
   skipEmptyLines: true,
-  transformHeader: (h) => h.replace(/^\ufeff/, "").trim().replace("população", "populacao"),
+  transformHeader: (h) =>
+    h
+      .replace(/^\ufeff/, "")
+      .trim()
+      .replace("população", "populacao"),
 });
 
 const municipios = parsed.data.map((row) => {

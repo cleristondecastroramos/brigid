@@ -1,5 +1,5 @@
-const fs = require('fs');
-let content = fs.readFileSync('src/routes/manual.tsx', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("src/routes/manual.tsx", "utf8");
 
 const newSection = `          {/* 2. Origem do nome BRÍGID */}
           <section className="space-y-4">
@@ -13,21 +13,21 @@ const newSection = `          {/* 2. Origem do nome BRÍGID */}
 
 for (let i = 15; i >= 2; i--) {
   // Replace HTML comments e.g. {/* 15. ... */}
-  let target = new RegExp('(\\{/\\* )' + i + '(\\. )', 'g');
-  content = content.replace(target, '$1' + (i + 1) + '$2');
-  
+  let target = new RegExp("(\\{/\\* )" + i + "(\\. )", "g");
+  content = content.replace(target, "$1" + (i + 1) + "$2");
+
   // Replace <h2> tags e.g. <h2 className="...">15. ...</h2>
-  target = new RegExp('(">)' + i + '(\\. )', 'g');
-  content = content.replace(target, '$1' + (i + 1) + '$2');
-  
+  target = new RegExp('(">)' + i + "(\\. )", "g");
+  content = content.replace(target, "$1" + (i + 1) + "$2");
+
   // Replace <h3> tags e.g. <h3 className="...">15.1. ...</h3>
-  target = new RegExp('(">)' + i + '(\\.\\d+\\. )', 'g');
-  content = content.replace(target, '$1' + (i + 1) + '$2');
+  target = new RegExp('(">)' + i + "(\\.\\d+\\. )", "g");
+  content = content.replace(target, "$1" + (i + 1) + "$2");
 }
 
 // Insert new section after section 1
-const insertPoint = content.indexOf('{/* 3. Finalidade do sistema */}');
-content = content.slice(0, insertPoint) + newSection + '\n' + content.slice(insertPoint);
+const insertPoint = content.indexOf("{/* 3. Finalidade do sistema */}");
+content = content.slice(0, insertPoint) + newSection + "\n" + content.slice(insertPoint);
 
-fs.writeFileSync('src/routes/manual.tsx', content);
-console.log('Updated manual.tsx successfully');
+fs.writeFileSync("src/routes/manual.tsx", content);
+console.log("Updated manual.tsx successfully");

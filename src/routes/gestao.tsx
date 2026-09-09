@@ -20,26 +20,46 @@ interface Entrega {
 }
 
 const STATUS_LABEL: Record<Entrega["status"], { label: string; icon: any; cls: string }> = {
-  concluida: { label: "Concluída", icon: CheckCircle2, cls: "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)] border-[color:var(--color-success)]/30" },
-  andamento: { label: "Em andamento", icon: Clock, cls: "bg-[color:var(--color-warning)]/20 text-[color:var(--color-warning)] border-[color:var(--color-warning)]/40" },
-  planejada: { label: "Planejada", icon: Circle, cls: "bg-muted text-muted-foreground border-border" },
+  concluida: {
+    label: "Concluída",
+    icon: CheckCircle2,
+    cls: "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)] border-[color:var(--color-success)]/30",
+  },
+  andamento: {
+    label: "Em andamento",
+    icon: Clock,
+    cls: "bg-[color:var(--color-warning)]/20 text-[color:var(--color-warning)] border-[color:var(--color-warning)]/40",
+  },
+  planejada: {
+    label: "Planejada",
+    icon: Circle,
+    cls: "bg-muted text-muted-foreground border-border",
+  },
 };
 
 function Gestao() {
-  const { data: entregas = [], isLoading, error } = useQuery({
-    queryKey: ['entregas_estrategicas'],
+  const {
+    data: entregas = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["entregas_estrategicas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('entregas_estrategicas').select('*').order('id', { ascending: true });
+      const { data, error } = await supabase
+        .from("entregas_estrategicas")
+        .select("*")
+        .order("id", { ascending: true });
       if (error) throw error;
       return data as Entrega[];
-    }
+    },
   });
 
   const total = entregas.length;
   const concluidas = entregas.filter((e) => e.status === "concluida").length;
   const andamento = entregas.filter((e) => e.status === "andamento").length;
   const planejadas = entregas.filter((e) => e.status === "planejada").length;
-  const progressoMedio = total > 0 ? Math.round(entregas.reduce((s, e) => s + (e.progresso || 0), 0) / total) : 0;
+  const progressoMedio =
+    total > 0 ? Math.round(entregas.reduce((s, e) => s + (e.progresso || 0), 0) / total) : 0;
 
   if (isLoading) {
     return (
@@ -67,8 +87,12 @@ function Gestao() {
           <Stat label="Planejadas" value={planejadas} />
           <div className="md:col-span-4 mt-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span className="font-medium uppercase tracking-wider">Progresso Geral do Projeto</span>
-              <span className="tabular-nums font-bold text-foreground text-sm">{progressoMedio}%</span>
+              <span className="font-medium uppercase tracking-wider">
+                Progresso Geral do Projeto
+              </span>
+              <span className="tabular-nums font-bold text-foreground text-sm">
+                {progressoMedio}%
+              </span>
             </div>
             <Progress value={progressoMedio} className="h-3 shadow-inner" />
           </div>
@@ -76,7 +100,11 @@ function Gestao() {
       </Card>
 
       <Card className="border border-border/60 shadow-sm overflow-hidden">
-        <CardHeader className="bg-muted/20 border-b border-border/40 py-4"><CardTitle className="text-base font-bold text-primary">Entregas estratégicas — Feminicídio Zero</CardTitle></CardHeader>
+        <CardHeader className="bg-muted/20 border-b border-border/40 py-4">
+          <CardTitle className="text-base font-bold text-primary">
+            Entregas estratégicas — Feminicídio Zero
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-muted-foreground border-collapse">
@@ -90,42 +118,53 @@ function Gestao() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
-                {[...entregas].sort((a, b) => {
-                  const parsePrazo = (p: string) => {
-                    if (!p) return 99999;
-                    const yearMatch = p.match(/(\d{4})/);
-                    const qMatch = p.match(/Q(\d)/i);
-                    if (yearMatch && qMatch) {
-                      return parseInt(yearMatch[1]) * 10 + parseInt(qMatch[1]); // ex: 20254
-                    }
-                    return 99999;
-                  };
-                  return parsePrazo(a.prazo) - parsePrazo(b.prazo);
-                }).map((e) => {
-                  const s = STATUS_LABEL[e.status] || STATUS_LABEL.planejada;
-                  const Icon = s.icon;
-                  return (
-                    <tr key={e.titulo} className="hover:bg-muted/30 transition-colors bg-card">
-                      <td className="px-5 py-4">
-                        <div className="font-semibold text-foreground text-sm">{e.titulo}</div>
-                        <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{e.descricao}</div>
-                      </td>
-                      <td className="px-5 py-4 text-xs font-medium text-foreground/80">{e.responsavel}</td>
-                      <td className="px-5 py-4 text-xs tabular-nums text-foreground/80">{e.prazo}</td>
-                      <td className="px-5 py-4">
-                        <Badge variant="outline" className={s.cls + " font-semibold py-0.5 whitespace-nowrap shadow-sm"}>
-                          <Icon className="mr-1.5 h-3.5 w-3.5" /> {s.label}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center justify-between text-xs mb-2 font-bold text-foreground/80">
-                          <span>{e.progresso || 0}%</span>
-                        </div>
-                        <Progress value={e.progresso || 0} className="h-2.5 shadow-inner" />
-                      </td>
-                    </tr>
-                  );
-                })}
+                {[...entregas]
+                  .sort((a, b) => {
+                    const parsePrazo = (p: string) => {
+                      if (!p) return 99999;
+                      const yearMatch = p.match(/(\d{4})/);
+                      const qMatch = p.match(/Q(\d)/i);
+                      if (yearMatch && qMatch) {
+                        return parseInt(yearMatch[1]) * 10 + parseInt(qMatch[1]); // ex: 20254
+                      }
+                      return 99999;
+                    };
+                    return parsePrazo(a.prazo) - parsePrazo(b.prazo);
+                  })
+                  .map((e) => {
+                    const s = STATUS_LABEL[e.status] || STATUS_LABEL.planejada;
+                    const Icon = s.icon;
+                    return (
+                      <tr key={e.titulo} className="hover:bg-muted/30 transition-colors bg-card">
+                        <td className="px-5 py-4">
+                          <div className="font-semibold text-foreground text-sm">{e.titulo}</div>
+                          <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                            {e.descricao}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-xs font-medium text-foreground/80">
+                          {e.responsavel}
+                        </td>
+                        <td className="px-5 py-4 text-xs tabular-nums text-foreground/80">
+                          {e.prazo}
+                        </td>
+                        <td className="px-5 py-4">
+                          <Badge
+                            variant="outline"
+                            className={s.cls + " font-semibold py-0.5 whitespace-nowrap shadow-sm"}
+                          >
+                            <Icon className="mr-1.5 h-3.5 w-3.5" /> {s.label}
+                          </Badge>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-between text-xs mb-2 font-bold text-foreground/80">
+                            <span>{e.progresso || 0}%</span>
+                          </div>
+                          <Progress value={e.progresso || 0} className="h-2.5 shadow-inner" />
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -135,8 +174,21 @@ function Gestao() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: "success" | "warning" }) {
-  const cls = tone === "success" ? "text-[color:var(--color-success)]" : tone === "warning" ? "text-[color:var(--color-warning)]" : "text-foreground";
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "success" | "warning";
+}) {
+  const cls =
+    tone === "success"
+      ? "text-[color:var(--color-success)]"
+      : tone === "warning"
+        ? "text-[color:var(--color-warning)]"
+        : "text-foreground";
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>

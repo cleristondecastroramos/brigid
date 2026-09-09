@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 const HeroWave = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -6,7 +6,7 @@ const HeroWave = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let width: number, height: number, imageData: ImageData, data: Uint8ClampedArray;
@@ -22,14 +22,14 @@ const HeroWave = () => {
         canvas.width = window.innerWidth / 2;
         canvas.height = window.innerHeight;
       }
-      
+
       width = Math.floor(canvas.width / SCALE);
       height = Math.floor(canvas.height / SCALE);
       imageData = ctx.createImageData(width, height);
       data = imageData.data;
     };
 
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener("resize", resizeCanvas);
     resizeCanvas();
 
     const startTime = Date.now();
@@ -106,12 +106,17 @@ const HeroWave = () => {
     render();
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener("resize", resizeCanvas);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-60 pointer-events-none" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full object-cover mix-blend-screen opacity-60 pointer-events-none"
+    />
+  );
 };
 
 export default HeroWave;

@@ -5,7 +5,11 @@ import { cn } from "@/lib/utils";
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
     <div className="relative w-full border border-[rgba(var(--table-grid),var(--table-grid-opacity))] bg-card">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm border-collapse", className)} {...props} />
+      <table
+        ref={ref}
+        className={cn("w-full caption-bottom text-sm border-collapse", className)}
+        {...props}
+      />
     </div>
   ),
 );
@@ -15,7 +19,11 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("bg-[var(--color-sidebar)] text-white sticky top-0 z-20", className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn("bg-[var(--color-sidebar)] text-white sticky top-0 z-20", className)}
+    {...props}
+  />
 ));
 TableHeader.displayName = "TableHeader";
 

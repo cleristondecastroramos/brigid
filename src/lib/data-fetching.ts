@@ -5,11 +5,13 @@ import geoJson from "@/data/piaui-map-fixed.json";
 import { supabase } from "./supabase";
 
 async function fetchMunicipios(): Promise<Municipio[]> {
-  const { data, error } = await supabase.from('municipios').select('*, eventos_feminicidio(*)');
+  const { data, error } = await supabase.from("municipios").select("*, eventos_feminicidio(*)");
 
   if (error) {
     console.error("Erro ao buscar municípios no Supabase:", error);
-    throw new Error("Não foi possível carregar os dados dos municípios do banco de dados. " + error.message);
+    throw new Error(
+      "Não foi possível carregar os dados dos municípios do banco de dados. " + error.message,
+    );
   }
 
   if (!data || data.length === 0) {
@@ -18,7 +20,7 @@ async function fetchMunicipios(): Promise<Municipio[]> {
 
   // Apenas garante que a estrutura 'eventos_feminicidio' existe,
   // mesmo que vazia, caso a migração ainda não tenha dados na tabela filha.
-  return (data as Municipio[]).map(m => {
+  return (data as Municipio[]).map((m) => {
     if (!m.eventos_feminicidio) {
       m.eventos_feminicidio = [];
     }

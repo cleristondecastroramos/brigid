@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { User, Lock, ArrowRight } from 'lucide-react';
+import { User, Lock, ArrowRight } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 
@@ -140,7 +140,11 @@ export function SmokeyBackground({
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+      gl.STATIC_DRAW,
+    );
 
     const positionLocation = gl.getAttribLocation(program, "a_position");
     gl.enableVertexAttribArray(positionLocation);
@@ -151,10 +155,10 @@ export function SmokeyBackground({
     const iMouseLocation = gl.getUniformLocation(program, "iMouse");
     const uColorLocation = gl.getUniformLocation(program, "u_color");
 
-    let startTime = Date.now();
+    const startTime = Date.now();
     const [r, g, b] = hexToRgb(color);
     gl.uniform3f(uColorLocation, r, g, b);
-    
+
     let animationFrameId: number;
 
     const render = () => {
@@ -168,7 +172,11 @@ export function SmokeyBackground({
 
       gl.uniform2f(iResolutionLocation, width, height);
       gl.uniform1f(iTimeLocation, currentTime);
-      gl.uniform2f(iMouseLocation, isHovering ? mousePosition.x : width / 2, isHovering ? height - mousePosition.y : height / 2);
+      gl.uniform2f(
+        iMouseLocation,
+        isHovering ? mousePosition.x : width / 2,
+        isHovering ? height - mousePosition.y : height / 2,
+      );
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       animationFrameId = requestAnimationFrame(render);
@@ -221,7 +229,7 @@ export function LoginForm() {
       toast.error("Por favor, preencha todos os campos.");
       return;
     }
-    
+
     if (email.toLowerCase().trim() === "caocrim@mppi.mp.br") {
       login("admin");
       toast.success("Acesso de Administrador autorizado com sucesso!");
@@ -229,7 +237,9 @@ export function LoginForm() {
     } else {
       // Se não for o admin, loga como público e avisa
       login("public");
-      toast.error("Credenciais não reconhecidas como administrador. Acesso limitado ao painel público.");
+      toast.error(
+        "Credenciais não reconhecidas como administrador. Acesso limitado ao painel público.",
+      );
       navigate({ to: "/apresentacao-do-sistema" });
     }
   };
@@ -241,7 +251,7 @@ export function LoginForm() {
           <h2 className="text-3xl font-bold text-white">Bem-vindo</h2>
           <p className="mt-2 text-sm text-white/80">Escolha o tipo de acesso</p>
         </div>
-        
+
         <div className="flex flex-row gap-4 mt-8">
           <Link
             to="/apresentacao-do-sistema"
@@ -262,14 +272,33 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm p-8 space-y-6 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-2xl">
       <div className="flex items-center gap-2 mb-6">
-        <button type="button" onClick={() => setShowLogin(false)} className="text-white/70 hover:text-white transition-colors cursor-pointer" title="Voltar">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <button
+          type="button"
+          onClick={() => setShowLogin(false)}
+          className="text-white/70 hover:text-white transition-colors cursor-pointer"
+          title="Voltar"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
         </button>
         <div className="flex-1 text-center pr-6">
           <h2 className="text-2xl font-bold text-white">Acesso Restrito</h2>
         </div>
       </div>
-      <p className="text-center text-sm text-gray-300 -mt-4">Entre com suas credenciais institucionais</p>
+      <p className="text-center text-sm text-gray-300 -mt-4">
+        Entre com suas credenciais institucionais
+      </p>
       <form onSubmit={handleAdminLogin} className="space-y-8">
         {/* Email Input with Animated Label */}
         <div className="relative z-0">
@@ -279,7 +308,7 @@ export function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="block py-2.5 px-0 w-full text-sm text-white bg-transparent border-0 border-b-2 border-gray-300 appearance-none focus:outline-none focus:ring-0 focus:border-blue-500 peer"
-            placeholder=" " 
+            placeholder=" "
             required
           />
           <label
@@ -311,9 +340,11 @@ export function LoginForm() {
         </div>
 
         <div className="flex items-center justify-between">
-          <a href="#" className="text-xs text-gray-300 hover:text-white transition">Esqueceu a senha?</a>
+          <a href="#" className="text-xs text-gray-300 hover:text-white transition">
+            Esqueceu a senha?
+          </a>
         </div>
-        
+
         <button
           type="submit"
           className="group w-full flex items-center justify-center py-3 px-4 bg-[#195e6b] hover:bg-[#154d58] rounded-lg text-white font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#195e6b] transition-all duration-300 cursor-pointer"

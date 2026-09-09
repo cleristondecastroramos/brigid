@@ -30,7 +30,7 @@ function csvHeaderLines() {
 
 export function exportCsv(filename: string, rows: Record<string, any>[]) {
   if (!rows.length) return;
-  const headers = Object.keys(rows[0]).filter(k => k !== "codigo_ibge");
+  const headers = Object.keys(rows[0]).filter((k) => k !== "codigo_ibge");
   const escape = (v: any) => {
     const s = v == null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -41,10 +41,14 @@ export function exportCsv(filename: string, rows: Record<string, any>[]) {
   download(blob, brandedFilename(filename));
 }
 
-export async function exportXlsx(filename: string, rows: Record<string, any>[], sheetName = "Dados") {
+export async function exportXlsx(
+  filename: string,
+  rows: Record<string, any>[],
+  sheetName = "Dados",
+) {
   if (!rows.length) return;
   const XLSX = await import("xlsx");
-  const headers = Object.keys(rows[0]).filter(k => k !== "codigo_ibge");
+  const headers = Object.keys(rows[0]).filter((k) => k !== "codigo_ibge");
   const aoa: any[][] = [
     [BRIGID_BRAND.long],
     [`${BRIGID_BRAND.project} · ${BRIGID_BRAND.org}`],
@@ -92,14 +96,14 @@ function drawBrigidMark(doc: any, x: number, y: number, size: number) {
 }
 
 export async function exportPdf(
-  filename: string, 
-  title: string, 
+  filename: string,
+  title: string,
   rows: Record<string, any>[],
   options?: {
     subtitle?: string;
     kpis?: { label: string; value: string | number }[];
     criterios?: string;
-  }
+  },
 ) {
   if (!rows.length) return;
   const { default: jsPDF } = await import("jspdf");
@@ -123,11 +127,11 @@ export async function exportPdf(
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 40;
-  
+
   // Calculate first page header height
   let firstPageHeaderHeight = 85;
   let linesCriterios: string[] = [];
-  
+
   if (options) {
     if (options.subtitle) firstPageHeaderHeight += 14;
     if (options.criterios) {
@@ -183,39 +187,39 @@ export async function exportPdf(
         doc.setTextColor(80, 90, 100);
         doc.text(options.subtitle, margin, currentY);
       }
-      
+
       if (options.criterios) {
         currentY += 20;
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.setTextColor(40, 50, 60);
         doc.text("Critérios Aplicados:", margin, currentY);
-        
+
         doc.setFont("helvetica", "normal");
         doc.setTextColor(80, 90, 100);
         doc.text(linesCriterios, margin + 105, currentY);
         currentY += (linesCriterios.length - 1) * 12;
       }
-      
+
       if (options.kpis && options.kpis.length > 0) {
         currentY += 25;
         let xPos = margin;
         for (const kpi of options.kpis) {
-           doc.setDrawColor(220, 225, 230);
-           doc.setFillColor(248, 250, 252);
-           doc.roundedRect(xPos, currentY, 120, 36, 3, 3, "FD");
-           
-           doc.setFont("helvetica", "bold");
-           doc.setFontSize(14);
-           doc.setTextColor(33, 53, 95);
-           doc.text(String(kpi.value), xPos + 60, currentY + 16, { align: "center" });
-           
-           doc.setFont("helvetica", "normal");
-           doc.setFontSize(7);
-           doc.setTextColor(100);
-           doc.text(kpi.label.toUpperCase(), xPos + 60, currentY + 28, { align: "center" });
-           
-           xPos += 130;
+          doc.setDrawColor(220, 225, 230);
+          doc.setFillColor(248, 250, 252);
+          doc.roundedRect(xPos, currentY, 120, 36, 3, 3, "FD");
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.setTextColor(33, 53, 95);
+          doc.text(String(kpi.value), xPos + 60, currentY + 16, { align: "center" });
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(7);
+          doc.setTextColor(100);
+          doc.text(kpi.label.toUpperCase(), xPos + 60, currentY + 28, { align: "center" });
+
+          xPos += 130;
         }
         currentY += 36;
       }
@@ -243,8 +247,8 @@ export async function exportPdf(
     );
   };
 
-  const headers = Object.keys(rows[0]).filter(k => k !== "codigo_ibge");
-  
+  const headers = Object.keys(rows[0]).filter((k) => k !== "codigo_ibge");
+
   const formatHeader = (key: string) => {
     const dict: Record<string, string> = {
       populacao_feminina: "População Feminina",
@@ -289,53 +293,59 @@ export async function exportPdf(
       suficiencia: "Suficiência",
       grau_suficiencia_estrutura: "Suficiên.\nEstrut.",
       opm_orgaotipo: "Tipologia OPM",
-      opm_status_politicas_publicas: "Políticas Efetivas"
+      opm_status_politicas_publicas: "Políticas Efetivas",
     };
     if (dict[key]) return dict[key];
-    return key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    return key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formattedHeaders = headers.map(formatHeader);
 
-  const numericColumns = headers.map(h => {
-    return rows.some(r => {
+  const numericColumns = headers.map((h) => {
+    return rows.some((r) => {
       const val = r[h];
-      return typeof val === "number" || (typeof val === "string" && !isNaN(Number(val)) && val.trim() !== "");
+      return (
+        typeof val === "number" ||
+        (typeof val === "string" && !isNaN(Number(val)) && val.trim() !== "")
+      );
     });
   });
 
   autoTable(doc, {
     head: [formattedHeaders],
-    body: rows.map((r) => headers.map((h) => {
-      const val = r[h];
-      if (val === null || val === undefined) return "";
-      if (typeof val === "number") return val.toLocaleString("pt-BR");
-      if (typeof val === "string" && !isNaN(Number(val)) && val.trim() !== "") return Number(val).toLocaleString("pt-BR");
-      return String(val);
-    })),
+    body: rows.map((r) =>
+      headers.map((h) => {
+        const val = r[h];
+        if (val === null || val === undefined) return "";
+        if (typeof val === "number") return val.toLocaleString("pt-BR");
+        if (typeof val === "string" && !isNaN(Number(val)) && val.trim() !== "")
+          return Number(val).toLocaleString("pt-BR");
+        return String(val);
+      }),
+    ),
     startY: firstPageHeaderHeight,
     margin: { top: regularHeaderHeight, bottom: 44, left: margin, right: margin },
-    styles: { 
+    styles: {
       font: "helvetica",
-      fontSize: 6.5, 
+      fontSize: 6.5,
       cellPadding: 3,
       textColor: [40, 50, 60],
       lineColor: [230, 235, 240],
-      lineWidth: 0.1
+      lineWidth: 0.1,
     },
-    headStyles: { 
-      fillColor: [248, 250, 252], 
+    headStyles: {
+      fillColor: [248, 250, 252],
       textColor: [33, 53, 95],
       fontStyle: "bold",
       lineWidth: 0.1,
-      lineColor: [200, 210, 220]
+      lineColor: [200, 210, 220],
     },
     alternateRowStyles: { fillColor: [252, 253, 254] },
     horizontalPageBreak: true,
     horizontalPageBreakRepeat: 0,
     didParseCell: (hookData: any) => {
       if (numericColumns[hookData.column.index]) {
-        hookData.cell.styles.halign = 'right';
+        hookData.cell.styles.halign = "right";
       }
     },
     didDrawPage: (data: any) => {

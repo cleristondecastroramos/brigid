@@ -101,4 +101,3 @@ export interface EventoFeminicidio {
   versao_metodologia: string;
   updated_at?: string;
 }
-

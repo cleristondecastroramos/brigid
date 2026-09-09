@@ -5,9 +5,25 @@ import { municipiosQueryOptions } from "@/lib/data-fetching";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { RiskBadge } from "@/components/risk-badge";
-import { Scale, RefreshCw, AlertTriangle, ShieldCheck, UserCheck, Calendar, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Scale,
+  RefreshCw,
+  AlertTriangle,
+  ShieldCheck,
+  UserCheck,
+  Calendar,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -17,55 +33,74 @@ export const Route = createFileRoute("/pesos")({
 });
 
 function PesosConfigPanel() {
-  const {
-    weights,
-    thresholds,
-    simulationInfo,
-    updateWeights,
-    updateThresholds,
-    resetToDefaults,
-  } = useApp();
+  const { weights, thresholds, simulationInfo, updateWeights, updateThresholds, resetToDefaults } =
+    useApp();
 
   const { data: dynamicMunicipios } = useMunicipios();
   // Carrega os dados brutos estáticos da query original para fins de comparação
   const { data: rawMunicipios } = useSuspenseQuery(municipiosQueryOptions);
 
-  const [sortColumn, setSortColumn] = useState<"pos" | "municipio" | "score_original" | "score_novo" | "risco_original" | "risco_novo">("score_novo");
+  const [sortColumn, setSortColumn] = useState<
+    "pos" | "municipio" | "score_original" | "score_novo" | "risco_original" | "risco_novo"
+  >("score_novo");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const handleSort = (col: typeof sortColumn) => {
-    if (sortColumn === col) setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-    else { setSortColumn(col); setSortDirection("desc"); }
+    if (sortColumn === col) setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    else {
+      setSortColumn(col);
+      setSortDirection("desc");
+    }
   };
-  
+
   const SortIcon = ({ column }: { column: typeof sortColumn }) => {
     if (sortColumn !== column) return null;
-    return sortDirection === "asc" ? <ArrowUp className="ml-1 inline h-4 w-4" /> : <ArrowDown className="ml-1 inline h-4 w-4" />;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="ml-1 inline h-4 w-4" />
+    ) : (
+      <ArrowDown className="ml-1 inline h-4 w-4" />
+    );
   };
 
   // Ordena os recalculados para ver o impacto no ranking
   const dynamicRanking = [...dynamicMunicipios]
-    .map(m => {
+    .map((m) => {
       const original = rawMunicipios.find((r) => r.codigo_ibge === m.codigo_ibge);
       return {
         ...m,
         score_original: original?.risco_feminicidio_score ?? 0,
         risco_original: original?.risco_feminicidio_nivel ?? "BAIXO",
-      }
+      };
     })
-    .sort((a, b) => b.risco_feminicidio_score - a.risco_feminicidio_score || b.feminicidios_consumados_2023_2025 - a.feminicidios_consumados_2023_2025)
+    .sort(
+      (a, b) =>
+        b.risco_feminicidio_score - a.risco_feminicidio_score ||
+        b.feminicidios_consumados_2023_2025 - a.feminicidios_consumados_2023_2025,
+    )
     .slice(0, 10)
     .sort((a, b) => {
       let valA, valB;
-      if (sortColumn === "pos" || sortColumn === "score_novo") { valA = a.risco_feminicidio_score; valB = b.risco_feminicidio_score; }
-      else if (sortColumn === "score_original") { valA = a.score_original; valB = b.score_original; }
-      else if (sortColumn === "municipio") { valA = a.municipio; valB = b.municipio; }
-      else if (sortColumn === "risco_original") { valA = a.risco_original; valB = b.risco_original; }
-      else if (sortColumn === "risco_novo") { valA = a.risco_feminicidio_nivel; valB = b.risco_feminicidio_nivel; }
+      if (sortColumn === "pos" || sortColumn === "score_novo") {
+        valA = a.risco_feminicidio_score;
+        valB = b.risco_feminicidio_score;
+      } else if (sortColumn === "score_original") {
+        valA = a.score_original;
+        valB = b.score_original;
+      } else if (sortColumn === "municipio") {
+        valA = a.municipio;
+        valB = b.municipio;
+      } else if (sortColumn === "risco_original") {
+        valA = a.risco_original;
+        valB = b.risco_original;
+      } else if (sortColumn === "risco_novo") {
+        valA = a.risco_feminicidio_nivel;
+        valB = b.risco_feminicidio_nivel;
+      }
 
       if (valA === valB) return 0;
       const modifier = sortDirection === "asc" ? 1 : -1;
-      if (typeof valA === "string" && typeof valB === "string") return valA.localeCompare(valB) * modifier;
+      if (typeof valA === "string" && typeof valB === "string")
+        return valA.localeCompare(valB) * modifier;
       return ((valA as number) > (valB as number) ? 1 : -1) * modifier;
     });
 
@@ -98,9 +133,12 @@ function PesosConfigPanel() {
               <Scale className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Ambiente de Parametrização e Simulação</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                Ambiente de Parametrização e Simulação
+              </h2>
               <p className="text-xs text-muted-foreground">
-                Ajuste os parâmetros abaixo para simular cenários territoriais e validar a lógica de pesos no frontend.
+                Ajuste os parâmetros abaixo para simular cenários territoriais e validar a lógica de
+                pesos no frontend.
               </p>
             </div>
           </div>
@@ -123,17 +161,26 @@ function PesosConfigPanel() {
         <div className="space-y-6 lg:col-span-5">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Ponderação dos Indicadores (Modelo Híbrido)</CardTitle>
+              <CardTitle className="text-base">
+                Ponderação dos Indicadores (Modelo Híbrido)
+              </CardTitle>
               <CardDescription>
-                Defina o peso multiplicador. Os cálculos baseiam-se numa combinação de Taxa Relativa (por 100 mil hab.) com o Volume Absoluto (peso 70/30).
-                <br /><span className="text-[10px] text-muted-foreground mt-1 inline-block">* Denominador provisório: População Total (o sistema migrará automaticamente para População Feminina quando o dado for inserido na base).</span>
+                Defina o peso multiplicador. Os cálculos baseiam-se numa combinação de Taxa Relativa
+                (por 100 mil hab.) com o Volume Absoluto (peso 70/30).
+                <br />
+                <span className="text-[10px] text-muted-foreground mt-1 inline-block">
+                  * Denominador provisório: População Total (o sistema migrará automaticamente para
+                  População Feminina quando o dado for inserido na base).
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               {/* Peso Feminicidios */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-foreground">Feminicídios Consumados (2023-2026)</span>
+                  <span className="font-semibold text-foreground">
+                    Feminicídios Consumados (2023-2026)
+                  </span>
                   <span className="rounded bg-primary/10 px-2 py-0.5 font-bold text-primary">
                     Peso {weights.pesoFeminicidios}
                   </span>
@@ -152,7 +199,9 @@ function PesosConfigPanel() {
               {/* Peso Tentativas */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-foreground">Tentativas de Feminicídio (2023-2026)</span>
+                  <span className="font-semibold text-foreground">
+                    Tentativas de Feminicídio (2023-2026)
+                  </span>
                   <span className="rounded bg-primary/10 px-2 py-0.5 font-bold text-primary">
                     Peso {weights.pesoTentativas}
                   </span>
@@ -274,7 +323,11 @@ function PesosConfigPanel() {
               </div>
 
               <div className="pt-2">
-                <Button variant="outline" className="w-full flex items-center justify-center gap-2" onClick={handleReset}>
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={handleReset}
+                >
                   <RefreshCw className="h-4 w-4" /> Restaurar Padrões Institucionais
                 </Button>
               </div>
@@ -287,10 +340,12 @@ function PesosConfigPanel() {
           <Card className="h-full">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-primary" /> Pré-visualização do Impacto (Top 10)
+                <ShieldCheck className="h-5 w-5 text-primary" /> Pré-visualização do Impacto (Top
+                10)
               </CardTitle>
               <CardDescription>
-                Veja em tempo real como o ranking dos municípios prioritários é alterado pelos novos pesos.
+                Veja em tempo real como o ranking dos municípios prioritários é alterado pelos novos
+                pesos.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -298,12 +353,42 @@ function PesosConfigPanel() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10 cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('pos')}>Pos <SortIcon column="pos" /></TableHead>
-                      <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('score_original')}>Score original <SortIcon column="score_original" /></TableHead>
-                      <TableHead className="text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('score_novo')}>Novo score <SortIcon column="score_novo" /></TableHead>
-                      <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('risco_original')}>Risco original <SortIcon column="risco_original" /></TableHead>
-                      <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('risco_novo')}>Novo risco <SortIcon column="risco_novo" /></TableHead>
+                      <TableHead
+                        className="w-10 cursor-pointer transition-colors hover:bg-white/10"
+                        onClick={() => handleSort("pos")}
+                      >
+                        Pos <SortIcon column="pos" />
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer transition-colors hover:bg-white/10"
+                        onClick={() => handleSort("municipio")}
+                      >
+                        Município <SortIcon column="municipio" />
+                      </TableHead>
+                      <TableHead
+                        className="text-center cursor-pointer transition-colors hover:bg-white/10"
+                        onClick={() => handleSort("score_original")}
+                      >
+                        Score original <SortIcon column="score_original" />
+                      </TableHead>
+                      <TableHead
+                        className="text-center cursor-pointer transition-colors hover:bg-white/10"
+                        onClick={() => handleSort("score_novo")}
+                      >
+                        Novo score <SortIcon column="score_novo" />
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer transition-colors hover:bg-white/10"
+                        onClick={() => handleSort("risco_original")}
+                      >
+                        Risco original <SortIcon column="risco_original" />
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer transition-colors hover:bg-white/10"
+                        onClick={() => handleSort("risco_novo")}
+                      >
+                        Novo risco <SortIcon column="risco_novo" />
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -314,14 +399,27 @@ function PesosConfigPanel() {
                       const levelChanged = m.risco_feminicidio_nivel !== originalNivel;
 
                       return (
-                        <TableRow key={m.codigo_ibge} className="hover:bg-muted/50 transition-colors">
-                          <TableCell className="font-semibold text-muted-foreground">{idx + 1}</TableCell>
-                          <TableCell className="font-medium text-foreground">{m.municipio}</TableCell>
-                          <TableCell className="text-center text-muted-foreground tabular-nums">{originalScore}</TableCell>
-                          <TableCell className={`text-center font-semibold tabular-nums ${scoreChanged ? "text-primary bg-primary/5 rounded" : "text-foreground"}`}>
+                        <TableRow
+                          key={m.codigo_ibge}
+                          className="hover:bg-muted/50 transition-colors"
+                        >
+                          <TableCell className="font-semibold text-muted-foreground">
+                            {idx + 1}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {m.municipio}
+                          </TableCell>
+                          <TableCell className="text-center text-muted-foreground tabular-nums">
+                            {originalScore}
+                          </TableCell>
+                          <TableCell
+                            className={`text-center font-semibold tabular-nums ${scoreChanged ? "text-primary bg-primary/5 rounded" : "text-foreground"}`}
+                          >
                             {m.risco_feminicidio_score}
                           </TableCell>
-                          <TableCell><RiskBadge level={originalNivel} /></TableCell>
+                          <TableCell>
+                            <RiskBadge level={originalNivel} />
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1.5">
                               <RiskBadge level={m.risco_feminicidio_nivel} />
@@ -344,7 +442,8 @@ function PesosConfigPanel() {
                 <div>
                   <p className="font-semibold">Nota de Simulação</p>
                   <p className="mt-0.5">
-                    Estas alterações afetam apenas a sua sessão de visualização em memória. Os dados originais do arquivo CSV institucional permanecem inalterados.
+                    Estas alterações afetam apenas a sua sessão de visualização em memória. Os dados
+                    originais do arquivo CSV institucional permanecem inalterados.
                   </p>
                 </div>
               </div>

@@ -22,27 +22,46 @@ const toneStyles: Record<string, string> = {
   critical: "bg-destructive/15 text-destructive",
 };
 
-export function KpiCard({ label, value, hint, tooltip, icon: Icon, tone = "default", className, onClick, isActive }: KpiCardProps) {
+export function KpiCard({
+  label,
+  value,
+  hint,
+  tooltip,
+  icon: Icon,
+  tone = "default",
+  className,
+  onClick,
+  isActive,
+}: KpiCardProps) {
   return (
-    <Card 
+    <Card
       onClick={onClick}
       title={tooltip}
       className={cn(
-        "border-border/70 transition-colors", 
+        "border-border/70 transition-colors",
         onClick && "cursor-pointer hover:bg-accent/40",
         isActive && "ring-2 ring-primary border-primary",
-        className
+        className,
       )}
     >
       <CardContent className="p-3 pb-3.5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-muted-foreground leading-none">{label}</p>
-            <p className="mt-1.5 text-xl sm:text-2xl font-semibold tabular-nums text-foreground leading-none">{value}</p>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-muted-foreground leading-none">
+              {label}
+            </p>
+            <p className="mt-1.5 text-xl sm:text-2xl font-semibold tabular-nums text-foreground leading-none">
+              {value}
+            </p>
             {hint && <p className="mt-1 text-[10px] text-muted-foreground leading-none">{hint}</p>}
           </div>
           {Icon && (
-            <div className={cn("flex h-9 w-9 items-center justify-center rounded-md", toneStyles[tone])}>
+            <div
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-md",
+                toneStyles[tone],
+              )}
+            >
               <Icon className="h-5 w-5" />
             </div>
           )}
@@ -51,4 +70,3 @@ export function KpiCard({ label, value, hint, tooltip, icon: Icon, tone = "defau
     </Card>
   );
 }
-

@@ -1,5 +1,5 @@
-const fs = require('fs');
-let content = fs.readFileSync('manual-extracted.md', 'utf8');
+const fs = require("fs");
+let content = fs.readFileSync("manual-extracted.md", "utf8");
 
 const newSection = `## 2. Origem do nome BRÍGID
 
@@ -13,20 +13,20 @@ Nesse sentido, o nome BRÍGID cumpre dupla função: ele oferece uma identidade 
 
 for (let i = 15; i >= 2; i--) {
   // Replace ## 15. ... -> ## 16. ...
-  let target = new RegExp('^## ' + i + '\\. ', 'gm');
-  content = content.replace(target, '## ' + (i + 1) + '. ');
-  
+  let target = new RegExp("^## " + i + "\\. ", "gm");
+  content = content.replace(target, "## " + (i + 1) + ". ");
+
   // Replace ### 15.1. ... -> ### 16.1. ...
-  target = new RegExp('^### ' + i + '\\.(\\d+)\\. ', 'gm');
-  content = content.replace(target, '### ' + (i + 1) + '.$1. ');
+  target = new RegExp("^### " + i + "\\.(\\d+)\\. ", "gm");
+  content = content.replace(target, "### " + (i + 1) + ".$1. ");
 }
 
 // Insert new section after section 1
-const insertPoint = content.indexOf('## 3. Finalidade do sistema');
+const insertPoint = content.indexOf("## 3. Finalidade do sistema");
 if (insertPoint !== -1) {
-  content = content.slice(0, insertPoint) + newSection + '\n\n' + content.slice(insertPoint);
-  fs.writeFileSync('manual-extracted.md', content);
-  console.log('Updated manual-extracted.md successfully');
+  content = content.slice(0, insertPoint) + newSection + "\n\n" + content.slice(insertPoint);
+  fs.writeFileSync("manual-extracted.md", content);
+  console.log("Updated manual-extracted.md successfully");
 } else {
-  console.log('Could not find insert point in manual-extracted.md');
+  console.log("Could not find insert point in manual-extracted.md");
 }

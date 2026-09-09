@@ -1,12 +1,17 @@
-import { ContainerAnimated, ContainerStagger, GalleryGrid, GalleryGridCell } from "@/components/blocks/cta-section-with-gallery"
-import { Button } from "@/components/ui/button" 
+import {
+  ContainerAnimated,
+  ContainerStagger,
+  GalleryGrid,
+  GalleryGridCell,
+} from "@/components/blocks/cta-section-with-gallery";
+import { Button } from "@/components/ui/button";
 
 const IMAGES = [
   "https://cdn.21st.dev/assets/mirror/b4/b489547220e05476a6e9252ee770ceaefcfc04983b0c588116335d048ce1e2c7.jpg",
   "https://cdn.21st.dev/assets/mirror/19/195fc68ab1924d31b9603423fec192334039d7aca6537f284f280ac18b7fd579.jpg",
   "https://cdn.21st.dev/assets/mirror/5e/5e6145c62a3957eaff5285a8fd9aeaad17459c835ae6792f6ce48df1b7c093c4.jpg",
   "https://cdn.21st.dev/assets/mirror/44/44fd2efacd2545fadbf51b1fde849b93c0f1df3bb63e51b3f58989765a0d301f.jpg",
-]
+];
 
 export const AboutDemo = () => {
   return (
@@ -20,12 +25,14 @@ export const AboutDemo = () => {
             Scale Your Business Through Innovation
           </ContainerAnimated>
           <ContainerAnimated className="my-4 text-base text-slate-700 dark:text-slate-300 md:my-6 md:text-lg">
-            Transform your startup&apos;s potential through innovative solutions
-            and strategic growth. We help businesses adapt, evolve, and thrive
-            in today&apos;s competitive marketplace.
+            Transform your startup&apos;s potential through innovative solutions and strategic
+            growth. We help businesses adapt, evolve, and thrive in today&apos;s competitive
+            marketplace.
           </ContainerAnimated>
           <ContainerAnimated>
-            <Button className="bg-rose-500 hover:bg-rose-600 text-white">Start Scaling Today</Button>
+            <Button className="bg-rose-500 hover:bg-rose-600 text-white">
+              Start Scaling Today
+            </Button>
           </ContainerAnimated>
         </ContainerStagger>
 
@@ -44,5 +51,5 @@ export const AboutDemo = () => {
         </GalleryGrid>
       </div>
     </section>
-  )
-}
+  );
+};

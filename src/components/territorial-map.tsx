@@ -10,7 +10,11 @@ import { Lock, Unlock, ZoomIn, ZoomOut } from "lucide-react";
 export type ColorFn = (m: Municipio | undefined) => string;
 
 export function normName(s: string) {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
 }
 
 interface Props {
@@ -38,7 +42,9 @@ export function TerritorialMap({
 }: Props) {
   const { data: geo } = useSuspenseQuery(geoQueryOptions);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [hover, setHover] = useState<{ name: string; m?: Municipio; x: number; y: number } | null>(null);
+  const [hover, setHover] = useState<{ name: string; m?: Municipio; x: number; y: number } | null>(
+    null,
+  );
 
   const [zoom, setZoom] = useState(1);
   const [zoomLocked, setZoomLocked] = useState(true);
@@ -90,9 +96,15 @@ export function TerritorialMap({
     setTx(dragRef.current.tx + (e.clientX - dragRef.current.x));
     setTy(dragRef.current.ty + (e.clientY - dragRef.current.y));
   };
-  const stopDrag = () => { dragRef.current = null; };
+  const stopDrag = () => {
+    dragRef.current = null;
+  };
 
-  const reset = () => { setZoom(1); setTx(0); setTy(0); };
+  const reset = () => {
+    setZoom(1);
+    setTx(0);
+    setTy(0);
+  };
 
   return (
     <div className="relative w-full select-none">
@@ -106,13 +118,17 @@ export function TerritorialMap({
           >
             <ZoomOut className="h-4 w-4" />
           </button>
-          
+
           <button
             aria-label="Travar zoom"
             onClick={() => setZoomLocked(!zoomLocked)}
             className="flex h-7 w-7 items-center justify-center rounded text-sm text-foreground hover:bg-accent"
           >
-            {zoomLocked ? <Lock className="h-4 w-4 text-[color:var(--color-critical)]" /> : <Unlock className="h-4 w-4 text-muted-foreground" />}
+            {zoomLocked ? (
+              <Lock className="h-4 w-4 text-[color:var(--color-critical)]" />
+            ) : (
+              <Unlock className="h-4 w-4 text-muted-foreground" />
+            )}
           </button>
 
           <button
@@ -127,10 +143,15 @@ export function TerritorialMap({
 
         {legend && (
           <div className="flex flex-col gap-2 rounded-md border border-border bg-card/95 p-3 shadow-sm backdrop-blur text-xs w-fit">
-            {legendTitle && <span className="font-semibold text-foreground mb-1">{legendTitle}</span>}
+            {legendTitle && (
+              <span className="font-semibold text-foreground mb-1">{legendTitle}</span>
+            )}
             {legend.map((l) => (
               <div key={l.label} className="flex items-center gap-2 text-muted-foreground">
-                <span className="inline-block h-3 w-3 rounded-sm border border-border flex-shrink-0" style={{ background: l.color }} />
+                <span
+                  className="inline-block h-3 w-3 rounded-sm border border-border flex-shrink-0"
+                  style={{ background: l.color }}
+                />
                 <span>{l.label}</span>
               </div>
             ))}
@@ -148,7 +169,10 @@ export function TerritorialMap({
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={stopDrag}
-          onMouseLeave={() => { stopDrag(); setHover(null); }}
+          onMouseLeave={() => {
+            stopDrag();
+            setHover(null);
+          }}
         >
           <g transform={`translate(${tx} ${ty}) scale(${zoom})`}>
             {paths.map((p) => {
@@ -172,7 +196,9 @@ export function TerritorialMap({
                     onSelect?.(m, p.name);
                   }}
                   onMouseMove={(e) => {
-                    const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
+                    const rect = (
+                      e.currentTarget.ownerSVGElement as SVGSVGElement
+                    ).getBoundingClientRect();
                     setHover({
                       name: p.name,
                       m,
@@ -194,9 +220,17 @@ export function TerritorialMap({
             <p className="font-semibold text-foreground">{hover.name}</p>
             {hover.m && (
               <div className="mt-1 space-y-0.5 text-muted-foreground">
-                <p>Comarca: <span className="text-foreground">{hover.m.comarca || "—"}</span></p>
-                <p>Polo Regional: <span className="text-foreground">{hover.m.polo_regional || "—"}</span></p>
-                <p>Risco: <span className="text-foreground">{hover.m.risco_feminicidio_nivel}</span> · score {hover.m.risco_feminicidio_score}</p>
+                <p>
+                  Comarca: <span className="text-foreground">{hover.m.comarca || "—"}</span>
+                </p>
+                <p>
+                  Polo Regional:{" "}
+                  <span className="text-foreground">{hover.m.polo_regional || "—"}</span>
+                </p>
+                <p>
+                  Risco: <span className="text-foreground">{hover.m.risco_feminicidio_nivel}</span>{" "}
+                  · score {hover.m.risco_feminicidio_score}
+                </p>
                 <p className="text-[10px]">Clique para detalhar</p>
               </div>
             )}

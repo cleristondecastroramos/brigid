@@ -1,11 +1,28 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Building2, HeartHandshake, AlertTriangle,
-  MapPin, ListChecks, FileText, Map as MapIcon, LogOut, Sliders, BookOpen
+  LayoutDashboard,
+  Building2,
+  HeartHandshake,
+  AlertTriangle,
+  MapPin,
+  ListChecks,
+  FileText,
+  Map as MapIcon,
+  LogOut,
+  Sliders,
+  BookOpen,
 } from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { BrigidMark } from "@/components/brigid-mark";
 import { useApp } from "@/context/AppContext";
@@ -45,7 +62,7 @@ const groups = [
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (url: string) => (pathname.startsWith(url) && (url !== "/" || pathname === "/"));
+  const isActive = (url: string) => pathname.startsWith(url) && (url !== "/" || pathname === "/");
   const { userRole, logout } = useApp();
 
   const sidebarGroups = groups.map((g) => {
@@ -67,10 +84,16 @@ export function AppSidebar() {
       <SidebarHeader className="h-14 border-b border-sidebar-border px-4 py-0 justify-center m-0">
         <div className="flex items-center gap-2 text-sidebar-foreground">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center">
-            <img src="/logo_brigid.png" alt="BRIGID Logo" className="h-full w-full object-contain" />
+            <img
+              src="/logo_brigid.png"
+              alt="BRIGID Logo"
+              className="h-full w-full object-contain"
+            />
           </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="text-base font-bold tracking-[0.15em] text-sidebar-foreground">BRIGID</span>
+            <span className="text-base font-bold tracking-[0.15em] text-sidebar-foreground">
+              BRIGID
+            </span>
             <span className="text-[8px] tracking-wider text-sidebar-foreground/70 leading-tight uppercase font-semibold whitespace-nowrap">
               Projeto Feminicídio Zero
             </span>
@@ -81,7 +104,11 @@ export function AppSidebar() {
         <SidebarGroup className="pb-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={isActive("/apresentacao-do-sistema")} tooltip="Apresentação do Sistema">
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/apresentacao-do-sistema")}
+                tooltip="Apresentação do Sistema"
+              >
                 <Link to="/apresentacao-do-sistema">
                   <LayoutDashboard className="h-4 w-4" />
                   <span>Apresentação do Sistema</span>
@@ -91,7 +118,10 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
         {sidebarGroups.map((g, index) => (
-          <SidebarGroup key={g.label} className={index > 0 ? "border-t border-white/5 mt-1 pt-3" : "pt-3"}>
+          <SidebarGroup
+            key={g.label}
+            className={index > 0 ? "border-t border-white/5 mt-1 pt-3" : "pt-3"}
+          >
             <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -114,7 +144,11 @@ export function AppSidebar() {
         <div className="flex flex-col gap-2 px-2 py-3">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className="justify-center bg-sidebar-accent/50 text-sidebar-accent-foreground hover:bg-sidebar-accent" tooltip="Sair do sistema">
+              <SidebarMenuButton
+                asChild
+                className="justify-center bg-sidebar-accent/50 text-sidebar-accent-foreground hover:bg-sidebar-accent"
+                tooltip="Sair do sistema"
+              >
                 <Link to="/" onClick={() => logout()}>
                   <LogOut className="mr-2 h-4 w-4 opacity-70" />
                   <span>Sair do sistema</span>
@@ -122,7 +156,6 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-
         </div>
       </SidebarFooter>
     </Sidebar>
