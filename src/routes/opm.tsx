@@ -459,13 +459,13 @@ function OpmPanel() {
             <Table>
               <TableHeader>
                 <TableRow className="text-base">
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('populacao')}>População <SortIcon column="populacao" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')}>OPM <SortIcon column="opm_possui" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_orgaotipo')}>Tipologia <SortIcon column="opm_orgaotipo" /></TableHead>
-                  <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_status_politicas_publicas')}>Políticas Efetivas <SortIcon column="opm_status_politicas_publicas" /></TableHead>
+                  <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                  <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
+                  <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('polo_regional')}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
+                  <TableHead className="text-right cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('populacao')}>População <SortIcon column="populacao" /></TableHead>
+                  <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('opm_possui')}>OPM <SortIcon column="opm_possui" /></TableHead>
+                  <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('opm_orgaotipo')}>Tipologia <SortIcon column="opm_orgaotipo" /></TableHead>
+                  <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('opm_status_politicas_publicas')}>Políticas Efetivas <SortIcon column="opm_status_politicas_publicas" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

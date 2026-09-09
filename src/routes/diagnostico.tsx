@@ -811,14 +811,14 @@ function DiagnosticoPanel() {
                 <CardContent className="p-0">
                   <div className="max-h-[500px] overflow-y-auto px-4 pb-4">
                     <Table>
-                      <TableHeader className="bg-muted/40">
+                      <TableHeader>
                         <TableRow>
-                          <TableHead className="py-1 text-base text-black cursor-pointer hover:bg-muted/60 transition-colors" onClick={() => handlePoloSort("polo")}>Polo Regional <PoloSortIcon column="polo" /></TableHead>
-                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Estrutura da Rede" onClick={() => handlePoloSort("ier")}>IER <PoloSortIcon column="ier" /></TableHead>
-                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Maturidade dos Fluxos" onClick={() => handlePoloSort("imf")}>IMF <PoloSortIcon column="imf" /></TableHead>
-                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" title="Índice de Qualificação Técnica" onClick={() => handlePoloSort("iqt")}>IQT <PoloSortIcon column="iqt" /></TableHead>
-                          <TableHead className="py-1 text-base text-right text-black cursor-pointer hover:bg-muted/60 transition-colors" onClick={() => handlePoloSort("_mediaRaw")}>Média Geral <PoloSortIcon column="_mediaRaw" /></TableHead>
-                          <TableHead className="py-1 text-base text-center text-black">Status</TableHead>
+                          <TableHead className="py-1 text-base cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handlePoloSort("polo")}>Polo Regional <PoloSortIcon column="polo" /></TableHead>
+                          <TableHead className="py-1 text-base text-right cursor-pointer hover:bg-white/10 transition-colors" title="Índice de Estrutura da Rede" onClick={() => handlePoloSort("ier")}>IER <PoloSortIcon column="ier" /></TableHead>
+                          <TableHead className="py-1 text-base text-right cursor-pointer hover:bg-white/10 transition-colors" title="Índice de Maturidade dos Fluxos" onClick={() => handlePoloSort("imf")}>IMF <PoloSortIcon column="imf" /></TableHead>
+                          <TableHead className="py-1 text-base text-right cursor-pointer hover:bg-white/10 transition-colors" title="Índice de Qualificação Técnica" onClick={() => handlePoloSort("iqt")}>IQT <PoloSortIcon column="iqt" /></TableHead>
+                          <TableHead className="py-1 text-base text-right cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handlePoloSort("_mediaRaw")}>Média Geral <PoloSortIcon column="_mediaRaw" /></TableHead>
+                          <TableHead className="py-1 text-base text-center">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -923,24 +923,24 @@ function DiagnosticoPanel() {
             <CardContent>
               <div className="max-h-[600px] overflow-y-auto">
                 <Table>
-                  <TableHeader className="bg-muted/70 sticky top-0 z-10">
+                  <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_sala_especializada')}>Sala<br/>Especializada <SortIcon column="tem_sala_especializada" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_recursos_minimos')}>Recursos<br/>Mínimos <SortIcon column="tem_recursos_minimos" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atendimento<br/>Psicossocial <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_atendimento_juridico')}>Atendimento<br/>Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo<br/>Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_local_regional')}>Protocolo<br/>Regional <SortIcon column="tem_protocolo_local_regional" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_articulacao_rede')}>Articulação<br/>em Rede <SortIcon column="tem_articulacao_rede" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_multiprofissional')}>Equipe<br/>Multiprofissional <SortIcon column="tem_equipe_multiprofissional" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitação<br/>em Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento<br/>Feminicídio <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('ier_score')}>Score<br/>IER <SortIcon column="ier_score" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('imf_score')}>Score<br/>IMF <SortIcon column="imf_score" /></TableHead>
-                      <TableHead className="text-base leading-tight text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('iqt_score')}>Score<br/>IQT <SortIcon column="iqt_score" /></TableHead>
+                      <TableHead className="text-base cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-base cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_sala_especializada')}>Sala<br/>Especializada <SortIcon column="tem_sala_especializada" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_recursos_minimos')}>Recursos<br/>Mínimos <SortIcon column="tem_recursos_minimos" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_atendimento_psicossocial')}>Atendimento<br/>Psicossocial <SortIcon column="tem_atendimento_psicossocial" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_atendimento_juridico')}>Atendimento<br/>Jurídico <SortIcon column="tem_atendimento_juridico" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_fluxo_formal')}>Fluxo<br/>Formal <SortIcon column="tem_fluxo_formal" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_protocolo_local_regional')}>Protocolo<br/>Regional <SortIcon column="tem_protocolo_local_regional" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_articulacao_rede')}>Articulação<br/>em Rede <SortIcon column="tem_articulacao_rede" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_equipe_multiprofissional')}>Equipe<br/>Multiprofissional <SortIcon column="tem_equipe_multiprofissional" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitação<br/>em Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento<br/>Feminicídio <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
+                      <TableHead className="text-base leading-tight text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('grau_suficiencia_estrutura')}>Suficiência <SortIcon column="grau_suficiencia_estrutura" /></TableHead>
+                      <TableHead className="text-base leading-tight text-right cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('ier_score')}>Score<br/>IER <SortIcon column="ier_score" /></TableHead>
+                      <TableHead className="text-base leading-tight text-right cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('imf_score')}>Score<br/>IMF <SortIcon column="imf_score" /></TableHead>
+                      <TableHead className="text-base leading-tight text-right cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('iqt_score')}>Score<br/>IQT <SortIcon column="iqt_score" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1194,15 +1194,15 @@ function DiagnosticoPanel() {
             <CardContent>
               <div className="max-h-[650px] overflow-y-auto">
                 <Table>
-                  <TableHeader className="bg-muted/70 sticky top-0 z-10">
+                  <TableHeader className="sticky top-0 z-10">
                     <TableRow>
-                      <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_investigacao')}>Protocolo de<br/>Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_protocolo_pericial')}>Protocolo<br/>Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado em<br/>Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento<br/>Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Quantidade de<br/>Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
-                      <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência<br/>Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
+                      <TableHead className="text-base cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_protocolo_investigacao')}>Protocolo de<br/>Investigação <SortIcon column="tem_protocolo_investigacao" /></TableHead>
+                      <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_protocolo_pericial')}>Protocolo<br/>Pericial <SortIcon column="tem_protocolo_pericial" /></TableHead>
+                      <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('capacitado_perspectiva_genero')}>Capacitado em<br/>Gênero <SortIcon column="capacitado_perspectiva_genero" /></TableHead>
+                      <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('treinamento_especifico_feminicidio')}>Treinamento<br/>Específico <SortIcon column="treinamento_especifico_feminicidio" /></TableHead>
+                      <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('qtd_capacitacoes_realizadas')}>Quantidade de<br/>Capacitações <SortIcon column="qtd_capacitacoes_realizadas" /></TableHead>
+                      <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('grau_aderencia_protocolo')}>Aderência<br/>Técnica <SortIcon column="grau_aderencia_protocolo" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1342,14 +1342,14 @@ function DiagnosticoPanel() {
               <CardContent className="p-0">
                 <div className="max-h-[750px] overflow-y-auto px-4 pb-4">
                   <Table>
-                    <TableHeader className="bg-muted/40">
+                    <TableHeader>
                       <TableRow>
-                        <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('creas_possui')}>CREAS Ativo <SortIcon column="creas_possui" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe<br/>Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('articulacao_creas_rede')}>Articulação<br/>do CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
-                        <TableHead className="text-base text-center text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('profissionais_capacitados')}>Profissionais<br/>Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
-                        <TableHead className="text-base text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort('data_ultima_capacitacao')}>Última<br/>Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
+                        <TableHead className="text-base cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                        <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('creas_possui')}>CREAS Ativo <SortIcon column="creas_possui" /></TableHead>
+                        <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('tem_equipe_minima_creas')}>Equipe<br/>Mínima <SortIcon column="tem_equipe_minima_creas" /></TableHead>
+                        <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('articulacao_creas_rede')}>Articulação<br/>do CREAS <SortIcon column="articulacao_creas_rede" /></TableHead>
+                        <TableHead className="text-base text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('profissionais_capacitados')}>Profissionais<br/>Capacitados <SortIcon column="profissionais_capacitados" /></TableHead>
+                        <TableHead className="text-base cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('data_ultima_capacitacao')}>Última<br/>Capacitação <SortIcon column="data_ultima_capacitacao" /></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

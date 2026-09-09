@@ -354,29 +354,29 @@ function RiscoPanel() {
                  <Table>
                    <TableHeader>
                      <TableRow>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('polo_regional')}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao')}>População (Geral) <SortIcon column="populacao" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('populacao_feminina')}>Pop. Feminina <SortIcon column="populacao_feminina" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_feminicidio_nivel')}>Risco <SortIcon column="risco_feminicidio_nivel" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('risco_feminicidio_score')}>Score <SortIcon column="risco_feminicidio_score" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('taxa_feminicidios_100k')}>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('comarca')}>Comarca <SortIcon column="comarca" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('polo_regional')}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors text-right hover:bg-white/10" onClick={() => handleSort('populacao')}>População (Geral) <SortIcon column="populacao" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors text-right hover:bg-white/10" onClick={() => handleSort('populacao_feminina')}>Pop. Feminina <SortIcon column="populacao_feminina" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('risco_feminicidio_nivel')}>Risco <SortIcon column="risco_feminicidio_nivel" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors text-right hover:bg-white/10" onClick={() => handleSort('risco_feminicidio_score')}>Score <SortIcon column="risco_feminicidio_score" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors text-right hover:bg-white/10" onClick={() => handleSort('taxa_feminicidios_100k')}>
                           <div className="flex flex-col items-end">
                              <span>Feminicídios <SortIcon column="taxa_feminicidios_100k" /></span>
                              <span className="text-[10px] font-normal opacity-70">Taxa p/ 100k mulheres</span>
                           </div>
                        </TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors text-right" onClick={() => handleSort('taxa_tentativas_100k')}>
+                       <TableHead className="cursor-pointer transition-colors text-right hover:bg-white/10" onClick={() => handleSort('taxa_tentativas_100k')}>
                           <div className="flex flex-col items-end">
                              <span>Tentativas <SortIcon column="taxa_tentativas_100k" /></span>
                              <span className="text-[10px] font-normal opacity-70">Taxa p/ 100k mulheres</span>
                           </div>
                        </TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('opm_possui')} title="Organismo de Políticas para as Mulheres">OPM <SortIcon column="opm_possui" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('creas_possui')}>CREAS <SortIcon column="creas_possui" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('painel_alerta_rede')}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
-                       <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('necessita_atuacao_prioritaria')}>Prioritária <SortIcon column="necessita_atuacao_prioritaria" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('opm_possui')} title="Organismo de Políticas para as Mulheres">OPM <SortIcon column="opm_possui" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('creas_possui')}>CREAS <SortIcon column="creas_possui" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('painel_alerta_rede')}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
+                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('necessita_atuacao_prioritaria')}>Prioritária <SortIcon column="necessita_atuacao_prioritaria" /></TableHead>
                      </TableRow>
                    </TableHeader>
                    <TableBody>

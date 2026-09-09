@@ -232,17 +232,17 @@ function MunicipiosList() {
         <CardContent className="p-0">
           <div className="max-h-[600px] overflow-auto relative">
             <Table>
-              <TableHeader className="bg-muted/70 sticky top-0 z-20 shadow-sm">
+              <TableHeader className="sticky top-0 z-20">
                 <TableRow>
-                  <TableHead className="text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors sticky left-0 z-30 bg-muted/70" onClick={() => handleSort("municipio")}>Município <SortIcon column="municipio" /></TableHead>
-                  <TableHead className="text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort("comarca")}>Comarca <SortIcon column="comarca" /></TableHead>
-                  <TableHead className="text-black cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort("polo_regional")}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
-                  <TableHead className="text-black text-right cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
-                  <TableHead className="text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort("opm_possui")}>OPM <SortIcon column="opm_possui" /></TableHead>
-                  <TableHead className="text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors" onClick={() => handleSort("creas_possui")}>CREAS <SortIcon column="creas_possui" /></TableHead>
-                  <TableHead className="text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors border-l border-primary/10 bg-primary/5" onClick={() => handleSort("risco_feminicidio_score")}>Risco <SortIcon column="risco_feminicidio_score" /></TableHead>
-                  <TableHead className="text-black text-center cursor-pointer hover:bg-primary/90 hover:text-white transition-colors border-r border-primary/10 bg-primary/5" onClick={() => handleSort("painel_alerta_rede")}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
-                  <TableHead className="text-black w-[80px] text-center">Ação</TableHead>
+                  <TableHead className="cursor-pointer hover:bg-white/10 transition-colors sticky left-0 z-30 bg-[var(--color-sidebar)]" onClick={() => handleSort("municipio")}>Município <SortIcon column="municipio" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("comarca")}>Comarca <SortIcon column="comarca" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("polo_regional")}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
+                  <TableHead className="text-right cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
+                  <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("opm_possui")}>OPM <SortIcon column="opm_possui" /></TableHead>
+                  <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("creas_possui")}>CREAS <SortIcon column="creas_possui" /></TableHead>
+                  <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("risco_feminicidio_score")}>Risco <SortIcon column="risco_feminicidio_score" /></TableHead>
+                  <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("painel_alerta_rede")}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
+                  <TableHead className="w-[80px] text-center">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

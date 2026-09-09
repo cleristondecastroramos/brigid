@@ -48,13 +48,13 @@ export default function AdminAccessDialog() {
   if (userRole === 'admin') {
     return (
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-none border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
           Sessão Admin Ativa
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 rounded-full border border-purple-200 dark:border-purple-900 bg-white dark:bg-purple-950 px-3 py-1.5 text-purple-900 dark:text-purple-300 shadow-sm hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all font-medium uppercase tracking-wide text-[10px] cursor-pointer"
+          className="flex items-center gap-1.5 rounded-none border border-white/20 bg-white/10 px-3 py-1.5 text-white shadow-none hover:bg-white/20 transition-all font-medium uppercase tracking-wide text-[10px] cursor-pointer"
           title="Sair do modo restrito"
         >
           <LogOut className="h-3 w-3" />
@@ -71,10 +71,10 @@ export default function AdminAccessDialog() {
           setErrorMsg('');
           setOpen(true);
         }}
-        className="group flex items-center gap-1.5 rounded-full border border-purple-200 dark:border-purple-900 bg-white dark:bg-purple-950 px-3 py-1.5 shadow-sm hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition-all cursor-pointer"
+        className="group flex items-center gap-1.5 rounded-none border border-white/20 bg-white/10 px-3 py-1.5 shadow-none hover:bg-white/20 transition-all cursor-pointer"
       >
-        <ShieldCheck className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
-        <span className="font-semibold text-purple-950 dark:text-purple-200 tracking-wide uppercase text-[10px]">
+        <ShieldCheck className="h-3.5 w-3.5 text-white" />
+        <span className="font-semibold text-white tracking-wide uppercase text-[10px]">
           Acesso Restrito
         </span>
       </button>

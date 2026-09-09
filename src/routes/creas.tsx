@@ -424,19 +424,19 @@ function CreasPanel() {
             <Table>
               <TableHeader>
                 <TableRow className="text-base">
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("municipio")}>
+                  <TableHead className="cursor-pointer select-none hover:bg-white/10 transition-colors" onClick={() => handleSort("municipio")}>
                     <div className="flex items-center">Município <SortIcon col="municipio" /></div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("comarca")}>
+                  <TableHead className="cursor-pointer select-none hover:bg-white/10 transition-colors" onClick={() => handleSort("comarca")}>
                     <div className="flex items-center">Comarca <SortIcon col="comarca" /></div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("polo_regional")}>
+                  <TableHead className="cursor-pointer select-none hover:bg-white/10 transition-colors" onClick={() => handleSort("polo_regional")}>
                     <div className="flex items-center">Polo Regional <SortIcon col="polo_regional" /></div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("populacao")}>
+                  <TableHead className="cursor-pointer select-none hover:bg-white/10 transition-colors" onClick={() => handleSort("populacao")}>
                     <div className="flex items-center justify-end">População <SortIcon col="populacao" /></div>
                   </TableHead>
-                  <TableHead className="cursor-pointer select-none hover:bg-muted/50 transition-colors" onClick={() => handleSort("creas_possui")}>
+                  <TableHead className="cursor-pointer select-none hover:bg-white/10 transition-colors" onClick={() => handleSort("creas_possui")}>
                     <div className="flex items-center">CREAS <SortIcon col="creas_possui" /></div>
                   </TableHead>
                 </TableRow>

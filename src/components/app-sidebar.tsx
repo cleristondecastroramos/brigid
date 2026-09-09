@@ -64,9 +64,9 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-3 text-sidebar-foreground">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm border border-purple-900/10">
+      <SidebarHeader className="h-16 border-b border-sidebar-border px-4 py-0 justify-center">
+        <div className="flex items-center gap-2 text-sidebar-foreground">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center">
             <img src="/logo_brigid.png" alt="BRIGID Logo" className="h-full w-full object-contain" />
           </div>
           <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
@@ -90,8 +90,8 @@ export function AppSidebar() {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        {sidebarGroups.map((g) => (
-          <SidebarGroup key={g.label}>
+        {sidebarGroups.map((g, index) => (
+          <SidebarGroup key={g.label} className={index > 0 ? "border-t border-white/5 mt-1 pt-3" : "pt-3"}>
             <SidebarGroupLabel>{g.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>

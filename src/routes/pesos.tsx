@@ -298,12 +298,12 @@ function PesosConfigPanel() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10 cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('pos')}>Pos <SortIcon column="pos" /></TableHead>
-                      <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
-                      <TableHead className="text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('score_original')}>Score original <SortIcon column="score_original" /></TableHead>
-                      <TableHead className="text-center cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('score_novo')}>Novo score <SortIcon column="score_novo" /></TableHead>
-                      <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_original')}>Risco original <SortIcon column="risco_original" /></TableHead>
-                      <TableHead className="cursor-pointer hover:bg-primary/90 transition-colors" onClick={() => handleSort('risco_novo')}>Novo risco <SortIcon column="risco_novo" /></TableHead>
+                      <TableHead className="w-10 cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('pos')}>Pos <SortIcon column="pos" /></TableHead>
+                      <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('municipio')}>Município <SortIcon column="municipio" /></TableHead>
+                      <TableHead className="text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('score_original')}>Score original <SortIcon column="score_original" /></TableHead>
+                      <TableHead className="text-center cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('score_novo')}>Novo score <SortIcon column="score_novo" /></TableHead>
+                      <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('risco_original')}>Risco original <SortIcon column="risco_original" /></TableHead>
+                      <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('risco_novo')}>Novo risco <SortIcon column="risco_novo" /></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

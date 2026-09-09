@@ -4,7 +4,7 @@ import {
 } from "@tanstack/react-router";
 import { Suspense, useState, useEffect } from "react";
 import { Sun, Moon, ShieldCheck } from "lucide-react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
@@ -84,16 +84,16 @@ function PageHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-4 backdrop-blur transition-colors">
-      <SidebarTrigger className="-ml-1" />
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/10 bg-[var(--color-sidebar)] px-4 transition-colors mt-0 pt-0 border-t-0">
+      <SidebarTrigger className="-ml-1 text-white/80 hover:text-white" />
       
       <div className="flex items-center gap-2.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white p-0.5 shadow-sm border border-purple-900/10">
+        <div className="flex h-7 w-7 items-center justify-center">
           <img src="/logo_brigid.png" alt="BRIGID" className="h-full w-full object-contain" />
         </div>
-        <span className="font-bold text-xs tracking-wider text-purple-900 dark:text-purple-300 hidden sm:inline">BRIGID</span>
-        <div className="h-4 w-[1px] bg-border hidden sm:block" />
-        <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">{title}</span>
+        <span className="font-bold text-xs tracking-wider text-white hidden sm:inline">BRIGID</span>
+        <div className="h-4 w-[1px] bg-white/20 hidden sm:block" />
+        <span className="text-[11px] font-semibold text-white/75 tracking-wide">{title}</span>
       </div>
       
       <div className="ml-auto flex items-center gap-3 text-xs">
@@ -101,7 +101,7 @@ function PageHeader() {
         
         <button
           onClick={toggleTheme}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-all hover:bg-muted hover:scale-105 active:scale-95"
+          className="inline-flex h-8 w-8 items-center justify-center border border-white/20 bg-white/10 text-white shadow-none transition-all hover:bg-white/20"
           title={theme === "light" ? "Mudar para modo escuro" : "Mudar para modo claro"}
         >
           {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
@@ -150,33 +150,31 @@ function RootInner() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-dvh w-full bg-background">
-        <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <PageHeader />
-          <main className="flex-1 p-4 md:p-6">
-            <Suspense fallback={
-              <div className="flex h-[60vh] items-center justify-center">
-                <div className="text-center">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
-                  <p className="mt-2 text-sm text-muted-foreground">Carregando base territorial…</p>
-                </div>
+      <AppSidebar />
+      <SidebarInset className="flex flex-col min-w-0 mt-0 pt-0 border-t-0">
+        <PageHeader />
+        <main className="flex-1 p-4 md:p-6 bg-background">
+          <Suspense fallback={
+            <div className="flex h-[60vh] items-center justify-center">
+              <div className="text-center">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
+                <p className="mt-2 text-sm text-muted-foreground">Carregando base territorial…</p>
               </div>
-            }>
-              <Outlet />
-            </Suspense>
-            <footer className="mt-10 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
-              <p>
-                <span className="font-semibold tracking-[0.18em] text-foreground">BRIGID</span>
-                {" — "}Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
-              </p>
-              <p className="mt-1 text-muted-foreground/80">
-                Ministério Público do Estado do Piauí · CAOCRIM · Plataforma institucional de monitoramento, análise territorial e gestão estratégica baseada em evidências.
-              </p>
-            </footer>
-          </main>
-        </div>
-      </div>
+            </div>
+          }>
+            <Outlet />
+          </Suspense>
+          <footer className="mt-10 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
+            <p>
+              <span className="font-semibold tracking-[0.18em] text-foreground">BRIGID</span>
+              {" — "}Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto Feminicídio Zero.
+            </p>
+            <p className="mt-1 text-muted-foreground/80">
+              Ministério Público do Estado do Piauí · CAOCRIM · Plataforma institucional de monitoramento, análise territorial e gestão estratégica baseada em evidências.
+            </p>
+          </footer>
+        </main>
+      </SidebarInset>
       <Toaster />
     </SidebarProvider>
   );
