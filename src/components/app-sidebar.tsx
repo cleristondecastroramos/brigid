@@ -64,7 +64,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 border-b border-sidebar-border px-4 py-0 justify-center">
+      <SidebarHeader className="h-14 border-b border-sidebar-border px-4 py-0 justify-center m-0">
         <div className="flex items-center gap-2 text-sidebar-foreground">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center">
             <img src="/logo_brigid.png" alt="BRIGID Logo" className="h-full w-full object-contain" />

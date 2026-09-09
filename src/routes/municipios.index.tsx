@@ -237,7 +237,7 @@ function MunicipiosList() {
                   <TableHead className="cursor-pointer hover:bg-white/10 transition-colors sticky left-0 z-30 bg-[var(--color-sidebar)]" onClick={() => handleSort("municipio")}>Município <SortIcon column="municipio" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("comarca")}>Comarca <SortIcon column="comarca" /></TableHead>
                   <TableHead className="cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("polo_regional")}>Polo Regional <SortIcon column="polo_regional" /></TableHead>
-                  <TableHead className="text-right cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
+                  <TableHead className="cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("populacao")}>População <SortIcon column="populacao" /></TableHead>
                   <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("opm_possui")}>OPM <SortIcon column="opm_possui" /></TableHead>
                   <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("creas_possui")}>CREAS <SortIcon column="creas_possui" /></TableHead>
                   <TableHead className="text-center cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleSort("risco_feminicidio_score")}>Risco <SortIcon column="risco_feminicidio_score" /></TableHead>
@@ -255,18 +255,18 @@ function MunicipiosList() {
                 ) : (
                   filtered.map((m) => (
                     <TableRow key={m.codigo_ibge} className="hover:bg-muted/30 transition-colors group">
-                      <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur group-hover:bg-muted/80">
+                      <TableCell className="sticky left-0 z-10 bg-background group-hover:bg-muted">
                         <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }} className="font-semibold text-foreground hover:text-primary transition-colors">
                           {m.municipio}
                         </Link>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{m.comarca}</TableCell>
                       <TableCell className="text-muted-foreground">{m.polo_regional}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium text-foreground/80">{m.populacao.toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className="tabular-nums font-medium text-foreground/80">{m.populacao.toLocaleString("pt-BR")}</TableCell>
                       <TableCell className="text-center"><YesNoBadge value={m.opm_possui} /></TableCell>
                       <TableCell className="text-center"><YesNoBadge value={m.creas_possui} /></TableCell>
-                      <TableCell className="text-center border-l border-primary/5 bg-primary/[0.02]"><RiskBadge level={m.risco_feminicidio_nivel} /></TableCell>
-                      <TableCell className="text-center border-r border-primary/5 bg-primary/[0.02]"><AlertBadge level={m.painel_alerta_rede} /></TableCell>
+                      <TableCell className="text-center bg-primary/[0.02]"><RiskBadge level={m.risco_feminicidio_nivel} /></TableCell>
+                      <TableCell className="text-center bg-primary/[0.02]"><AlertBadge level={m.painel_alerta_rede} /></TableCell>
                       <TableCell className="text-center">
                         <Link to="/municipios/$slug" params={{ slug: m.municipio_slug }}>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10">

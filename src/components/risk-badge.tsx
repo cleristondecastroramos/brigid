@@ -15,12 +15,12 @@ const ALERT_TOKENS: Record<string, string> = {
 
 export function RiskBadge({ level }: { level: string }) {
   const cls = RISK_TOKENS[level] ?? "bg-muted text-muted-foreground border-border";
-  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium", cls)}>{level || "—"}</span>;
+  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap", cls)}>{level || "—"}</span>;
 }
 
 export function AlertBadge({ level }: { level: string }) {
   const cls = ALERT_TOKENS[level] ?? "bg-muted text-muted-foreground border-border";
-  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium", cls)}>{level || "—"}</span>;
+  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap", cls)}>{level || "—"}</span>;
 }
 
 export function YesNoBadge({ value, positiveIsGood = true }: { value: string; positiveIsGood?: boolean }) {
@@ -29,5 +29,5 @@ export function YesNoBadge({ value, positiveIsGood = true }: { value: string; po
   const cls = good
     ? "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)] border-[color:var(--color-success)]/30"
     : "bg-destructive/10 text-destructive border-destructive/30";
-  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium", cls)}>{value || "—"}</span>;
+  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap", cls)}>{value || "—"}</span>;
 }

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto border border-[rgba(var(--table-grid),var(--table-grid-opacity))] bg-card">
+    <div className="relative w-full border border-[rgba(var(--table-grid),var(--table-grid-opacity))] bg-card">
       <table ref={ref} className={cn("w-full caption-bottom text-sm border-collapse", className)} {...props} />
     </div>
   ),
@@ -15,7 +15,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("bg-[var(--color-sidebar)] text-white", className)} {...props} />
+  <thead ref={ref} className={cn("bg-[var(--color-sidebar)] text-white sticky top-0 z-20", className)} {...props} />
 ));
 TableHeader.displayName = "TableHeader";
 
@@ -60,7 +60,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-10 px-4 py-2.5 text-left align-middle font-semibold whitespace-nowrap text-white border-t border-t-[rgba(255,255,255,0.24)] border-b border-b-[rgba(255,255,255,0.42)] border-x border-x-[rgba(255,255,255,0.24)] last:border-r-0 first:border-l-0 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "h-10 px-4 py-2.5 text-center align-middle font-semibold whitespace-nowrap text-white border-t border-t-[rgba(255,255,255,0.24)] border-b border-b-[rgba(255,255,255,0.42)] border-x border-x-[rgba(255,255,255,0.24)] last:border-r-0 first:border-l-0 [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}
@@ -75,7 +75,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "p-2.5 px-4 align-middle text-foreground border border-[rgba(var(--table-grid),var(--table-grid-opacity))] [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+      "p-2.5 px-4 text-center align-middle text-foreground border border-[rgba(var(--table-grid),var(--table-grid-opacity))] [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
       className,
     )}
     {...props}

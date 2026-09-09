@@ -373,10 +373,10 @@ function RiscoPanel() {
                              <span className="text-[10px] font-normal opacity-70">Taxa p/ 100k mulheres</span>
                           </div>
                        </TableHead>
-                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('opm_possui')} title="Organismo de Políticas para as Mulheres">OPM <SortIcon column="opm_possui" /></TableHead>
-                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('creas_possui')}>CREAS <SortIcon column="creas_possui" /></TableHead>
-                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('painel_alerta_rede')}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
-                       <TableHead className="cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('necessita_atuacao_prioritaria')}>Prioritária <SortIcon column="necessita_atuacao_prioritaria" /></TableHead>
+                       <TableHead className="min-w-[100px] whitespace-nowrap cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('opm_possui')} title="Organismo de Políticas para as Mulheres">OPM <SortIcon column="opm_possui" /></TableHead>
+                       <TableHead className="min-w-[100px] whitespace-nowrap cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('creas_possui')}>CREAS <SortIcon column="creas_possui" /></TableHead>
+                       <TableHead className="min-w-[120px] whitespace-nowrap cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('painel_alerta_rede')}>Alerta <SortIcon column="painel_alerta_rede" /></TableHead>
+                       <TableHead className="min-w-[120px] whitespace-nowrap cursor-pointer transition-colors hover:bg-white/10" onClick={() => handleSort('necessita_atuacao_prioritaria')}>Prioritária <SortIcon column="necessita_atuacao_prioritaria" /></TableHead>
                      </TableRow>
                    </TableHeader>
                    <TableBody>
@@ -401,10 +401,10 @@ function RiscoPanel() {
                             <span className="font-semibold">{m.taxa_tentativas_100k}</span>
                             <span className="text-[10px] text-muted-foreground ml-1">({m.feminicidios_tentados_2023_2025})</span>
                          </TableCell>
-                         <TableCell><YesNoBadge value={m.opm_possui} /></TableCell>
-                         <TableCell><YesNoBadge value={m.creas_possui} /></TableCell>
-                         <TableCell><AlertBadge level={m.painel_alerta_rede} /></TableCell>
-                         <TableCell><YesNoBadge value={m.necessita_atuacao_prioritaria} positiveIsGood={false} /></TableCell>
+                         <TableCell className="whitespace-nowrap"><YesNoBadge value={m.opm_possui} /></TableCell>
+                         <TableCell className="whitespace-nowrap"><YesNoBadge value={m.creas_possui} /></TableCell>
+                         <TableCell className="whitespace-nowrap"><AlertBadge level={m.painel_alerta_rede} /></TableCell>
+                         <TableCell className="whitespace-nowrap"><YesNoBadge value={m.necessita_atuacao_prioritaria} positiveIsGood={false} /></TableCell>
                        </TableRow>
                      ))}
                    </TableBody>

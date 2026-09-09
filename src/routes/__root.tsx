@@ -84,7 +84,7 @@ function PageHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/10 bg-[var(--color-sidebar)] px-4 transition-colors mt-0 pt-0 border-t-0">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-white/10 bg-[var(--color-sidebar)] px-4 transition-colors m-0 p-0 border-t-0 w-full">
       <SidebarTrigger className="-ml-1 text-white/80 hover:text-white" />
       
       <div className="flex items-center gap-2.5">
@@ -149,13 +149,13 @@ function RootInner() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="m-0 p-0">
       <AppSidebar />
-      <SidebarInset className="flex flex-col min-w-0 mt-0 pt-0 border-t-0">
+      <SidebarInset className="flex flex-col min-w-0 m-0 p-0 border-t-0 bg-transparent">
         <PageHeader />
-        <main className="flex-1 p-4 md:p-6 bg-background">
+        <main className="flex-1 p-4 md:p-6 bg-background m-0">
           <Suspense fallback={
-            <div className="flex h-[60vh] items-center justify-center">
+            <div className="flex h-[calc(100vh-56px)] items-center justify-center">
               <div className="text-center">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BRIGID</p>
                 <p className="mt-2 text-sm text-muted-foreground">Carregando base territorial…</p>
