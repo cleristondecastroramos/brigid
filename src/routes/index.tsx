@@ -29,6 +29,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Component as Background } from "@/components/ui/background-snippets";
 
 export const Route = createFileRoute("/")({
   component: LandingPage,
@@ -72,7 +73,8 @@ function LandingPage() {
   };
 
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-gradient-to-br from-rose-50 via-background to-fuchsia-50 dark:from-rose-950/20 dark:via-background dark:to-fuchsia-950/20 font-sans text-foreground">
+    <div className="flex min-h-dvh w-full flex-col relative overflow-hidden font-sans text-foreground">
+      <Background />
       {/* Header institucional */}
       <header className="flex w-full items-center justify-between border-b border-border bg-card px-6 py-4">
         <div className="flex items-center gap-4">
@@ -103,7 +105,7 @@ function LandingPage() {
             </ContainerAnimated>
 
             <ContainerAnimated className="text-4xl font-bold md:text-[2.6rem] tracking-tight text-foreground leading-[1.1]">
-              BRÍGID — Sistema de Monitoramento Integrado e Prevenção
+              BRÍGID — Base de Referência Integrada para Gestão, Inteligência e Dados
             </ContainerAnimated>
 
             <ContainerAnimated className="my-6 text-base text-muted-foreground md:text-lg leading-relaxed max-w-xl">
