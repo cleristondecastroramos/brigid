@@ -96,7 +96,9 @@ function PageHeader() {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-white/10 bg-[var(--color-sidebar)] px-4 transition-colors m-0 p-0 border-t-0 w-full">
-      <SidebarTrigger className="-ml-1 text-white/80 hover:text-white" />
+      {!pathname.startsWith("/diagnostico-brigid") && (
+        <SidebarTrigger className="-ml-1 text-white/80 hover:text-white" />
+      )}
 
       <div className="flex items-center gap-2.5">
         <div className="flex h-7 w-7 items-center justify-center">
@@ -147,12 +149,22 @@ function RootInner() {
   }, [pathname, userRole, navigate]);
 
   const isLandingPage = pathname === "/";
+  const isDiagnosticoBrigid = pathname.startsWith("/diagnostico-brigid");
 
-  if (isLandingPage) {
+  if (isLandingPage || isDiagnosticoBrigid) {
     return (
       <>
         <Suspense fallback={<div className="min-h-dvh bg-[#F8FAFC]" />}>
-          <Outlet />
+          {isDiagnosticoBrigid ? (
+            <div className="flex flex-col min-h-screen bg-background">
+              <PageHeader />
+              <main className="flex-1 p-4 md:p-6 m-0">
+                <Outlet />
+              </main>
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </Suspense>
         <Toaster />
       </>

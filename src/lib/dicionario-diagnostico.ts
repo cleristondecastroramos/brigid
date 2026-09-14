@@ -15,21 +15,6 @@ export interface CampoDicionario {
 export const dicionarioDiagnostico: CampoDicionario[] = [
   // IDENTIFICAÇÃO
   {
-    id: 'DGN_UNIDADE_TIPO',
-    codigo_tecnico: 'DGN_UNIDADE_TIPO',
-    secao: 'identificacao',
-    rotulo: 'Tipo de unidade ministerial',
-    descricao: 'Identifica a configuração da Promotoria',
-    tipo_controle: 'select',
-    opcoes: [
-      { label: 'Promotoria com atribuição de cidadania/cível', value: 'cidadania' },
-      { label: 'Promotoria com atribuição criminal', value: 'criminal' },
-      { label: 'Promotoria com atribuições cumulativas', value: 'cumulativa' },
-      { label: 'Promotoria Única', value: 'unica' },
-    ],
-    obrigatorio: true,
-  },
-  {
     id: 'DGN_SITUACAO',
     codigo_tecnico: 'DGN_SITUACAO',
     secao: 'identificacao',

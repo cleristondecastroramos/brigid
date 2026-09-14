@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SelecaoPromotoria } from "./SelecaoPromotoria";
 import { toast } from "sonner";
 
 interface FormularioDiagnosticoProps {
@@ -23,6 +22,9 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
   const [activeTab, setActiveTab] = useState<SecaoId>("identificacao");
 
   // Novo fluxo
+  const [todasPromotorias, setTodasPromotorias] = useState<Promotoria[]>([]);
+  const [comarcasDisponiveis, setComarcasDisponiveis] = useState<string[]>([]);
+  const [selectedComarca, setSelectedComarca] = useState<string>("");
   const [promotoriaObj, setPromotoriaObj] = useState<Promotoria | null>(null);
   const [municipiosVinculados, setMunicipiosVinculados] = useState<PromotoriaMunicipio[]>([]);
   const [loadingVinculos, setLoadingVinculos] = useState(false);
@@ -34,6 +36,12 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
   });
 
   useEffect(() => {
+    promotoriasService.listarPromotorias().then(data => {
+      setTodasPromotorias(data);
+      const comarcas = Array.from(new Set(data.map(p => p.comarca_sede))).sort();
+      setComarcasDisponiveis(comarcas);
+    });
+
     if (!isNew && diagnosticoId) {
       diagnosticoService.getById(diagnosticoId).then(async (res) => {
         if (res) {
@@ -41,7 +49,10 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
           // Rehydrate promotoria state
           if (res.promotoria_id) {
             const p = await promotoriasService.buscarPromotoriaPorId(res.promotoria_id);
-            if (p) setPromotoriaObj(p);
+            if (p) {
+              setPromotoriaObj(p);
+              setSelectedComarca(p.comarca_sede);
+            }
             const muns = await promotoriasService.listarMunicipiosDaPromotoria(res.promotoria_id);
             setMunicipiosVinculados(muns);
           }
@@ -55,6 +66,31 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
       setLoading(false);
     }
   }, [isNew, diagnosticoId, navigate]);
+
+  const handleChangeComarca = (comarca: string) => {
+    if (selectedComarca && selectedComarca !== comarca && formData.promotoria_id) {
+      const temRespostas = Object.keys(formData.respostas || {}).length > 0;
+      if (temRespostas) {
+        const confirmar = window.confirm("A alteração da Comarca redefinirá a Promotoria de Justiça e modificará os municípios disponíveis. Deseja continuar?");
+        if (!confirmar) return;
+      }
+    }
+    
+    setSelectedComarca(comarca);
+    setPromotoriaObj(null);
+    setMunicipiosVinculados([]);
+    setFormData(prev => ({
+      ...prev,
+      promotoria_id: "",
+      promotoria_nome: "",
+      codigo_ibge: "",
+      municipio: "",
+      comarca: "",
+      polo_regional: "",
+      atribuicao: [],
+      respostas: {}
+    }));
+  };
 
   const handleChangePromotoria = async (pid: string) => {
     if (formData.promotoria_id && formData.promotoria_id !== pid) {
@@ -187,11 +223,40 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
               {s.id === 'identificacao' && (
                 <div className="space-y-6 mb-8 p-6 bg-muted/10 border rounded-lg">
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">Comarca Sede <span className="text-destructive">*</span></label>
+                    <Select
+                      value={selectedComarca}
+                      onValueChange={handleChangeComarca}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a Comarca..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {comarcasDisponiveis.map(c => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">Promotoria de Justiça respondente <span className="text-destructive">*</span></label>
-                    <SelecaoPromotoria
-                      value={formData.promotoria_id}
-                      onChange={handleChangePromotoria}
-                    />
+                    <Select
+                      value={formData.promotoria_id || ""}
+                      onValueChange={handleChangePromotoria}
+                      disabled={!selectedComarca}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={!selectedComarca ? "Selecione primeiro a Comarca" : "Selecione a Promotoria de Justiça..."} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {todasPromotorias
+                          .filter(p => p.comarca_sede === selectedComarca)
+                          .map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {formData.promotoria_id && (

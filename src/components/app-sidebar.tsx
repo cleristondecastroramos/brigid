@@ -31,7 +31,6 @@ const groups = [
   {
     label: "Monitoramento",
     items: [
-      { title: "Diagnóstico Institucional", url: "/diagnostico-brigid", icon: FileText },
       { title: "Diagnóstico da Rede", url: "/diagnostico", icon: FileText },
       { title: "Cobertura OPM", url: "/opm", icon: Building2 },
       { title: "Cobertura CREAS", url: "/creas", icon: HeartHandshake },
