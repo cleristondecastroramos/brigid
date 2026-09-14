@@ -8,6 +8,7 @@ import {
   Database,
   User,
   AlertCircle,
+  FileText,
 } from "lucide-react";
 import logoMPPI from "@/assets/logo-mppi.png";
 import { useApp } from "@/context/AppContext";
@@ -48,6 +49,11 @@ function LandingPage() {
     login("public");
     toast.success("Acesso ao painel público carregado com sucesso.");
     navigate({ to: "/apresentacao-do-sistema" });
+  };
+
+  const handleAccessDiagnostico = () => {
+    // Optionally login if needed, or simply navigate
+    navigate({ to: "/diagnostico-brigid" });
   };
 
   const handleAdminLogin = (e: React.FormEvent) => {
@@ -123,6 +129,15 @@ function LandingPage() {
               >
                 Acessar painel
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+
+              <Button
+                onClick={handleAccessDiagnostico}
+                className="h-12 px-8 text-base shadow-sm"
+                variant="secondary"
+              >
+                Diagnóstico BRIGID
+                <FileText className="ml-2 h-4 w-4" />
               </Button>
 
               <Dialog

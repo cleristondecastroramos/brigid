@@ -23,7 +23,15 @@ import { Route as BaseRouteImport } from './routes/base'
 import { Route as ApresentacaoDoSistemaRouteImport } from './routes/apresentacao-do-sistema'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MunicipiosIndexRouteImport } from './routes/municipios.index'
+import { Route as DiagnosticoBrigidIndexRouteImport } from './routes/diagnostico-brigid/index'
 import { Route as MunicipiosSlugRouteImport } from './routes/municipios.$slug'
+import { Route as DiagnosticoBrigidPainelRouteImport } from './routes/diagnostico-brigid/painel'
+import { Route as DiagnosticoBrigidNovoRouteImport } from './routes/diagnostico-brigid/novo'
+import { Route as DiagnosticoBrigidMeusDiagnosticosRouteImport } from './routes/diagnostico-brigid/meus-diagnosticos'
+import { Route as DiagnosticoBrigidBaseRouteImport } from './routes/diagnostico-brigid/base'
+import { Route as DiagnosticoBrigidAdministracaoRouteImport } from './routes/diagnostico-brigid/administracao'
+import { Route as DiagnosticoBrigidAcompanhamentoRouteImport } from './routes/diagnostico-brigid/acompanhamento'
+import { Route as DiagnosticoBrigidFormularioDiagnosticoIdRouteImport } from './routes/diagnostico-brigid/formulario.$diagnosticoId'
 
 const TerritorioRoute = TerritorioRouteImport.update({
   id: '/territorio',
@@ -95,11 +103,55 @@ const MunicipiosIndexRoute = MunicipiosIndexRouteImport.update({
   path: '/municipios/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiagnosticoBrigidIndexRoute = DiagnosticoBrigidIndexRouteImport.update({
+  id: '/diagnostico-brigid/',
+  path: '/diagnostico-brigid/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MunicipiosSlugRoute = MunicipiosSlugRouteImport.update({
   id: '/municipios/$slug',
   path: '/municipios/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiagnosticoBrigidPainelRoute = DiagnosticoBrigidPainelRouteImport.update({
+  id: '/diagnostico-brigid/painel',
+  path: '/diagnostico-brigid/painel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticoBrigidNovoRoute = DiagnosticoBrigidNovoRouteImport.update({
+  id: '/diagnostico-brigid/novo',
+  path: '/diagnostico-brigid/novo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticoBrigidMeusDiagnosticosRoute =
+  DiagnosticoBrigidMeusDiagnosticosRouteImport.update({
+    id: '/diagnostico-brigid/meus-diagnosticos',
+    path: '/diagnostico-brigid/meus-diagnosticos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DiagnosticoBrigidBaseRoute = DiagnosticoBrigidBaseRouteImport.update({
+  id: '/diagnostico-brigid/base',
+  path: '/diagnostico-brigid/base',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticoBrigidAdministracaoRoute =
+  DiagnosticoBrigidAdministracaoRouteImport.update({
+    id: '/diagnostico-brigid/administracao',
+    path: '/diagnostico-brigid/administracao',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DiagnosticoBrigidAcompanhamentoRoute =
+  DiagnosticoBrigidAcompanhamentoRouteImport.update({
+    id: '/diagnostico-brigid/acompanhamento',
+    path: '/diagnostico-brigid/acompanhamento',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DiagnosticoBrigidFormularioDiagnosticoIdRoute =
+  DiagnosticoBrigidFormularioDiagnosticoIdRouteImport.update({
+    id: '/diagnostico-brigid/formulario/$diagnosticoId',
+    path: '/diagnostico-brigid/formulario/$diagnosticoId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,8 +167,16 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
   '/territorio': typeof TerritorioRoute
+  '/diagnostico-brigid/acompanhamento': typeof DiagnosticoBrigidAcompanhamentoRoute
+  '/diagnostico-brigid/administracao': typeof DiagnosticoBrigidAdministracaoRoute
+  '/diagnostico-brigid/base': typeof DiagnosticoBrigidBaseRoute
+  '/diagnostico-brigid/meus-diagnosticos': typeof DiagnosticoBrigidMeusDiagnosticosRoute
+  '/diagnostico-brigid/novo': typeof DiagnosticoBrigidNovoRoute
+  '/diagnostico-brigid/painel': typeof DiagnosticoBrigidPainelRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
+  '/diagnostico-brigid/': typeof DiagnosticoBrigidIndexRoute
   '/municipios/': typeof MunicipiosIndexRoute
+  '/diagnostico-brigid/formulario/$diagnosticoId': typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -132,8 +192,16 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
   '/territorio': typeof TerritorioRoute
+  '/diagnostico-brigid/acompanhamento': typeof DiagnosticoBrigidAcompanhamentoRoute
+  '/diagnostico-brigid/administracao': typeof DiagnosticoBrigidAdministracaoRoute
+  '/diagnostico-brigid/base': typeof DiagnosticoBrigidBaseRoute
+  '/diagnostico-brigid/meus-diagnosticos': typeof DiagnosticoBrigidMeusDiagnosticosRoute
+  '/diagnostico-brigid/novo': typeof DiagnosticoBrigidNovoRoute
+  '/diagnostico-brigid/painel': typeof DiagnosticoBrigidPainelRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
+  '/diagnostico-brigid': typeof DiagnosticoBrigidIndexRoute
   '/municipios': typeof MunicipiosIndexRoute
+  '/diagnostico-brigid/formulario/$diagnosticoId': typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -150,8 +218,16 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/risco': typeof RiscoRoute
   '/territorio': typeof TerritorioRoute
+  '/diagnostico-brigid/acompanhamento': typeof DiagnosticoBrigidAcompanhamentoRoute
+  '/diagnostico-brigid/administracao': typeof DiagnosticoBrigidAdministracaoRoute
+  '/diagnostico-brigid/base': typeof DiagnosticoBrigidBaseRoute
+  '/diagnostico-brigid/meus-diagnosticos': typeof DiagnosticoBrigidMeusDiagnosticosRoute
+  '/diagnostico-brigid/novo': typeof DiagnosticoBrigidNovoRoute
+  '/diagnostico-brigid/painel': typeof DiagnosticoBrigidPainelRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
+  '/diagnostico-brigid/': typeof DiagnosticoBrigidIndexRoute
   '/municipios/': typeof MunicipiosIndexRoute
+  '/diagnostico-brigid/formulario/$diagnosticoId': typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,8 +245,16 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/risco'
     | '/territorio'
+    | '/diagnostico-brigid/acompanhamento'
+    | '/diagnostico-brigid/administracao'
+    | '/diagnostico-brigid/base'
+    | '/diagnostico-brigid/meus-diagnosticos'
+    | '/diagnostico-brigid/novo'
+    | '/diagnostico-brigid/painel'
     | '/municipios/$slug'
+    | '/diagnostico-brigid/'
     | '/municipios/'
+    | '/diagnostico-brigid/formulario/$diagnosticoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -186,8 +270,16 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/risco'
     | '/territorio'
+    | '/diagnostico-brigid/acompanhamento'
+    | '/diagnostico-brigid/administracao'
+    | '/diagnostico-brigid/base'
+    | '/diagnostico-brigid/meus-diagnosticos'
+    | '/diagnostico-brigid/novo'
+    | '/diagnostico-brigid/painel'
     | '/municipios/$slug'
+    | '/diagnostico-brigid'
     | '/municipios'
+    | '/diagnostico-brigid/formulario/$diagnosticoId'
   id:
     | '__root__'
     | '/'
@@ -203,8 +295,16 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/risco'
     | '/territorio'
+    | '/diagnostico-brigid/acompanhamento'
+    | '/diagnostico-brigid/administracao'
+    | '/diagnostico-brigid/base'
+    | '/diagnostico-brigid/meus-diagnosticos'
+    | '/diagnostico-brigid/novo'
+    | '/diagnostico-brigid/painel'
     | '/municipios/$slug'
+    | '/diagnostico-brigid/'
     | '/municipios/'
+    | '/diagnostico-brigid/formulario/$diagnosticoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,8 +321,16 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   RiscoRoute: typeof RiscoRoute
   TerritorioRoute: typeof TerritorioRoute
+  DiagnosticoBrigidAcompanhamentoRoute: typeof DiagnosticoBrigidAcompanhamentoRoute
+  DiagnosticoBrigidAdministracaoRoute: typeof DiagnosticoBrigidAdministracaoRoute
+  DiagnosticoBrigidBaseRoute: typeof DiagnosticoBrigidBaseRoute
+  DiagnosticoBrigidMeusDiagnosticosRoute: typeof DiagnosticoBrigidMeusDiagnosticosRoute
+  DiagnosticoBrigidNovoRoute: typeof DiagnosticoBrigidNovoRoute
+  DiagnosticoBrigidPainelRoute: typeof DiagnosticoBrigidPainelRoute
   MunicipiosSlugRoute: typeof MunicipiosSlugRoute
+  DiagnosticoBrigidIndexRoute: typeof DiagnosticoBrigidIndexRoute
   MunicipiosIndexRoute: typeof MunicipiosIndexRoute
+  DiagnosticoBrigidFormularioDiagnosticoIdRoute: typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -325,11 +433,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MunicipiosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diagnostico-brigid/': {
+      id: '/diagnostico-brigid/'
+      path: '/diagnostico-brigid'
+      fullPath: '/diagnostico-brigid/'
+      preLoaderRoute: typeof DiagnosticoBrigidIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/municipios/$slug': {
       id: '/municipios/$slug'
       path: '/municipios/$slug'
       fullPath: '/municipios/$slug'
       preLoaderRoute: typeof MunicipiosSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/painel': {
+      id: '/diagnostico-brigid/painel'
+      path: '/diagnostico-brigid/painel'
+      fullPath: '/diagnostico-brigid/painel'
+      preLoaderRoute: typeof DiagnosticoBrigidPainelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/novo': {
+      id: '/diagnostico-brigid/novo'
+      path: '/diagnostico-brigid/novo'
+      fullPath: '/diagnostico-brigid/novo'
+      preLoaderRoute: typeof DiagnosticoBrigidNovoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/meus-diagnosticos': {
+      id: '/diagnostico-brigid/meus-diagnosticos'
+      path: '/diagnostico-brigid/meus-diagnosticos'
+      fullPath: '/diagnostico-brigid/meus-diagnosticos'
+      preLoaderRoute: typeof DiagnosticoBrigidMeusDiagnosticosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/base': {
+      id: '/diagnostico-brigid/base'
+      path: '/diagnostico-brigid/base'
+      fullPath: '/diagnostico-brigid/base'
+      preLoaderRoute: typeof DiagnosticoBrigidBaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/administracao': {
+      id: '/diagnostico-brigid/administracao'
+      path: '/diagnostico-brigid/administracao'
+      fullPath: '/diagnostico-brigid/administracao'
+      preLoaderRoute: typeof DiagnosticoBrigidAdministracaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/acompanhamento': {
+      id: '/diagnostico-brigid/acompanhamento'
+      path: '/diagnostico-brigid/acompanhamento'
+      fullPath: '/diagnostico-brigid/acompanhamento'
+      preLoaderRoute: typeof DiagnosticoBrigidAcompanhamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/formulario/$diagnosticoId': {
+      id: '/diagnostico-brigid/formulario/$diagnosticoId'
+      path: '/diagnostico-brigid/formulario/$diagnosticoId'
+      fullPath: '/diagnostico-brigid/formulario/$diagnosticoId'
+      preLoaderRoute: typeof DiagnosticoBrigidFormularioDiagnosticoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -349,8 +513,18 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   RiscoRoute: RiscoRoute,
   TerritorioRoute: TerritorioRoute,
+  DiagnosticoBrigidAcompanhamentoRoute: DiagnosticoBrigidAcompanhamentoRoute,
+  DiagnosticoBrigidAdministracaoRoute: DiagnosticoBrigidAdministracaoRoute,
+  DiagnosticoBrigidBaseRoute: DiagnosticoBrigidBaseRoute,
+  DiagnosticoBrigidMeusDiagnosticosRoute:
+    DiagnosticoBrigidMeusDiagnosticosRoute,
+  DiagnosticoBrigidNovoRoute: DiagnosticoBrigidNovoRoute,
+  DiagnosticoBrigidPainelRoute: DiagnosticoBrigidPainelRoute,
   MunicipiosSlugRoute: MunicipiosSlugRoute,
+  DiagnosticoBrigidIndexRoute: DiagnosticoBrigidIndexRoute,
   MunicipiosIndexRoute: MunicipiosIndexRoute,
+  DiagnosticoBrigidFormularioDiagnosticoIdRoute:
+    DiagnosticoBrigidFormularioDiagnosticoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

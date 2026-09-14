@@ -71,6 +71,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
   "/pesos": "Ponderação e Simulação de Pesos",
+  "/diagnostico-brigid": "Diagnóstico BRIGID",
 };
 
 function PageHeader() {

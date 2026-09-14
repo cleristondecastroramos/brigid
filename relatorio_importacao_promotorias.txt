@@ -1,0 +1,19 @@
+==================================================
+RELATÓRIO DE IMPORTAÇÃO DE PROMOTORIAS
+==================================================
+Linhas lidas no CSV: 564
+Promotorias distintas identificadas: 162
+Vínculos Promotoria-Município gerados: 564
+Municípios com código IBGE resolvido: 224
+
+Registros sem correspondência de município na base (0):
+
+Divergências entre comarca do CSV e comarca da base territorial (4):
+ - Mun: Beneditinos | CSV: Altos | Base: Beneditinos
+ - Mun: Porto Alegre do Piauí | CSV: Marcos Parente | Base: Uruçuí
+ - Mun: Beneditinos | CSV: Altos | Base: Beneditinos
+ - Mun: Beneditinos | CSV: Altos | Base: Beneditinos
+
+Arquivos gerados com sucesso:
+- src/data/promotorias-seed.ts
+- migrations/migration_promotorias.sql
