@@ -152,12 +152,14 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
       if (!formData.promotoria_id) return toast.error("Selecione a Promotoria respondente.");
       if (!formData.codigo_ibge) return toast.error("Selecione o Município avaliado.");
       if (!formData.atribuicao || formData.atribuicao.length === 0) return toast.error("A atribuição funcional é obrigatória.");
+      if (progressPercent < 100) return toast.error("O formulário precisa de 100% de preenchimento para ser enviado.");
     }
 
     try {
       const dataToSave = {
         ...formData,
         status: concluir ? 'concluido' : 'rascunho',
+        percentual_preenchimento: progressPercent,
       } as DiagnosticoFormModel;
       
       const saved = await diagnosticoService.save(dataToSave);
@@ -201,6 +203,46 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
     { id: "gargalos" as SecaoId, label: "Gargalos", visible: isCriminal },
   ].filter(s => s.visible);
 
+  const currentIndex = secoes.findIndex(s => s.id === activeTab);
+  const isLastTab = currentIndex === secoes.length - 1;
+
+  const handleNextTab = () => {
+    if (!isLastTab) {
+      setActiveTab(secoes[currentIndex + 1].id);
+    }
+  };
+
+  // Calcula progresso
+  const visibleSecoesIds = secoes.map(s => s.id);
+  const requiredFields = dicionarioDiagnostico.filter(c => {
+    if (!c.obrigatorio) return false;
+    if (!visibleSecoesIds.includes(c.secao)) return false;
+    if (c.regra_exibicao) {
+      return c.regra_exibicao(formData.respostas, formData.atribuicao || []);
+    }
+    return true;
+  });
+  
+  const hasPromotoria = !!formData.promotoria_id;
+  const hasMunicipio = !!formData.codigo_ibge;
+  const hasAtribuicao = formData.atribuicao && formData.atribuicao.length > 0;
+  
+  const baseRequiredCount = 3;
+  const baseFilledCount = (hasPromotoria ? 1 : 0) + (hasMunicipio ? 1 : 0) + (hasAtribuicao ? 1 : 0);
+  
+  const dictRequiredCount = requiredFields.length;
+  const dictFilledCount = requiredFields.filter(f => {
+    const val = formData.respostas && formData.respostas[f.codigo_tecnico];
+    if (f.tipo_controle === 'checkbox_group') {
+      return Array.isArray(val) && val.length > 0;
+    }
+    return val !== undefined && val !== '';
+  }).length;
+  
+  const totalRequired = baseRequiredCount + dictRequiredCount;
+  const totalFilled = baseFilledCount + dictFilledCount;
+  const progressPercent = totalRequired > 0 ? Math.round((totalFilled / totalRequired) * 100) : 0;
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -215,6 +257,19 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
               </TabsTrigger>
             ))}
           </TabsList>
+
+          <div className="mb-6 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Progresso do preenchimento</span>
+              <span className="font-medium">{progressPercent}%</span>
+            </div>
+            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
 
           {secoes.map((s) => (
             <TabsContent key={s.id} value={s.id} className="space-y-4">
@@ -333,6 +388,12 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
                 <div className="grid gap-6">
                   {dicionarioDiagnostico
                     .filter((campo) => campo.secao === s.id)
+                    .filter((campo) => {
+                      if (campo.regra_exibicao) {
+                        return campo.regra_exibicao(formData.respostas, formData.atribuicao || []);
+                      }
+                      return true;
+                    })
                     .map((campo) => {
                       return (
                         <div key={campo.id} className="space-y-2">
@@ -357,6 +418,22 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
                             </Select>
                           )}
 
+                          {campo.tipo_controle === 'text' && (
+                            <Input
+                              type="text"
+                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
+                              onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
+                            />
+                          )}
+
+                          {campo.tipo_controle === 'date' && (
+                            <Input
+                              type="date"
+                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
+                              onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
+                            />
+                          )}
+
                           {campo.tipo_controle === 'number' && (
                             <Input
                               type="number"
@@ -371,6 +448,33 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
                               value={formData.respostas?.[campo.codigo_tecnico] || ''}
                               onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
                             />
+                          )}
+
+                          {campo.tipo_controle === 'checkbox_group' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                              {campo.opcoes?.map(op => {
+                                const selected = (formData.respostas?.[campo.codigo_tecnico] || []) as string[];
+                                const isChecked = selected.includes(op.value);
+                                return (
+                                  <label key={op.value} className="flex items-center space-x-2 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      className="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                      checked={isChecked}
+                                      onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        if (checked) {
+                                          handleChangeResposta(campo.codigo_tecnico, [...selected, op.value]);
+                                        } else {
+                                          handleChangeResposta(campo.codigo_tecnico, selected.filter(v => v !== op.value));
+                                        }
+                                      }}
+                                    />
+                                    <span>{op.label}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
                       );
@@ -389,8 +493,18 @@ export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagno
           <Button variant="secondary" onClick={() => handleSave(false)}>
             Salvar Rascunho
           </Button>
-          <Button onClick={() => handleSave(true)}>
-            Concluir / Enviar
+          <Button 
+            onClick={() => {
+              if (isLastTab) {
+                handleSave(true);
+              } else {
+                handleNextTab();
+              }
+            }}
+            disabled={isLastTab && progressPercent < 100}
+            title={isLastTab && progressPercent < 100 ? "O envio requer 100% de preenchimento" : undefined}
+          >
+            {isLastTab ? "Concluir / Enviar" : "Avançar"}
           </Button>
         </div>
       </CardFooter>

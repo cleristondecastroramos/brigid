@@ -12,6 +12,7 @@ export interface DiagnosticoFormModel {
   data_atualizacao: string;
   respostas: Record<string, any>;
   gargalos: any[];
+  percentual_preenchimento?: number;
 }
 
 class DiagnosticoLocalService {
