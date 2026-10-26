@@ -568,7 +568,7 @@ Promotoria de Justiça
 
 A Promotoria de Justiça utiliza o módulo Diagnóstico BRIGID com a conta do seu e-mail institucional para:
 
-no primeiro acesso, trocar a senha provisória por uma senha definitiva;
+no primeiro acesso, informar a credencial provisória recebida e definir uma senha definitiva;
 
 preencher, salvar e enviar os diagnósticos dos municípios de sua atribuição;
 
@@ -586,29 +586,29 @@ Escolher a Promotoria e informar o e-mail institucional.
 
 Clicar em "Aprovar e ativar cadastro".
 
-O sistema confirma que o cadastro está ativo e exibe o e-mail e a senha provisória padrão, a mesma para todas as Promotorias, que o CAOCRIM informa à Promotoria.
+O sistema confirma que o cadastro está ativo e exibe, uma única vez, o e-mail e uma credencial provisória individual, gerada aleatoriamente pelo sistema, que o CAOCRIM entrega somente à Promotoria, por canal seguro.
 
-Se o e-mail já pertencer a uma conta de Promotoria com senha definitiva, a conta é apenas vinculada e a senha é mantida. Contas do CAOCRIM não podem ser usadas como contas de Promotoria.
+Aprovar novamente ou vincular uma conta já existente nunca altera a senha: a conta é apenas vinculada e, se ainda aguardar o primeiro acesso, continua valendo a credencial já entregue. Contas do CAOCRIM não podem ser usadas como contas de Promotoria, e uma conta existente fora do cadastro das Promotorias só é aprovada após a conferência da titularidade.
 
 Primeiro acesso e troca obrigatória de senha
 
-A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a senha provisória.
+A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a credencial provisória.
 
-O sistema exibe apenas a tela "Troca de senha obrigatória" e só libera o formulário após a definição da senha definitiva.
+O sistema exibe apenas a tela "Definir senha definitiva", na qual a Promotoria informa novamente a credencial provisória e a nova senha, e só libera o formulário após a definição.
 
-A nova senha deve ter pelo menos 10 caracteres e não pode ser igual à senha provisória.
+A nova senha deve ter pelo menos 12 caracteres e não pode ser igual à credencial provisória.
 
-A troca deve ser feita em até 72 horas após a aprovação ou a redefinição. Depois desse prazo, a senha provisória não permite mais definir a senha definitiva, e o CAOCRIM precisa redefini-la. Enquanto a senha provisória estiver em uso, o banco de dados também recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
+A credencial provisória vale por 72 horas, contadas pelo relógio do servidor. Depois desse prazo, ela não permite mais definir a senha definitiva, e o CAOCRIM precisa redefinir a senha. Enquanto a senha definitiva não for definida, o banco de dados recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
 
 Esquecimento de senha e troca de titular
 
-A Promotoria solicita ao CAOCRIM a redefinição. O CAOCRIM clica em "Redefinir senha" na linha da conta e confirma: a senha volta a ser a provisória, a senha anterior deixa de valer e a troca é exigida novamente no próximo acesso. Na troca de titular, nada precisa ser migrado; recomenda-se redefinir a senha para que o novo titular crie a sua.
+A Promotoria solicita ao CAOCRIM a redefinição. O CAOCRIM clica em "Redefinir senha" na linha da conta e confirma: a senha anterior deixa de valer, as sessões abertas da conta são encerradas e o sistema emite uma nova credencial provisória individual, válida por 72 horas, exigindo nova definição de senha no próximo acesso. A redefinição vale para a conta inteira, inclusive para todos os seus vínculos. Na troca de titular, nada precisa ser migrado; recomenda-se redefinir a senha para que o novo titular crie a sua.
 
 Situação das contas no painel do CAOCRIM
 
-Aguardando troca de senha: conta aprovada ou redefinida, ainda com a senha provisória;
+Aguardando primeiro acesso: conta aprovada ou redefinida, com credencial provisória válida;
 
-Senha provisória expirada: passaram-se 72 horas sem a troca; é preciso redefinir a senha;
+Credencial provisória expirada: passaram-se 72 horas sem a definição da senha; é preciso redefinir a senha;
 
 Ativa: a Promotoria já definiu a senha definitiva;
 
@@ -618,9 +618,9 @@ A coluna "Senha definida em" mostra quando a senha atual foi criada, e "Último 
 
 Cuidados de segurança
 
-Aprovar ou redefinir uma conta somente quando a Promotoria estiver pronta para acessar, pois a senha provisória é a mesma para todas as contas.
+Aprovar ou redefinir uma conta somente quando a Promotoria estiver pronta para acessar, para encurtar o tempo em que a credencial provisória fica válida.
 
-Informar a senha provisória apenas à Promotoria titular da conta.
+Entregar a credencial provisória apenas à Promotoria titular da conta, por canal seguro, sem registrá-la em mensagens, documentos ou planilhas.
 
 Pedir à Promotoria que confira a data em "Senha definida em" logo após o primeiro acesso; se não reconhecer a data, solicitar nova redefinição.
 
@@ -648,9 +648,9 @@ Atuação prioritária
 
 Marcador administrativo de urgência estratégica que pode elevar a prioridade institucional de determinado município independentemente de parte dos critérios automatizados.
 
-Senha provisória
+Credencial provisória
 
-Senha padrão, a mesma para todas as contas das Promotorias, atribuída na aprovação ou na redefinição pelo CAOCRIM. Vale por 72 horas e serve apenas para o primeiro acesso, quando deve ser trocada por uma senha definitiva e individual.
+Senha individual e aleatória gerada pelo sistema na aprovação de uma conta nova ou na redefinição pelo CAOCRIM. É exibida uma única vez, vale por 72 horas e serve apenas para o primeiro acesso, quando a Promotoria define uma senha definitiva e individual.
 
 Considerações finais
 

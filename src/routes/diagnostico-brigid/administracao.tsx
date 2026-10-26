@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   promotoriasService,
-  senhaProvisoriaExpirada,
   VALIDADE_PROVISORIA_HORAS,
-  type ContaAtivada,
+  type ResultadoConta,
   type Promotoria,
   type VinculoAdmin,
 } from "@/services/promotorias-service";
@@ -41,6 +40,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ArrowLeft, CheckCircle2, Database, KeyRound, Search, UserCheck } from "lucide-react";
 import { toast } from "sonner";
+
+const dataHora = (iso: string | null | undefined) =>
+  iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—";
 
 export const Route = createFileRoute("/diagnostico-brigid/administracao")({
   component: () => (
@@ -288,10 +290,9 @@ function VinculosUsuarios({
   const [vinculos, setVinculos] = useState<VinculoAdmin[]>([]);
   const [novo, setNovo] = useState({ email: "", promotoria: "" });
   const [salvando, setSalvando] = useState(false);
-  // Última conta aprovada ou redefinida: o painel informa o e-mail e a senha provisória
-  const [aviso, setAviso] = useState<
-    (ContaAtivada & { tipo: "ativada" | "redefinida"; promotoria: string }) | null
-  >(null);
+  // Resultado da última aprovação ou redefinição. A credencial provisória fica só neste
+  // estado da tela (nunca em localStorage) e some ao fechar o aviso ou sair da página.
+  const [aviso, setAviso] = useState<(ResultadoConta & { promotoria: string }) | null>(null);
   const [redefinir, setRedefinir] = useState<VinculoAdmin | null>(null);
 
   const carregar = async () => {
@@ -315,13 +316,13 @@ function VinculosUsuarios({
     try {
       const r = await promotoriasService.ativarConta(promotoriaId, email);
       const nome = promotorias.find((p) => p.id === promotoriaId)?.nome ?? "";
-      setAviso({ ...r, tipo: "ativada", promotoria: nome });
+      setAviso({ ...r, promotoria: nome });
       onEmailRegistrado(promotoriaId, r.email);
       setNovo({ email: "", promotoria: "" });
       toast.success(
-        r.senha_mantida
-          ? "Conta vinculada; a senha atual foi mantida."
-          : "Cadastro aprovado e ativo.",
+        r.credencial_provisoria
+          ? "Cadastro aprovado e ativo."
+          : "Vínculo registrado; a senha da conta não foi alterada.",
       );
       await carregar();
     } catch (e) {
@@ -338,8 +339,8 @@ function VinculosUsuarios({
     setSalvando(true);
     try {
       const r = await promotoriasService.redefinirSenha(v.user_id);
-      setAviso({ ...r, tipo: "redefinida", promotoria: v.promotoria_nome });
-      toast.success("Senha redefinida para a senha provisória.");
+      setAviso({ ...r, promotoria: v.promotoria_nome });
+      toast.success("Nova credencial provisória emitida.");
       await carregar();
     } catch (e) {
       toast.error((e as Error).message);
@@ -372,22 +373,23 @@ function VinculosUsuarios({
             cadastro".
           </li>
           <li>
-            A conta é criada com a senha provisória padrão, a mesma para todas as Promotorias. Ela é
-            exibida aqui após a aprovação, para ser informada à Promotoria.
+            A conta nova recebe uma credencial provisória individual, gerada pelo sistema e exibida
+            uma única vez, aqui, logo após a aprovação. Entregue-a somente à Promotoria, por canal
+            seguro.
           </li>
           <li>
-            No primeiro acesso, a Promotoria é obrigada a trocar a senha provisória por uma senha
-            definitiva antes de usar o Diagnóstico. A troca deve ocorrer em até{" "}
-            {VALIDADE_PROVISORIA_HORAS} horas; depois disso, é preciso redefinir a senha.
+            No primeiro acesso, a Promotoria informa a credencial e define uma senha definitiva
+            antes de usar o Diagnóstico. A credencial vale por {VALIDADE_PROVISORIA_HORAS} horas;
+            depois disso, é preciso redefinir a senha.
           </li>
           <li>
-            Esquecimento de senha ou troca de titular: use "Redefinir senha". A senha volta a ser a
-            provisória e a troca é exigida de novo no próximo acesso.
+            Aprovar de novo ou vincular uma conta existente não altera a senha. Esquecimento de
+            senha ou troca de titular: use "Redefinir senha", que emite uma nova credencial.
           </li>
         </ol>
         <p className="mt-2 text-sm text-muted-foreground">
-          Como a senha provisória é a mesma para todas as contas, aprove ou redefina somente quando
-          a Promotoria estiver pronta para entrar, e peça que confira a data em "Senha definida em".
+          Aprove ou redefina somente quando a Promotoria estiver pronta para entrar, e peça que
+          confira a data em "Senha definida em" após o primeiro acesso.
         </p>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
@@ -437,35 +439,47 @@ function VinculosUsuarios({
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
             <div className="space-y-1">
               <p className="font-medium text-foreground">
-                {aviso.tipo === "ativada" ? "Cadastro ativo" : "Senha redefinida"}
+                {aviso.situacao === "redefinida" ? "Senha redefinida" : "Cadastro ativo"}
                 {aviso.promotoria ? ` — ${aviso.promotoria}` : ""}.
               </p>
-              {aviso.senha_mantida ? (
-                <p className="text-muted-foreground">
-                  A conta <span className="font-medium text-foreground">{aviso.email}</span> já
-                  tinha senha definitiva e foi apenas vinculada; a senha não mudou. Se a Promotoria
-                  não lembrar a senha, use "Redefinir senha".
-                </p>
-              ) : (
+              {aviso.credencial_provisoria ? (
                 <>
                   <p className="text-muted-foreground">
-                    Informe à Promotoria os dados de acesso ao Diagnóstico BRIGID:
+                    Entregue à Promotoria, por canal seguro, os dados de acesso ao Diagnóstico
+                    BRIGID. A credencial é exibida só agora e não poderá ser consultada depois.
                   </p>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
                     <dt className="text-muted-foreground">E-mail</dt>
                     <dd className="font-medium text-foreground">{aviso.email}</dd>
-                    <dt className="text-muted-foreground">Senha provisória</dt>
+                    <dt className="text-muted-foreground">Credencial provisória</dt>
                     <dd className="font-mono font-medium text-foreground">
-                      {aviso.senha_provisoria}
+                      {aviso.credencial_provisoria}
                     </dd>
+                    <dt className="text-muted-foreground">Válida até</dt>
+                    <dd className="text-foreground">{dataHora(aviso.expira_em)}</dd>
                   </dl>
                   <p className="text-muted-foreground">
-                    No próximo acesso, em até {VALIDADE_PROVISORIA_HORAS} horas, a Promotoria deverá
-                    trocar a senha provisória por uma senha definitiva.
-                    {aviso.conta_existente &&
-                      " A conta já existia: a senha anterior deixou de valer."}
+                    No primeiro acesso, a Promotoria informa a credencial e define a senha
+                    definitiva.
+                    {aviso.situacao === "redefinida" &&
+                      (aviso.sessoes_encerradas
+                        ? " As sessões abertas da conta foram encerradas."
+                        : " Não foi possível encerrar as sessões abertas; elas continuam sem acesso aos diagnósticos.")}
                   </p>
                 </>
+              ) : (
+                <p className="text-muted-foreground">
+                  A conta <span className="font-medium text-foreground">{aviso.email}</span> foi
+                  vinculada e a senha não foi alterada.{" "}
+                  {aviso.situacao === "senha_preservada" &&
+                    'A conta já tem senha definitiva. Se a Promotoria não lembrar a senha, use "Redefinir senha".'}
+                  {aviso.situacao === "provisoria_preservada" &&
+                    `A conta aguarda o primeiro acesso com a credencial já entregue, válida até ${dataHora(aviso.expira_em)}. Se ela se perdeu, use "Redefinir senha".`}
+                  {aviso.situacao === "provisoria_expirada" &&
+                    'A credencial provisória da conta expirou: use "Redefinir senha" para emitir uma nova.'}
+                  {aviso.situacao === "provisoria_legada" &&
+                    'A conta ainda usa a senha provisória compartilhada antiga, que não é mais aceita: use "Redefinir senha" para emitir uma credencial individual.'}
+                </p>
               )}
             </div>
             <button
@@ -505,23 +519,27 @@ function VinculosUsuarios({
                     <TableCell>
                       {!v.ativo ? (
                         <Badge variant="outline">Inativa</Badge>
-                      ) : v.senha_provisoria && senhaProvisoriaExpirada(v) ? (
+                      ) : v.senha_provisoria && !v.credencial_individual ? (
                         <Badge variant="outline" className="border-destructive/40 text-destructive">
-                          Senha provisória expirada
+                          Senha compartilhada antiga: redefinir
+                        </Badge>
+                      ) : v.senha_provisoria && v.senha_provisoria_expirada ? (
+                        <Badge variant="outline" className="border-destructive/40 text-destructive">
+                          Credencial provisória expirada
                         </Badge>
                       ) : v.senha_provisoria ? (
-                        <Badge variant="outline">Aguardando troca de senha</Badge>
+                        <Badge
+                          variant="outline"
+                          title={`Credencial emitida em ${dataHora(v.senha_provisoria_em)}, válida até ${dataHora(v.senha_provisoria_expira_em)}`}
+                        >
+                          Aguardando primeiro acesso
+                        </Badge>
                       ) : (
                         <Badge className="bg-success text-success-foreground">Ativa</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {v.senha_definida_em
-                        ? new Date(v.senha_definida_em).toLocaleString("pt-BR", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })
-                        : "—"}
+                      {v.senha_definida_em ? dataHora(v.senha_definida_em) : "—"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {v.ultimo_acesso
@@ -566,10 +584,23 @@ function VinculosUsuarios({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Redefinir a senha da Promotoria?</AlertDialogTitle>
-            <AlertDialogDescription>
-              A senha de <strong>{redefinir?.email}</strong> ({redefinir?.promotoria_nome}) volta a
-              ser a senha provisória padrão. A senha atual deixa de valer e a Promotoria deverá
-              criar uma nova senha no próximo acesso, em até {VALIDADE_PROVISORIA_HORAS} horas.
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Conta afetada: <strong>{redefinir?.email}</strong>. A senha atual deixa de valer,
+                  as sessões abertas são encerradas e uma nova credencial provisória individual é
+                  emitida, válida por {VALIDADE_PROVISORIA_HORAS} horas. A Promotoria deverá definir
+                  uma nova senha antes de voltar a usar o Diagnóstico.
+                </p>
+                <p>
+                  A redefinição vale para a conta inteira, inclusive em todos os seus vínculos:{" "}
+                  {vinculos
+                    .filter((x) => x.user_id === redefinir?.user_id)
+                    .map((x) => x.promotoria_nome)
+                    .join("; ")}
+                  .
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

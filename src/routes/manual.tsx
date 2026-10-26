@@ -1144,7 +1144,8 @@ function Manual() {
             </p>
             <ul className="list-disc pl-6 space-y-2">
               <li className="text-justify">
-                no primeiro acesso, trocar a senha provisória por uma senha definitiva;
+                no primeiro acesso, informar a credencial provisória recebida e definir uma senha
+                definitiva;
               </li>
               <li className="text-justify">
                 preencher, salvar e enviar os diagnósticos dos municípios de sua atribuição;
@@ -1180,14 +1181,17 @@ function Manual() {
               </li>
               <li className="text-justify">Clicar em "Aprovar e ativar cadastro".</li>
               <li className="text-justify">
-                O sistema confirma que o cadastro está ativo e exibe o e-mail e a senha provisória
-                padrão, a mesma para todas as Promotorias, que o CAOCRIM informa à Promotoria.
+                O sistema confirma que o cadastro está ativo e exibe, uma única vez, o e-mail e uma
+                credencial provisória individual, gerada aleatoriamente pelo sistema, que o CAOCRIM
+                entrega somente à Promotoria, por canal seguro.
               </li>
             </ul>
             <p className="leading-relaxed text-justify">
-              Se o e-mail já pertencer a uma conta de Promotoria com senha definitiva, a conta é
-              apenas vinculada e a senha é mantida. Contas do CAOCRIM não podem ser usadas como
-              contas de Promotoria.
+              Aprovar novamente ou vincular uma conta já existente nunca altera a senha: a conta é
+              apenas vinculada e, se ainda aguardar o primeiro acesso, continua valendo a credencial
+              já entregue. Contas do CAOCRIM não podem ser usadas como contas de Promotoria, e uma
+              conta existente fora do cadastro das Promotorias só é aprovada após a conferência da
+              titularidade.
             </p>
 
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
@@ -1195,23 +1199,24 @@ function Manual() {
             </h3>
             <ul className="list-decimal pl-6 space-y-2">
               <li className="text-justify">
-                A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a senha
+                A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a credencial
                 provisória.
               </li>
               <li className="text-justify">
-                O sistema exibe apenas a tela "Troca de senha obrigatória" e só libera o formulário
-                após a definição da senha definitiva.
+                O sistema exibe apenas a tela "Definir senha definitiva", na qual a Promotoria
+                informa novamente a credencial provisória e a nova senha, e só libera o formulário
+                após a definição.
               </li>
               <li className="text-justify">
-                A nova senha deve ter pelo menos 10 caracteres e não pode ser igual à senha
+                A nova senha deve ter pelo menos 12 caracteres e não pode ser igual à credencial
                 provisória.
               </li>
             </ul>
             <p className="leading-relaxed text-justify">
-              A troca deve ser feita em até 72 horas após a aprovação ou a redefinição. Depois desse
-              prazo, a senha provisória não permite mais definir a senha definitiva, e o CAOCRIM
-              precisa redefini-la. Enquanto a senha provisória estiver em uso, o banco de dados
-              também recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
+              A credencial provisória vale por 72 horas, contadas pelo relógio do servidor. Depois
+              desse prazo, ela não permite mais definir a senha definitiva, e o CAOCRIM precisa
+              redefinir a senha. Enquanto a senha definitiva não for definida, o banco de dados
+              recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
             </p>
 
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
@@ -1219,10 +1224,12 @@ function Manual() {
             </h3>
             <p className="leading-relaxed text-justify">
               A Promotoria solicita ao CAOCRIM a redefinição. O CAOCRIM clica em "Redefinir senha"
-              na linha da conta e confirma: a senha volta a ser a provisória, a senha anterior deixa
-              de valer e a troca é exigida novamente no próximo acesso. Na troca de titular, nada
-              precisa ser migrado; recomenda-se redefinir a senha para que o novo titular crie a
-              sua.
+              na linha da conta e confirma: a senha anterior deixa de valer, as sessões abertas da
+              conta são encerradas e o sistema emite uma nova credencial provisória individual,
+              válida por 72 horas, exigindo nova definição de senha no próximo acesso. A redefinição
+              vale para a conta inteira, inclusive para todos os seus vínculos. Na troca de titular,
+              nada precisa ser migrado; recomenda-se redefinir a senha para que o novo titular crie
+              a sua.
             </p>
 
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
@@ -1230,12 +1237,12 @@ function Manual() {
             </h3>
             <ul className="list-disc pl-6 space-y-2">
               <li className="text-justify">
-                <strong>Aguardando troca de senha:</strong> conta aprovada ou redefinida, ainda com
-                a senha provisória;
+                <strong>Aguardando primeiro acesso:</strong> conta aprovada ou redefinida, com
+                credencial provisória válida;
               </li>
               <li className="text-justify">
-                <strong>Senha provisória expirada:</strong> passaram-se 72 horas sem a troca; é
-                preciso redefinir a senha;
+                <strong>Credencial provisória expirada:</strong> passaram-se 72 horas sem a
+                definição da senha; é preciso redefinir a senha;
               </li>
               <li className="text-justify">
                 <strong>Ativa:</strong> a Promotoria já definiu a senha definitiva;
@@ -1256,10 +1263,11 @@ function Manual() {
             <ul className="list-disc pl-6 space-y-2">
               <li className="text-justify">
                 Aprovar ou redefinir uma conta somente quando a Promotoria estiver pronta para
-                acessar, pois a senha provisória é a mesma para todas as contas.
+                acessar, para encurtar o tempo em que a credencial provisória fica válida.
               </li>
               <li className="text-justify">
-                Informar a senha provisória apenas à Promotoria titular da conta.
+                Entregar a credencial provisória apenas à Promotoria titular da conta, por canal
+                seguro, sem registrá-la em mensagens, documentos ou planilhas.
               </li>
               <li className="text-justify">
                 Pedir à Promotoria que confira a data em "Senha definida em" logo após o primeiro
@@ -1333,12 +1341,13 @@ function Manual() {
 
               <div>
                 <h3 className="font-bold text-slate-800 dark:text-slate-100 print:text-black">
-                  Senha provisória
+                  Credencial provisória
                 </h3>
                 <p className="leading-relaxed text-justify">
-                  Senha padrão, a mesma para todas as contas das Promotorias, atribuída na aprovação
-                  ou na redefinição pelo CAOCRIM. Vale por 72 horas e serve apenas para o primeiro
-                  acesso, quando deve ser trocada por uma senha definitiva e individual.
+                  Senha individual e aleatória gerada pelo sistema na aprovação de uma conta nova ou
+                  na redefinição pelo CAOCRIM. É exibida uma única vez, vale por 72 horas e serve
+                  apenas para o primeiro acesso, quando a Promotoria define uma senha definitiva e
+                  individual.
                 </p>
               </div>
             </div>

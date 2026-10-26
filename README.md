@@ -86,7 +86,7 @@ Recursos transversais: filtros por polo regional, comarca e município; mapas in
 | `/diagnostico-brigid/revisao/:id` | CAOCRIM | Revisão completa do diagnóstico. Ver detalhes abaixo. |
 | `/diagnostico-brigid/administracao` | CAOCRIM | Atribuição funcional das Promotorias, e-mails institucionais, aprovação das contas e redefinição de senha. |
 
-Enquanto a conta da Promotoria usa a senha provisória padrão, qualquer rota do módulo mostra só a tela **"Troca de senha obrigatória"**.
+Enquanto a conta da Promotoria não definir a senha definitiva, qualquer rota do módulo mostra só a tela **"Definir senha definitiva"**.
 
 A revisão completa (`/revisao/:id`) reúne:
 - respostas por bloco, pendências e inconsistências;
@@ -304,10 +304,12 @@ em preenchimento → enviado → em análise ─┬─▶ devolvido → (correç
   - Nenhuma escrita direta pela API, nem do CAOCRIM. Toda escrita da coleta passa por funções `SECURITY DEFINER` com `search_path` fixo, que conferem perfil, vínculo e estado e registram auditoria.
 - **Administração no banco:** o perfil administrativo vem de `admin_users` e é conferido por `is_admin()`.
 - **Anexos:** ficam em bucket privado, acessíveis só pelo CAOCRIM e pela Promotoria dona do diagnóstico, por URL assinada de 5 minutos.
-- **Contas das Promotorias:** criadas só pelo CAOCRIM (cadastro aberto desativado), com senha provisória de troca obrigatória no primeiro acesso.
-  - Enquanto a senha provisória estiver em uso, o banco bloqueia todo acesso aos diagnósticos, e a marca só sai pela função de borda.
-  - A senha provisória vale por 72 horas e não está no código do navegador.
-  - A troca de senha pela função só é aceita para a própria conta com senha provisória; aprovar de novo uma conta com senha definitiva não a apaga.
+- **Contas das Promotorias:** criadas só pelo CAOCRIM (cadastro aberto desativado), com credencial provisória individual e definição obrigatória de senha no primeiro acesso.
+  - A credencial é aleatória, gerada no servidor a cada emissão, exibida uma única vez ao CAOCRIM e guardada só como hash, numa tabela que só a chave de serviço lê. Vale por 72 horas, pelo relógio do servidor.
+  - Enquanto a senha definitiva não for definida, o banco bloqueia todo acesso aos diagnósticos, e a marca só sai pela função de borda.
+  - A definição de senha só é aceita para a própria conta, com a credencial correta e dentro da validade; contas definitivas e do CAOCRIM são recusadas.
+  - Aprovar ou vincular nunca altera a senha de uma conta existente: só "Redefinir senha" emite nova credencial.
+  - A API do Supabase ainda permite que uma sessão válida troque a própria senha ou e-mail: ative *Secure password change* e *Secure email change* no Supabase (ver [`docs/fluxo-diagnostico.md`](docs/fluxo-diagnostico.md)).
 - **Chaves:** a chave pública (`VITE_SUPABASE_PUBLISHABLE_KEY`) vai no código do navegador, por definição. A **chave de serviço nunca deve ir para o repositório** nem para variáveis com prefixo `VITE_`.
 
 ---
@@ -352,7 +354,7 @@ Todos os scripts SQL ficam em [`database/`](database/README.md). Para montar um 
 1. `database/carga-inicial/base_municipios.sql`: estrutura e carga inicial de `municipios` e `entregas_estrategicas`.
    > **Atenção:** começa com `DROP TABLE`. Use **apenas** num banco novo, nunca em produção.
 2. `database/cargas/*.sql`: população, OPM, CREAS, diagnóstico da rede, protocolos, assistência, capacitações, gargalos e casos.
-3. `database/migrations/01_…` a `08_…`, em ordem numérica:
+3. `database/migrations/01_…` a `09_…`, em ordem numérica:
    - eventos de feminicídio;
    - Promotorias;
    - diagnóstico;
@@ -360,9 +362,10 @@ Todos os scripts SQL ficam em [`database/`](database/README.md). Para montar um 
    - fluxo do diagnóstico;
    - contas das Promotorias;
    - contador de acessos;
-   - senha provisória das contas das Promotorias.
+   - bloqueio das contas das Promotorias até o primeiro acesso;
+   - credencial provisória individual.
 
-Num banco que já está em uso, aplique apenas as migrations que ainda não rodaram. As migrations `02` a `08` podem ser reexecutadas. A `01` não pode, porque duplicaria os eventos. A tabela de [`database/README.md`](database/README.md) relaciona os nomes atuais aos nomes antigos dos arquivos.
+Num banco que já está em uso, aplique apenas as migrations que ainda não rodaram. As migrations `02` a `09` podem ser reexecutadas. A `01` não pode, porque duplicaria os eventos. A tabela de [`database/README.md`](database/README.md) relaciona os nomes atuais aos nomes antigos dos arquivos.
 
 ---
 
@@ -417,7 +420,7 @@ Executa os **scripts SQL reais do projeto** num PostgreSQL embutido (PGlite), si
   - conflitos entre Promotorias exigem confirmação.
 - **Privacidade e caráter:** dados privados não vazam, e dados preliminares continuam preliminares.
 - **Regras de conversão:** recursos mínimos, suficiência e capacitações.
-- **Contas:** só o CAOCRIM aprova e redefine; a senha provisória bloqueia diagnósticos e anexos até a troca; a troca recusa senha curta, igual à provisória, expirada ou de conta sem a marca; reaprovar uma conta com senha definitiva a mantém; cada envio registra quem assinou.
+- **Contas:** só o CAOCRIM aprova e redefine; a credencial é individual a cada emissão e nunca aparece em consultas ou logs; a marca provisória bloqueia diagnósticos e anexos e não pode ser alterada pelo cliente; reaprovar ou vincular não altera senha nem credencial; a definição de senha recusa conta definitiva, conta do CAOCRIM, outro usuário, credencial errada ou expirada e falhas parciais; não há senha fixa no código do navegador; cada envio registra quem assinou.
 - **Completude:** o cálculo do navegador e o do banco coincidem em 400 casos aleatórios.
 
 Também é recomendável rodar antes de publicar alterações:
@@ -456,7 +459,7 @@ npm run lint
 
 - **Migrations:** aplicar conforme a seção [Banco de dados](#banco-de-dados-criação-e-migrations).
 - **Função de borda `contas-promotorias`** (`supabase/functions/contas-promotorias/`): cria as contas das Promotorias e altera senhas com a chave de serviço, que fica só no servidor e nunca vai para o navegador. No Lovable Cloud, é publicada pelo próprio Lovable; confira em **More → Edge Functions** e, se não aparecer, peça a publicação no chat do Lovable. No Supabase próprio: `supabase functions deploy contas-promotorias`.
-- **More → Users → Settings:** ativar **Disable sign-up**. O sistema não usa e-mails de convite nem de recuperação de senha.
+- **More → Users → Settings:** ativar **Disable sign-up**, **Secure password change** e **Secure email change**. O sistema não usa e-mails de convite nem de recuperação de senha.
 - **CAOCRIM:** criar a conta em **More → Users → Add user → Create new user** e marcá-la como administradora:
   ```sql
   INSERT INTO public.admin_users (user_id)
@@ -473,14 +476,14 @@ npm run lint
 Tudo é feito em **Diagnóstico BRIGID → Administração → Contas das Promotorias**; nenhum e-mail é enviado pelo sistema.
 
 1. Escolha a Promotoria, informe o e-mail institucional e clique em **"Aprovar e ativar cadastro"**.
-2. O painel confirma que o cadastro está ativo e mostra os dados a repassar à Promotoria: o e-mail cadastrado e a senha provisória padrão **`feminicidio0`** (a mesma para todas).
-3. No primeiro acesso, a Promotoria entra com esse e-mail e `feminicidio0` e é obrigada a criar uma senha definitiva (mínimo de 10 caracteres, diferente da provisória). Até lá, o formulário fica bloqueado, inclusive no banco.
+2. Para uma conta nova, o painel mostra **uma única vez** o e-mail, a **credencial provisória individual** gerada pelo sistema e a validade. Entregue-a somente à Promotoria, por canal seguro; ela não pode ser consultada depois.
+3. No primeiro acesso, a Promotoria entra com o e-mail e a credencial e é obrigada a definir uma senha definitiva (mínimo de 12 caracteres), informando de novo a credencial. Até lá, o formulário fica bloqueado, inclusive no banco.
 
-A troca deve ocorrer em até **72 horas**; depois disso, a coluna **Situação** mostra "Senha provisória expirada" e é preciso redefinir a senha. Até a troca, a situação é "Aguardando troca de senha". A coluna **Senha definida em** mostra quando a Promotoria criou a senha atual, para ela confirmar que foi ela. Aprovar de novo uma conta de Promotoria que já tem senha definitiva só a vincula, sem trocar a senha.
+A credencial vale por **72 horas**; depois disso, a coluna **Situação** mostra "Credencial provisória expirada" e é preciso redefinir a senha. Antes, a situação é "Aguardando primeiro acesso". A coluna **Senha definida em** mostra quando a Promotoria criou a senha atual, para ela confirmar que foi ela. Aprovar de novo ou vincular uma conta existente nunca altera a senha (a tabela completa está em [`docs/fluxo-diagnostico.md`](docs/fluxo-diagnostico.md)).
 
 ### Esquecimento de senha e troca de titular
 
-- Clique em **"Redefinir senha"** na linha da conta e confirme. A senha volta a ser `feminicidio0`, a senha anterior deixa de valer, e a troca é exigida no próximo acesso.
+- Clique em **"Redefinir senha"** na linha da conta e confirme. A senha anterior deixa de valer, as sessões abertas são encerradas e uma nova credencial individual é emitida, válida por 72 horas. A redefinição vale para a conta em todos os seus vínculos.
 - O novo titular informa o próprio nome e a condição no diagnóstico; o histórico preserva quem assinou cada envio anterior.
 
 Recomenda-se redefinir a senha sempre que o titular mudar.
@@ -505,7 +508,7 @@ Recomenda-se redefinir a senha sempre que o titular mudar.
 
 - **Edição direta da base:** a página `/base` permite ao CAOCRIM editar `municipios` diretamente, fora do fluxo de validação. Use-a só para correções da carga histórica.
 - **Campos sem pergunta no formulário:** `tem_atendimento_juridico`, `tem_equipe_multiprofissional`, `tem_articulacao_rede` e `treinamento_especifico_feminicidio` não têm pergunta e aparecem como "Sem informação" enquanto não houver carga. Isso reduz os índices IMF e IQT.
-- **Senha provisória única:** todas as contas aprovadas ou redefinidas começam com a mesma senha (`feminicidio0`). Ela vale só até o primeiro acesso e por no máximo 72 horas, mas, nesse intervalo, quem souber o e-mail de uma conta ainda não usada pode entrar antes da Promotoria. Por isso: aprove cada conta perto do momento de repassar o acesso, mantenha o cadastro público desligado no Supabase e peça à Promotoria que confira a data em "Senha definida em".
+- **Credencial provisória:** quem obtiver a credencial de uma conta ainda não ativada, dentro das 72 horas, pode ativá-la antes da Promotoria. Entregue-a por canal seguro, aprove perto do momento de uso e peça à Promotoria que confira "Senha definida em". A credencial expirada ainda autentica no Supabase, mas não dá acesso a nada nem permite definir a senha.
 - **Dois clientes Supabase:** `src/lib/supabase.ts`, o usado, e `src/integrations/supabase/`, gerado e mantido pelo Lovable.
 - **Dois gerenciadores de pacotes:** o projeto usa npm (`package-lock.json`), mas o ambiente Lovable mantém `bun.lock` e `bunfig.toml`. Ao mudar dependências, convém atualizar os dois ou padronizar num só.
 - **`.env` versionado:** o arquivo está no repositório, hoje só com a chave pública. Recomenda-se incluí-lo no `.gitignore` e configurar as variáveis em cada ambiente.

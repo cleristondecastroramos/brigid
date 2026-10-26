@@ -89,8 +89,9 @@ export function AcessoDiagnostico() {
               {enviando ? "Verificando..." : "Entrar"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Esqueceu a senha ou houve mudança de titular? Solicite ao CAOCRIM a redefinição: a
-              senha volta a ser a provisória e deverá ser trocada no próximo acesso.
+              Esqueceu a senha ou houve mudança de titular? Solicite ao CAOCRIM a redefinição: será
+              emitida uma nova credencial provisória, e a senha definitiva deverá ser criada no
+              próximo acesso.
             </p>
             <p className="text-xs text-muted-foreground">
               As respostas registradas aqui não são publicadas automaticamente: somente diagnósticos
@@ -103,10 +104,12 @@ export function AcessoDiagnostico() {
   );
 }
 
-// Exibida no lugar do módulo enquanto a conta usa a senha provisória padrão (primeiro acesso
-// ou após redefinição pelo CAOCRIM). O banco também bloqueia os diagnósticos nesse estado.
+// Exibida no lugar do módulo enquanto a conta não definiu a senha definitiva (primeiro acesso
+// ou após redefinição pelo CAOCRIM). O banco também bloqueia os diagnósticos nesse estado, e
+// a função de borda confere a credencial, a validade e a conta antes de liberar.
 export function TrocaSenhaObrigatoria() {
-  const { userEmail, trocarSenhaProvisoria, logout } = useApp();
+  const { userEmail, definirSenhaDefinitiva, logout } = useApp();
+  const [credencial, setCredencial] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
   const [erro, setErro] = useState("");
@@ -115,8 +118,12 @@ export function TrocaSenhaObrigatoria() {
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro("");
-    if (senha.length < 10) {
-      setErro("A nova senha deve ter pelo menos 10 caracteres.");
+    if (!credencial.trim()) {
+      setErro("Informe a credencial provisória recebida do CAOCRIM.");
+      return;
+    }
+    if (senha.length < 12) {
+      setErro("A nova senha deve ter pelo menos 12 caracteres.");
       return;
     }
     if (senha !== confirmacao) {
@@ -124,13 +131,14 @@ export function TrocaSenhaObrigatoria() {
       return;
     }
     setSalvando(true);
-    const { error } = await trocarSenhaProvisoria(senha);
+    const { error } = await definirSenhaDefinitiva(credencial, senha);
     setSalvando(false);
     if (error) {
       setErro(error);
       return;
     }
-    toast.success("Senha alterada. Use a nova senha nos próximos acessos.");
+    setCredencial("");
+    toast.success("Senha definida. Use a nova senha nos próximos acessos.");
   };
 
   return (
@@ -140,11 +148,12 @@ export function TrocaSenhaObrigatoria() {
           <div className="mb-1 w-fit text-muted-foreground">
             <KeyRound className="h-6 w-6" />
           </div>
-          <CardTitle>Troca de senha obrigatória</CardTitle>
+          <CardTitle>Definir senha definitiva</CardTitle>
           <CardDescription>
-            A conta <span className="font-medium text-foreground">{userEmail}</span> está usando a
-            senha provisória. Defina uma senha definitiva para liberar o acesso ao Diagnóstico
-            BRIGID.
+            Primeiro acesso da conta{" "}
+            <span className="font-medium text-foreground">{userEmail}</span>. Informe a credencial
+            provisória recebida do CAOCRIM e defina uma senha definitiva para liberar o acesso ao
+            Diagnóstico BRIGID.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -155,6 +164,18 @@ export function TrocaSenhaObrigatoria() {
               </div>
             )}
             <div className="space-y-1.5">
+              <label htmlFor="credencial_provisoria" className="text-sm font-medium">
+                Credencial provisória
+              </label>
+              <Input
+                id="credencial_provisoria"
+                type="password"
+                autoComplete="current-password"
+                value={credencial}
+                onChange={(e) => setCredencial(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
               <label htmlFor="nova_senha" className="text-sm font-medium">
                 Nova senha
               </label>
@@ -162,7 +183,7 @@ export function TrocaSenhaObrigatoria() {
                 id="nova_senha"
                 type="password"
                 autoComplete="new-password"
-                placeholder="Mínimo de 10 caracteres"
+                placeholder="Mínimo de 12 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
               />
@@ -184,7 +205,7 @@ export function TrocaSenhaObrigatoria() {
             </Button>
             <p className="text-xs text-muted-foreground">
               A senha é da conta institucional da Promotoria. Guarde-a em local seguro; em caso de
-              esquecimento, o CAOCRIM pode redefini-la para a senha provisória.
+              esquecimento, o CAOCRIM pode emitir uma nova credencial provisória.
             </p>
             <button
               type="button"

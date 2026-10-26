@@ -11,7 +11,8 @@ Execute no SQL Editor do Supabase, nesta ordem:
 3. `database/migrations/04_rls_admin.sql`
 4. `database/migrations/05_fluxo_diagnostico.sql`
 5. `database/migrations/06_contas_promotorias.sql`
-6. `database/migrations/08_senha_provisoria.sql` (cadastro das contas com senha provisória)
+6. `database/migrations/08_senha_provisoria.sql` (cadastro das contas e bloqueio até o primeiro acesso)
+7. `database/migrations/09_credencial_individual.sql` (credencial provisória individual)
 
 A ordem completa, incluindo a carga inicial da base municipal, está em [`database/README.md`](../database/README.md).
 
@@ -20,7 +21,8 @@ Publique também a função de borda **`contas-promotorias`** (`supabase/functio
 Depois, no **Lovable Cloud** (no Supabase próprio, os mesmos itens ficam em Authentication):
 
 - **More → Users → Settings:** ative "Disable sign-up". As contas são criadas só pelo CAOCRIM, e o sistema não envia e-mails de convite nem de recuperação de senha. Isso é obrigatório: com o cadastro aberto, um estranho poderia criar antes uma conta com o e-mail de uma Promotoria.
-- **Política de senhas** (Authentication → Policies/Password): confirme que aceita a senha provisória padrão (12 caracteres, letras minúsculas e um dígito). Se a política exigir maiúsculas ou símbolos, a aprovação falha com uma mensagem que aponta para essa configuração.
+- **Política de senhas** (Authentication → Policies/Password): mantenha uma política forte. A credencial provisória tem 19 caracteres, com maiúsculas, minúsculas, dígitos e hífens, e atende às políticas usuais; não é preciso afrouxar nada.
+- **Troca segura de senha e de e-mail** (Authentication → Providers → Email → *Secure password change* e *Secure email change*): ative as duas. A API do Supabase permite que qualquer sessão válida troque a própria senha ou e-mail; essas opções exigem reautenticação. Sem elas, uma sessão roubada pode trocar a senha de uma conta definitiva diretamente pela API, fora do sistema.
 - **More → Users → Add user → Create new user:** crie a conta do CAOCRIM e marque-a como administradora com o SQL `INSERT INTO public.admin_users (user_id) SELECT id FROM auth.users WHERE email = 'caocrim@mppi.mp.br';`
 - Contas das Promotorias: veja a seção abaixo.
 
@@ -29,23 +31,35 @@ Depois, no **Lovable Cloud** (no Supabase próprio, os mesmos itens ficam em Aut
 - Cada Promotoria acessa com a conta do seu e-mail institucional (`promotorias_justica.email_institucional`). Os diagnósticos pertencem à Promotoria, não à pessoa.
 - Quem preenche informa nome e condição (titular, substituto(a), em respondência) ao criar o diagnóstico e declara esses dados a cada envio. A declaração fica gravada na versão enviada (`enviado_por_nome`, `enviado_por_condicao`) e nunca é publicada.
 
-### Cadastro e senha (tudo pela tela Administração)
+### Cadastro e primeiro acesso (tudo pela tela Administração)
 
-1. **Aprovar o cadastro:** em **Diagnóstico BRIGID → Administração → Contas das Promotorias**, escolha a Promotoria, informe o e-mail institucional e clique em **"Aprovar e ativar cadastro"**. A conta é criada com a senha provisória padrão **`feminicidio0`**, a mesma para todas as Promotorias, e já fica vinculada à Promotoria. O painel confirma que o cadastro está ativo e mostra o e-mail e a senha provisória para repassar à Promotoria (a senha fica só no servidor e não está no código do navegador). Se já existir uma conta de Promotoria com esse e-mail e senha definitiva, ela é só vinculada e a senha é mantida; outra conta existente com esse e-mail é reaproveitada e volta à senha provisória.
-2. **Primeiro acesso:** a Promotoria entra com o e-mail cadastrado e a senha `feminicidio0`.
-3. **Troca obrigatória:** enquanto a senha provisória estiver em uso, o sistema mostra apenas a tela "Troca de senha obrigatória". A nova senha precisa ter pelo menos 10 caracteres e não pode ser `feminicidio0`. Até a troca, o banco também recusa qualquer leitura, criação ou envio de diagnóstico pela conta. A troca vale por **72 horas** a partir da aprovação ou redefinição; depois disso, o CAOCRIM precisa redefinir a senha de novo.
-4. **Esquecimento de senha ou troca de titular:** o CAOCRIM clica em **"Redefinir senha"** na linha da conta. A senha volta a ser `feminicidio0` e a troca é exigida de novo no próximo acesso.
+1. **Aprovar o cadastro:** em **Diagnóstico BRIGID → Administração → Contas das Promotorias**, escolha a Promotoria, informe o e-mail institucional e clique em **"Aprovar e ativar cadastro"**. Uma conta nova recebe uma **credencial provisória individual**, gerada aleatoriamente no servidor, e já fica vinculada à Promotoria. O painel mostra o e-mail, a credencial e a validade **uma única vez**: ela não é gravada (só o hash), não aparece na listagem e não pode ser consultada depois. Entregue-a somente à Promotoria, por canal seguro.
+2. **Primeiro acesso:** a Promotoria entra com o e-mail e a credencial. O sistema mostra apenas a tela **"Definir senha definitiva"**, onde ela informa de novo a credencial e a nova senha (mínimo de 12 caracteres, diferente da credencial). Até lá, o banco recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
+3. **Validade:** a credencial vale por **72 horas**, pelo relógio do servidor. Depois disso, a definição da senha é recusada e o CAOCRIM precisa usar "Redefinir senha". A credencial expirada ainda autentica no Supabase (o Supabase não expira senhas), mas a sessão não acessa nada além da tela de definição de senha, que a recusa.
+4. **Esquecimento de senha ou troca de titular:** o CAOCRIM clica em **"Redefinir senha"** e confirma. A senha anterior deixa de valer, as sessões abertas da conta são encerradas e uma nova credencial individual é emitida, com nova validade. A redefinição vale para a conta inteira, em todos os seus vínculos.
 
-A coluna **Situação** mostra "Aguardando troca de senha" enquanto a conta usa a senha provisória e "Senha provisória expirada" após as 72 horas. **Senha definida em** mostra quando a senha atual foi criada: peça à Promotoria que confira essa data, para ter certeza de que foi ela quem a definiu. "Último acesso" ajuda a identificar contas nunca usadas. "Desativar" retira o vínculo sem apagar a conta; "Reativar" vincula de novo, mantendo a senha definitiva.
+**Aprovar não altera senha.** Repetir a aprovação ou vincular uma conta existente a outra Promotoria só registra o vínculo:
 
-Como a senha provisória é a mesma para todas as contas e os e-mails institucionais são conhecidos, aprove ou redefina uma conta só quando a Promotoria estiver pronta para entrar.
+| Conta com esse e-mail | O que a aprovação faz |
+| --- | --- |
+| Não existe | Cria a conta e emite a credencial individual. |
+| Existe, sem senha (convite antigo nunca concluído) | Emite a credencial individual e vincula. |
+| De Promotoria, com senha definitiva | Só vincula; senha, datas e sessões preservadas. |
+| Aguardando primeiro acesso | Só vincula; a credencial já entregue continua valendo. Se expirou ou se perdeu, use "Redefinir senha". |
+| Com senha, fora do cadastro das Promotorias | Recusa: a existência da conta não prova a titularidade. Confira a conta em Authentication → Users antes. |
+| Do CAOCRIM | Recusa. |
+
+A coluna **Situação** mostra "Aguardando primeiro acesso" (com emissão e validade ao passar o mouse), "Credencial provisória expirada" ou "Senha compartilhada antiga: redefinir" (conta aprovada no fluxo anterior, cuja senha compartilhada não é mais aceita). **Senha definida em** mostra quando a Promotoria criou a senha atual: peça que ela confira essa data. "Desativar" retira o vínculo sem apagar a conta; "Reativar" vincula de novo, sem alterar a senha.
+
+Aprove ou redefina uma conta só quando a Promotoria estiver pronta para entrar, para encurtar o tempo em que a credencial fica válida.
 
 Como funciona por dentro:
 
-- A marca `senha_provisoria` fica em `app_metadata` da conta, que só a chave de serviço altera: a Promotoria não consegue retirá-la sem trocar a senha pela função de borda.
-- `senha_provisoria_ativa()`, `usuario_vinculado()` e `meus_vinculos()` (migration 08) leem a marca direto de `auth.users`, então o bloqueio vale logo após uma redefinição, mesmo para uma sessão já aberta.
-- A função de borda confere o CAOCRIM e os dados com `admin_preparar_conta_promotoria`, `admin_vincular_conta_promotoria` e `admin_conferir_conta_promotoria`. Contas do CAOCRIM nunca são criadas nem redefinidas por essa tela.
-- A troca de senha pela função de borda só é aceita para a conta que está com a marca provisória e dentro das 72 horas (`senha_provisoria_em`); qualquer outra conta recebe recusa. Ao trocar, a função grava `senha_definida_em`.
+- A marca `senha_provisoria` fica em `app_metadata` da conta, que só a chave de serviço altera. `senha_provisoria_ativa()`, `usuario_vinculado()` e `meus_vinculos()` (migration 08) leem a marca direto de `auth.users`, então o bloqueio vale logo após uma redefinição, mesmo para uma sessão já aberta.
+- O hash SHA-256 da credencial, a emissão, a validade e quem emitiu ficam em `credenciais_provisorias` (migration 09), sem políticas de RLS e sem permissão para `anon` e `authenticated`: só a chave de serviço lê.
+- A definição de senha (`definir_senha_definitiva`) só é aceita para a própria conta autenticada, que não pode ser do CAOCRIM, precisa estar com a marca provisória e com vínculo ativo, e deve informar a credencial correta dentro da validade. Senha e marca mudam na mesma atualização: se ela falhar, a conta continua bloqueada.
+- A aprovação usa `admin_situacao_conta_promotoria` (migration 09) para decidir sem alterar contas existentes; a redefinição usa `admin_conferir_conta_promotoria` (08) e `encerrar_sessoes_conta` (09). Contas do CAOCRIM nunca são criadas nem redefinidas por essa tela.
+- As respostas da função não vão para cache (`Cache-Control: no-store`) e o corpo das solicitações nunca é registrado em log.
 - As regras das ações ficam em `supabase/functions/contas-promotorias/acoes.ts`, testadas por `scripts/testes/contas-promotorias.test.mjs`.
 
 Se o dicionário (`src/lib/dicionario-diagnostico.ts`) mudar, rode `npm run gerar:regras` e reaplique a migration. Os testes conferem que a completude calculada no navegador e no banco é a mesma: `npm run test:diagnostico`.

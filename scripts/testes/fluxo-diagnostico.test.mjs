@@ -30,6 +30,10 @@ async function como(uid) {
     await db.exec("SET ROLE anon");
   } else if (uid === "super") {
     await db.query("SELECT set_config('request.jwt.claim.sub', '', false)");
+  } else if (uid === "service") {
+    // Chave de serviço do Supabase: papel próprio, que ignora o RLS
+    await db.query("SELECT set_config('request.jwt.claim.sub', '', false)");
+    await db.exec("SET ROLE service_role");
   } else {
     await db.query("SELECT set_config('request.jwt.claim.sub', $1, false)", [uid]);
     await db.exec("SET ROLE authenticated");
@@ -140,17 +144,20 @@ before(async () => {
   await db.exec(`
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
+    CREATE ROLE service_role NOLOGIN BYPASSRLS;
     CREATE SCHEMA auth;
     CREATE TABLE auth.users (id UUID PRIMARY KEY, email TEXT,
       raw_app_meta_data JSONB NOT NULL DEFAULT '{}', last_sign_in_at TIMESTAMPTZ,
       encrypted_password TEXT);
+    CREATE TABLE auth.sessions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE);
     CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS
       $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     GRANT USAGE ON SCHEMA auth TO anon, authenticated;
     GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated;
     CREATE SCHEMA extensions;
     CREATE FUNCTION extensions.uuid_generate_v4() RETURNS UUID LANGUAGE sql AS $$ SELECT gen_random_uuid() $$;
-    GRANT USAGE ON SCHEMA public, extensions TO anon, authenticated;
+    GRANT USAGE ON SCHEMA public, extensions TO anon, authenticated, service_role;
     GRANT EXECUTE ON FUNCTION extensions.uuid_generate_v4() TO anon, authenticated;
     -- Como no Supabase: privilégios amplos nas tabelas, contidos pelo RLS
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
@@ -171,6 +178,7 @@ before(async () => {
     "database/migrations/05_fluxo_diagnostico.sql",
     "database/migrations/06_contas_promotorias.sql",
     "database/migrations/08_senha_provisoria.sql",
+    "database/migrations/09_credencial_individual.sql",
   ]) {
     await db.exec(sql(f));
   }
@@ -1194,6 +1202,163 @@ test("painel do CAOCRIM mostra as datas da senha provisória e da senha definiti
     PROMOTOR_A,
     PROMOTOR_B,
   ]);
+});
+
+test("09: credenciais provisórias só pela chave de serviço; o cliente não altera a marca", async () => {
+  await q(
+    "super",
+    `INSERT INTO public.credenciais_provisorias (user_id, hash_credencial, expira_em)
+     VALUES ($1, 'hash-secreto', now() + interval '72 hours')`,
+    [PROMOTOR_A],
+  );
+  for (const uid of ["anon", PROMOTOR_A, ADMIN]) {
+    await falha(uid, "SELECT * FROM public.credenciais_provisorias", [], /permission denied/);
+    await falha(
+      uid,
+      "INSERT INTO public.credenciais_provisorias (user_id, hash_credencial, expira_em) VALUES ($1, 'x', now())",
+      [PROMOTOR_B],
+      /permission denied/,
+    );
+  }
+  // A marca provisória e a senha ficam em auth.users, fora do alcance da API
+  for (const uid of [PROMOTOR_A, ADMIN]) {
+    await falha(
+      uid,
+      "UPDATE auth.users SET raw_app_meta_data = '{}' WHERE id = $1",
+      [PROMOTOR_A],
+      /permission denied/,
+    );
+  }
+  const [{ n }] = await q(
+    "service",
+    "SELECT count(*)::int AS n FROM public.credenciais_provisorias",
+  );
+  assert.equal(n, 1, "a chave de serviço lê a tabela");
+  await q("super", "DELETE FROM public.credenciais_provisorias");
+});
+
+test("09: situação da conta na aprovação, conferida pelo CAOCRIM e sem alterar nada", async () => {
+  const situacao = "SELECT * FROM public.admin_situacao_conta_promotoria($1, $2)";
+  const NOVA = "00000000-0000-0000-0000-0000000000d1";
+  await falha(PROMOTOR_A, situacao, [ctx.pA, "x@mppi.mp.br"], /restrita ao CAOCRIM/);
+  await falha(ADMIN, situacao, [ctx.pA, "caocrim@mppi.mp.br"], /conta do CAOCRIM/);
+  assert.deepEqual(await q(ADMIN, situacao, [ctx.pA, "ninguem@mppi.mp.br"]), []);
+
+  const meta = (uid, senha, json) =>
+    q(
+      "super",
+      "UPDATE auth.users SET encrypted_password = $2, raw_app_meta_data = $3::jsonb WHERE id = $1",
+      [uid, senha, json],
+    );
+  const ver = async (email) => (await q(ADMIN, situacao, [ctx.pA, email]))[0];
+
+  // Definitiva e vinculada
+  await meta(PROMOTOR_A, "hash", '{"senha_provisoria":false}');
+  let r = await ver("promotor.a@mppi.mp.br");
+  assert.equal(r.user_id, PROMOTOR_A);
+  assert.equal(r.tem_senha, true);
+  assert.equal(r.provisoria, false);
+  assert.equal(r.vinculada_promotoria, true);
+
+  // Provisória com credencial válida, depois expirada (relógio do servidor)
+  await meta(PROMOTOR_A, "hash", '{"senha_provisoria":true}');
+  await q(
+    "super",
+    "INSERT INTO public.credenciais_provisorias (user_id, hash_credencial, expira_em) VALUES ($1, 'h', now() + interval '1 hour')",
+    [PROMOTOR_A],
+  );
+  r = await ver("promotor.a@mppi.mp.br");
+  assert.equal(r.provisoria, true);
+  assert.equal(r.credencial_individual, true);
+  assert.equal(r.credencial_expirada, false);
+  await q(
+    "super",
+    "UPDATE public.credenciais_provisorias SET expira_em = now() - interval '1 second' WHERE user_id = $1",
+    [PROMOTOR_A],
+  );
+  r = await ver("promotor.a@mppi.mp.br");
+  assert.equal(r.credencial_expirada, true);
+
+  // Provisória sem credencial individual (senha compartilhada anterior)
+  await q("super", "DELETE FROM public.credenciais_provisorias");
+  r = await ver("promotor.a@mppi.mp.br");
+  assert.equal(r.provisoria, true);
+  assert.equal(r.credencial_individual, false);
+
+  // Conta com senha fora do cadastro das Promotorias
+  await q(
+    "super",
+    "INSERT INTO auth.users (id, email, encrypted_password) VALUES ($1, 'externa@mppi.mp.br', 'hash')",
+    [NOVA],
+  );
+  r = await ver("externa@mppi.mp.br");
+  assert.equal(r.tem_senha, true);
+  assert.equal(r.vinculada_promotoria, false);
+  await q("super", "DELETE FROM auth.users WHERE id = $1", [NOVA]);
+  await meta(PROMOTOR_A, null, "{}");
+});
+
+test("09: lista do painel calcula a expiração no servidor e nunca devolve credencial ou hash", async () => {
+  await q(
+    "super",
+    `UPDATE auth.users SET raw_app_meta_data = '{"senha_provisoria":true}' WHERE id IN ($1, $2)`,
+    [PROMOTOR_A, PROMOTOR_B],
+  );
+  await q(
+    "super",
+    `INSERT INTO public.credenciais_provisorias (user_id, hash_credencial, emitida_em, expira_em) VALUES
+       ($1, 'hash-a', now() - interval '73 hours', now() - interval '1 hour')`,
+    [PROMOTOR_A],
+  );
+  const lista = await q(ADMIN, "SELECT * FROM public.admin_listar_vinculos()");
+  const a = lista.find((v) => v.user_id === PROMOTOR_A);
+  const b = lista.find((v) => v.user_id === PROMOTOR_B);
+  assert.equal(a.credencial_individual, true);
+  assert.equal(a.senha_provisoria_expirada, true);
+  assert.ok(a.senha_provisoria_expira_em);
+  assert.equal(b.credencial_individual, false, "provisória sem credencial individual");
+  assert.equal(b.senha_provisoria_expirada, true, "senha compartilhada antiga conta como expirada");
+  const texto = JSON.stringify(lista);
+  assert.ok(!texto.includes("hash-a"));
+  assert.ok(!Object.keys(a).some((k) => /hash|credencial_provisoria|senha$/.test(k)));
+
+  await q(
+    "super",
+    "UPDATE public.credenciais_provisorias SET expira_em = now() + interval '1 hour'",
+  );
+  const [a2] = (await q(ADMIN, "SELECT * FROM public.admin_listar_vinculos()")).filter(
+    (v) => v.user_id === PROMOTOR_A,
+  );
+  assert.equal(a2.senha_provisoria_expirada, false);
+  await falha(
+    PROMOTOR_A,
+    "SELECT * FROM public.admin_listar_vinculos()",
+    [],
+    /restrita ao CAOCRIM/,
+  );
+  await q("super", "DELETE FROM public.credenciais_provisorias");
+  await q("super", "UPDATE auth.users SET raw_app_meta_data = '{}' WHERE id IN ($1, $2)", [
+    PROMOTOR_A,
+    PROMOTOR_B,
+  ]);
+});
+
+test("09: encerramento de sessões só pela chave de serviço", async () => {
+  await q("super", "INSERT INTO auth.sessions (user_id) VALUES ($1), ($1), ($2)", [
+    PROMOTOR_A,
+    PROMOTOR_B,
+  ]);
+  for (const uid of ["anon", PROMOTOR_A, ADMIN]) {
+    await falha(uid, "SELECT public.encerrar_sessoes_conta($1)", [PROMOTOR_A], /permission denied/);
+  }
+  assert.equal(await rpc("service", "encerrar_sessoes_conta", PROMOTOR_A), 2);
+  const restantes = await q("super", "SELECT user_id FROM auth.sessions");
+  assert.deepEqual(
+    restantes.map((r) => r.user_id),
+    [PROMOTOR_B],
+    "só as sessões da conta redefinida",
+  );
+  await q("super", "DELETE FROM auth.sessions");
 });
 
 test("conta da Promotoria: cada envio registra quem assinou, mesmo após troca de titular", async () => {

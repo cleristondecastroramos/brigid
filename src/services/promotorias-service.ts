@@ -34,32 +34,42 @@ export interface VinculoAdmin {
   comarca_sede: string;
   nome_responsavel: string | null;
   ativo: boolean;
-  // true enquanto a conta usa a senha provisória padrão (troca obrigatória no próximo acesso)
+  // true enquanto a conta não definiu a senha definitiva (diagnósticos bloqueados no banco)
   senha_provisoria: boolean;
+  // false: conta provisória da senha compartilhada anterior (exige "Redefinir senha")
+  credencial_individual: boolean;
   senha_provisoria_em: string | null;
+  senha_provisoria_expira_em: string | null;
+  // Calculado pelo relógio do servidor
+  senha_provisoria_expirada: boolean;
   // Quando a Promotoria definiu a senha atual (para ela confirmar que foi ela)
   senha_definida_em: string | null;
   ultimo_acesso: string | null;
   created_at: string;
 }
 
-// Resposta da função de borda. A senha provisória só existe no servidor e vem nesta resposta,
-// para o CAOCRIM; ela não fica no código enviado ao navegador.
-export interface ContaAtivada {
+// Resposta da função de borda. A credencial provisória é individual, gerada no servidor, e
+// só vem na resposta da aprovação de conta nova ou da redefinição: fica apenas no estado da
+// tela do CAOCRIM até ser fechada (nunca em localStorage).
+export type SituacaoConta =
+  | "conta_criada"
+  | "credencial_emitida"
+  | "senha_preservada"
+  | "provisoria_preservada"
+  | "provisoria_expirada"
+  | "provisoria_legada"
+  | "redefinida";
+
+export interface ResultadoConta {
   email: string;
-  senha_provisoria?: string;
-  conta_existente?: boolean;
-  // Conta de Promotoria que já tinha senha definitiva: foi só vinculada, sem trocar a senha
-  senha_mantida?: boolean;
+  situacao: SituacaoConta;
+  credencial_provisoria?: string;
+  expira_em?: string | null;
+  sessoes_encerradas?: boolean;
 }
 
-// Prazo para a troca da senha provisória (o mesmo da função de borda)
+// Validade da credencial provisória (conferida no servidor; aqui só para os textos)
 export const VALIDADE_PROVISORIA_HORAS = 72;
-
-export function senhaProvisoriaExpirada(v: Pick<VinculoAdmin, "senha_provisoria_em">) {
-  if (!v.senha_provisoria_em) return true;
-  return Date.now() - Date.parse(v.senha_provisoria_em) > VALIDADE_PROVISORIA_HORAS * 3600 * 1000;
-}
 
 function erro(e: { message: string } | null) {
   if (e) throw new Error(e.message);
@@ -132,18 +142,19 @@ class PromotoriasService {
     return data as VinculoAdmin[];
   }
 
-  // Aprova o cadastro: cria (ou reativa) a conta com a senha provisória padrão e a vincula
-  async ativarConta(promotoriaId: string, email: string): Promise<ContaAtivada> {
-    return chamarContasPromotorias<ContaAtivada>({
+  // Aprova o cadastro: cria a conta com credencial individual ou só vincula a conta existente
+  // (a aprovação nunca altera a senha de uma conta existente)
+  async ativarConta(promotoriaId: string, email: string): Promise<ResultadoConta> {
+    return chamarContasPromotorias<ResultadoConta>({
       acao: "ativar",
       promotoria_id: promotoriaId,
       email: email.trim().toLowerCase(),
     });
   }
 
-  // Volta a conta à senha provisória padrão; a troca é exigida no próximo acesso
-  async redefinirSenha(userId: string): Promise<ContaAtivada> {
-    return chamarContasPromotorias<ContaAtivada>({ acao: "redefinir", user_id: userId });
+  // Emite nova credencial provisória individual; a definição de senha é exigida de novo
+  async redefinirSenha(userId: string): Promise<ResultadoConta> {
+    return chamarContasPromotorias<ResultadoConta>({ acao: "redefinir", user_id: userId });
   }
 
   async atualizarEmailInstitucional(id: string, email: string) {

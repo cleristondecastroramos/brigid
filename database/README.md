@@ -28,7 +28,8 @@ Execute no SQL Editor, nesta ordem:
 | `05_fluxo_diagnostico.sql` | Versões, revisão, validação, publicação, regras de completude, mapeamento e permissões | Sim |
 | `06_contas_promotorias.sql` | Vínculo em lote das contas institucionais das Promotorias (substituído pela 08) | Sim |
 | `07_contador_acessos.sql` | Contador de acessos do site (`site_visits`, `get_visitor_stats`) | Sim |
-| `08_senha_provisoria.sql` | Cadastro das contas pelo CAOCRIM com senha provisória e troca obrigatória (usa a função de borda `contas-promotorias`) | Sim |
+| `08_senha_provisoria.sql` | Cadastro das contas pelo CAOCRIM e bloqueio dos diagnósticos até o primeiro acesso (usa a função de borda `contas-promotorias`) | Sim |
+| `09_credencial_individual.sql` | Credencial provisória individual: hash, emissão e validade (72 h), situação da conta na aprovação e encerramento de sessões na redefinição | Sim |
 
 Em um banco que já está em uso, aplique apenas as migrations que ainda não foram executadas.
 

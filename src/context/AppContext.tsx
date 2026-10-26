@@ -36,9 +36,9 @@ interface AppContextProps {
   // Usuário autenticado no Supabase (qualquer perfil)
   userEmail: string | null;
   isAuthenticated: boolean;
-  // Conta com a senha provisória padrão: a troca é obrigatória antes de usar o Diagnóstico
+  // Conta sem senha definitiva: o primeiro acesso é obrigatório antes de usar o Diagnóstico
   senhaProvisoria: boolean;
-  trocarSenhaProvisoria: (novaSenha: string) => Promise<{ error?: string }>;
+  definirSenhaDefinitiva: (credencial: string, novaSenha: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   weights: Weights;
   thresholds: Thresholds;
@@ -174,10 +174,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return {};
   };
 
-  // A troca passa pela função de borda, que confere a nova senha e retira a marca provisória
-  const trocarSenhaProvisoria = async (novaSenha: string): Promise<{ error?: string }> => {
+  // Primeiro acesso pela função de borda, que confere a conta, a credencial e a validade no
+  // servidor antes de gravar a senha e retirar a marca provisória
+  const definirSenhaDefinitiva = async (
+    credencial: string,
+    novaSenha: string,
+  ): Promise<{ error?: string }> => {
     try {
-      await chamarContasPromotorias({ acao: "trocar_senha", nova_senha: novaSenha });
+      await chamarContasPromotorias({
+        acao: "definir_senha_definitiva",
+        credencial_provisoria: credencial,
+        nova_senha: novaSenha,
+      });
     } catch (e) {
       return { error: (e as Error).message };
     }
@@ -236,7 +244,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         userEmail,
         isAuthenticated: userEmail !== null,
         senhaProvisoria,
-        trocarSenhaProvisoria,
+        definirSenhaDefinitiva,
         logout,
         weights,
         thresholds,
