@@ -477,7 +477,7 @@ Tudo é feito em **Diagnóstico BRIGID → Administração → Contas das Promot
 
 1. Escolha a Promotoria, informe o e-mail institucional e clique em **"Aprovar e ativar cadastro"**.
 2. Para uma conta nova, o painel mostra **uma única vez** o e-mail, a **credencial provisória individual** gerada pelo sistema e a validade. Entregue-a somente à Promotoria, por canal seguro; ela não pode ser consultada depois.
-3. No primeiro acesso, a Promotoria entra com o e-mail e a credencial e é obrigada a definir uma senha definitiva (mínimo de 12 caracteres), informando de novo a credencial. Até lá, o formulário fica bloqueado, inclusive no banco.
+3. No primeiro acesso, a Promotoria entra com o e-mail e a credencial e é obrigada a definir uma senha definitiva (mínimo de 8 caracteres), informando de novo a credencial. Até lá, o formulário fica bloqueado, inclusive no banco.
 
 A credencial vale por **72 horas**; depois disso, a coluna **Situação** mostra "Credencial provisória expirada" e é preciso redefinir a senha. Antes, a situação é "Aguardando primeiro acesso". A coluna **Senha definida em** mostra quando a Promotoria criou a senha atual, para ela confirmar que foi ela. Aprovar de novo ou vincular uma conta existente nunca altera a senha (a tabela completa está em [`docs/fluxo-diagnostico.md`](docs/fluxo-diagnostico.md)).
 

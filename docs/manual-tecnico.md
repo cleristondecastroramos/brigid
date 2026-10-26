@@ -596,7 +596,7 @@ A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a credencial
 
 O sistema exibe apenas a tela "Definir senha definitiva", na qual a Promotoria informa novamente a credencial provisória e a nova senha, e só libera o formulário após a definição.
 
-A nova senha deve ter pelo menos 12 caracteres e não pode ser igual à credencial provisória.
+A nova senha deve ter pelo menos 8 caracteres e não pode ser igual à credencial provisória.
 
 A credencial provisória vale por 72 horas, contadas pelo relógio do servidor. Depois desse prazo, ela não permite mais definir a senha definitiva, e o CAOCRIM precisa redefinir a senha. Enquanto a senha definitiva não for definida, o banco de dados recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
 

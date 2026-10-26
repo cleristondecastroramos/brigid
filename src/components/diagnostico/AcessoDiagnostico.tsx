@@ -122,8 +122,8 @@ export function TrocaSenhaObrigatoria() {
       setErro("Informe a credencial provisória recebida do CAOCRIM.");
       return;
     }
-    if (senha.length < 12) {
-      setErro("A nova senha deve ter pelo menos 12 caracteres.");
+    if (senha.length < 8) {
+      setErro("A nova senha deve ter pelo menos 8 caracteres.");
       return;
     }
     if (senha !== confirmacao) {
@@ -183,7 +183,7 @@ export function TrocaSenhaObrigatoria() {
                 id="nova_senha"
                 type="password"
                 autoComplete="new-password"
-                placeholder="Mínimo de 12 caracteres"
+                placeholder="Mínimo de 8 caracteres"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
               />

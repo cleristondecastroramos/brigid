@@ -12,7 +12,7 @@
 // "Redefinir senha".
 
 export const VALIDADE_PROVISORIA_HORAS = 72;
-export const TAMANHO_MINIMO = 12;
+export const TAMANHO_MINIMO = 8;
 
 export class ErroSolicitacao extends Error {
   constructor(

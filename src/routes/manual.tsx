@@ -1208,7 +1208,7 @@ function Manual() {
                 após a definição.
               </li>
               <li className="text-justify">
-                A nova senha deve ter pelo menos 12 caracteres e não pode ser igual à credencial
+                A nova senha deve ter pelo menos 8 caracteres e não pode ser igual à credencial
                 provisória.
               </li>
             </ul>

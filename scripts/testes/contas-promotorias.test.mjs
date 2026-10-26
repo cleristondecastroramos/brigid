@@ -259,11 +259,23 @@ test("primeiro acesso: credencial errada, ausente ou de outra emissão é recusa
   assert.ok(!JSON.stringify(logs).includes(credencial));
 });
 
+test("primeiro acesso: mínimo de 8 caracteres (7 recusados, 8 aceitos)", async () => {
+  const { estado, deps, credencial, usuario } = await contaProvisoria();
+  await assert.rejects(
+    m.executarAcao(definir(credencial, "Abc-123"), usuario, deps),
+    (e) => e.status === 400 && /pelo menos 8/.test(e.message),
+  );
+  assert.equal(estado.contas.pa.app_metadata.senha_provisoria, true);
+  await m.executarAcao(definir(credencial, "Abc-1234"), usuario, deps);
+  assert.equal(estado.contas.pa.senha, "Abc-1234");
+  assert.equal(estado.contas.pa.app_metadata.senha_provisoria, false);
+});
+
 test("primeiro acesso: recusa senha curta ou igual à credencial", async () => {
   const { estado, deps, credencial, usuario } = await contaProvisoria();
   for (const [nova, padrao] of [
-    ["curta", /pelo menos 12/],
-    ["", /pelo menos 12/],
+    ["curta", /pelo menos 8/],
+    ["", /pelo menos 8/],
     [credencial, /não pode ser a credencial/],
   ]) {
     await assert.rejects(
