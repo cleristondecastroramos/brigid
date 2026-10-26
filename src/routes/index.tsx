@@ -208,70 +208,80 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 py-10">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col rounded-md border border-border bg-card p-6">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                Painel público
+        {/* Fundo roxo suave atrás das entradas e do panorama estadual */}
+        <section className="bg-primary/[0.06] dark:bg-primary/[0.12]">
+          <div className="mx-auto max-w-7xl px-6 py-12">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="flex flex-col rounded-md border border-border bg-card p-6">
+                <h2 className="flex items-center gap-3 font-serif text-[1.375rem] font-semibold leading-tight tracking-tight text-primary dark:text-foreground">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary dark:bg-primary/25 dark:text-foreground">
+                    <LayoutDashboard className="h-[18px] w-[18px]" />
+                  </span>
+                  Painel público
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Consulta aberta aos dados consolidados e autorizados para publicação.
+                </p>
+                <ul className="mt-4 space-y-1.5 text-sm text-foreground/80">
+                  {MODULOS_PAINEL.map((m) => (
+                    <li key={m} className="flex gap-2">
+                      <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-auto pt-6">
+                  <Button className="h-10 px-5" onClick={handleAccessPublic}>
+                    Acessar painel
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Consulta aberta aos dados consolidados e autorizados para publicação.
-              </p>
-              <ul className="mt-4 space-y-1.5 text-sm text-foreground/80">
-                {MODULOS_PAINEL.map((m) => (
-                  <li key={m} className="flex gap-2">
+
+              <div className="flex flex-col rounded-md border border-border bg-card p-6">
+                <h2 className="flex items-center gap-3 font-serif text-[1.375rem] font-semibold leading-tight tracking-tight text-primary dark:text-foreground">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary dark:bg-primary/25 dark:text-foreground">
+                    <ClipboardList className="h-[18px] w-[18px]" />
+                  </span>
+                  Diagnóstico BRIGID
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Módulo de coleta para as Promotorias de Justiça registrarem o diagnóstico da rede
+                  de proteção nos municípios de sua atribuição.
+                </p>
+                <ul className="mt-4 space-y-1.5 text-sm text-foreground/80">
+                  <li className="flex gap-2">
                     <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
-                    {m}
+                    Acesso pela conta institucional da Promotoria
                   </li>
-                ))}
-              </ul>
-              <div className="mt-6 pt-2">
-                <Button onClick={handleAccessPublic}>
-                  Acessar painel
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                  <li className="flex gap-2">
+                    <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
+                    Revisão e validação pelo CAOCRIM antes de qualquer publicação
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
+                    Histórico de versões, devoluções e anexos
+                  </li>
+                </ul>
+                <div className="mt-auto pt-6">
+                  <Button
+                    className="h-10 px-5"
+                    onClick={() => navigate({ to: "/diagnostico-brigid" })}
+                  >
+                    Entrar no módulo
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col rounded-md border border-border bg-card p-6">
-              <div className="flex items-center gap-2 text-sm font-semibold">
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                Diagnóstico BRIGID
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Módulo de coleta para as Promotorias de Justiça registrarem o diagnóstico da rede de
-                proteção nos municípios de sua atribuição.
-              </p>
-              <ul className="mt-4 space-y-1.5 text-sm text-foreground/80">
-                <li className="flex gap-2">
-                  <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
-                  Acesso pela conta institucional da Promotoria
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
-                  Revisão e validação pelo CAOCRIM antes de qualquer publicação
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-[9px] h-1 w-1 shrink-0 bg-foreground/40" />
-                  Histórico de versões, devoluções e anexos
-                </li>
-              </ul>
-              <div className="mt-6 pt-2">
-                <Button variant="outline" onClick={() => navigate({ to: "/diagnostico-brigid" })}>
-                  Entrar no módulo
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
+            <Suspense fallback={null}>
+              <PanoramaEstadual />
+            </Suspense>
+
+            <div className="mt-8 border-t border-primary/15 pt-4">
+              <VisitorCounter />
             </div>
-          </div>
-
-          <Suspense fallback={null}>
-            <PanoramaEstadual />
-          </Suspense>
-
-          <div className="mt-8 border-t border-border pt-4">
-            <VisitorCounter />
           </div>
         </section>
       </main>
