@@ -84,8 +84,9 @@ Recursos transversais: filtros por polo regional, comarca e município; mapas in
 | `/diagnostico-brigid/acompanhamento` | Todos os autenticados | Mapa e tabela da cobertura municipal, separando os blocos cível e criminal. |
 | `/diagnostico-brigid/revisao` | CAOCRIM | Fila de revisão com filtros (município, comarca, polo, Promotoria, atribuição, período, situação). |
 | `/diagnostico-brigid/revisao/:id` | CAOCRIM | Revisão completa do diagnóstico. Ver detalhes abaixo. |
-| `/diagnostico-brigid/administracao` | CAOCRIM | Atribuição funcional das Promotorias, e-mails institucionais e vínculo das contas. |
-| `/diagnostico-brigid/redefinir-senha` | Contas das Promotorias | Definição de senha a partir do convite ou do "Esqueci minha senha". |
+| `/diagnostico-brigid/administracao` | CAOCRIM | Atribuição funcional das Promotorias, e-mails institucionais, aprovação das contas e redefinição de senha. |
+
+Enquanto a conta da Promotoria usa a senha provisória padrão, qualquer rota do módulo mostra só a tela **"Troca de senha obrigatória"**.
 
 A revisão completa (`/revisao/:id`) reúne:
 - respostas por bloco, pendências e inconsistências;
@@ -123,7 +124,7 @@ O perfil é sempre conferido no banco, pela função `is_admin()` e pelo víncul
 │  • TanStack Router (rotas)   │   leitura pública (anon + RLS)    │  • PostgreSQL + RLS           │
 │  • TanStack Query (cache)    │ ◀──────────────────────────────── │  • Funções SECURITY DEFINER   │
 │  • Painéis, mapas, PDFs      │                                   │    (fluxo do diagnóstico)     │
-│  • Formulário e revisão      │   RPC autenticadas (JWT)          │  • Auth (contas e convites)   │
+│  • Formulário e revisão      │   RPC autenticadas (JWT)          │  • Auth + função de borda     │
 │                              │ ────────────────────────────────▶ │  • Storage privado (anexos)   │
 └──────────────────────────────┘                                   └───────────────────────────────┘
 ```
@@ -187,7 +188,9 @@ brigid/
 │   ├── services/                    # Acesso ao banco (diagnóstico, promotorias)
 │   ├── integrations/supabase/       # Cliente e tipos gerados pelo Lovable (não usados pelo app)
 │   └── data/                        # GeoJSON dos municípios do Piauí
-├── supabase/config.toml             # Identificação do projeto no Lovable Cloud
+├── supabase/
+│   ├── config.toml                  # Identificação do projeto no Lovable Cloud
+│   └── functions/contas-promotorias/ # Função de borda: cria contas e altera senhas (chave de serviço)
 ├── .lovable/, bun.lock, bunfig.toml # Arquivos do ambiente Lovable (mantidos para a integração)
 └── vercel.json                      # Reescrita de rotas da SPA
 ```
@@ -301,7 +304,7 @@ em preenchimento → enviado → em análise ─┬─▶ devolvido → (correç
   - Nenhuma escrita direta pela API, nem do CAOCRIM. Toda escrita da coleta passa por funções `SECURITY DEFINER` com `search_path` fixo, que conferem perfil, vínculo e estado e registram auditoria.
 - **Administração no banco:** o perfil administrativo vem de `admin_users` e é conferido por `is_admin()`.
 - **Anexos:** ficam em bucket privado, acessíveis só pelo CAOCRIM e pela Promotoria dona do diagnóstico, por URL assinada de 5 minutos.
-- **Cadastro aberto desativado:** as contas são criadas ou convidadas pelo CAOCRIM.
+- **Cadastro aberto desativado:** as contas das Promotorias são criadas só pelo CAOCRIM, com senha provisória de troca obrigatória no primeiro acesso.
 - **Chaves:** a chave pública (`VITE_SUPABASE_PUBLISHABLE_KEY`) vai no código do navegador, por definição. A **chave de serviço nunca deve ir para o repositório** nem para variáveis com prefixo `VITE_`.
 
 ---
@@ -346,16 +349,17 @@ Todos os scripts SQL ficam em [`database/`](database/README.md). Para montar um 
 1. `database/carga-inicial/base_municipios.sql`: estrutura e carga inicial de `municipios` e `entregas_estrategicas`.
    > **Atenção:** começa com `DROP TABLE`. Use **apenas** num banco novo, nunca em produção.
 2. `database/cargas/*.sql`: população, OPM, CREAS, diagnóstico da rede, protocolos, assistência, capacitações, gargalos e casos.
-3. `database/migrations/01_…` a `07_…`, em ordem numérica:
+3. `database/migrations/01_…` a `08_…`, em ordem numérica:
    - eventos de feminicídio;
    - Promotorias;
    - diagnóstico;
    - RLS e administração;
    - fluxo do diagnóstico;
    - contas das Promotorias;
-   - contador de acessos.
+   - contador de acessos;
+   - senha provisória das contas das Promotorias.
 
-Num banco que já está em uso, aplique apenas as migrations que ainda não rodaram. As migrations `02` a `07` podem ser reexecutadas. A `01` não pode, porque duplicaria os eventos. A tabela de [`database/README.md`](database/README.md) relaciona os nomes atuais aos nomes antigos dos arquivos.
+Num banco que já está em uso, aplique apenas as migrations que ainda não rodaram. As migrations `02` a `08` podem ser reexecutadas. A `01` não pode, porque duplicaria os eventos. A tabela de [`database/README.md`](database/README.md) relaciona os nomes atuais aos nomes antigos dos arquivos.
 
 ---
 
@@ -434,9 +438,6 @@ npm run lint
 | `npm run format` | Prettier em todo o projeto. |
 | `npm run test:diagnostico` | Testes do fluxo de diagnóstico (PGlite). |
 | `npm run gerar:regras` | Regenera as regras de completude na migration a partir do dicionário. |
-| `npm run contas:modelo` | Gera `contas-promotorias.csv` com todas as Promotorias, para preencher os e-mails institucionais. A planilha não é versionada. |
-| `node scripts/diagnostico/convidar-contas-promotorias.mjs contas-promotorias.csv --sql emails.sql` | Gera o SQL que grava os e-mails institucionais (Lovable Cloud). |
-| `node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv [--simular]` | Convida e vincula as contas de uma vez (exige chave de serviço; Supabase próprio). |
 
 ---
 
@@ -451,10 +452,8 @@ npm run lint
 ### Backend (Lovable Cloud / Supabase)
 
 - **Migrations:** aplicar conforme a seção [Banco de dados](#banco-de-dados-criação-e-migrations).
-- **More → Users → Settings:**
-  - ativar **Disable sign-up**;
-  - em **Advanced**, definir a **Site URL** como `https://brigid-mppi.vercel.app` e incluir `https://brigid-mppi.vercel.app/diagnostico-brigid/redefinir-senha` em **Redirect URLs**;
-  - se esses campos não puderem ser editados, peça a configuração no chat do Lovable.
+- **Função de borda `contas-promotorias`** (`supabase/functions/contas-promotorias/`): cria as contas das Promotorias e altera senhas com a chave de serviço, que fica só no servidor e nunca vai para o navegador. No Lovable Cloud, é publicada pelo próprio Lovable; confira em **More → Edge Functions** e, se não aparecer, peça a publicação no chat do Lovable. No Supabase próprio: `supabase functions deploy contas-promotorias`.
+- **More → Users → Settings:** ativar **Disable sign-up**. O sistema não usa e-mails de convite nem de recuperação de senha.
 - **CAOCRIM:** criar a conta em **More → Users → Add user → Create new user** e marcá-la como administradora:
   ```sql
   INSERT INTO public.admin_users (user_id)
@@ -468,27 +467,20 @@ npm run lint
 
 ### Cadastrar as contas das Promotorias
 
-1. Gere a planilha:
-   ```bash
-   npm run contas:modelo
-   ```
-   Preencha a coluna `email` de `contas-promotorias.csv` no Excel (separador `;`). Planilhas e SQL com e-mails não são versionados (`.gitignore`).
-2. Gere o SQL dos e-mails e execute-o no banco:
-   ```bash
-   node scripts/diagnostico/convidar-contas-promotorias.mjs contas-promotorias.csv --sql emails.sql
-   ```
-   Também é possível digitar os e-mails na tela **Administração**.
-3. Convide cada e-mail em **More → Users → Add user → Send invitation**. O link do convite leva à tela "Definir senha da Promotoria".
-4. Na tela **Administração**, clique em **"Vincular contas pelo e-mail institucional"**. Pode repetir depois de novos convites.
+Tudo é feito em **Diagnóstico BRIGID → Administração → Contas das Promotorias**; nenhum e-mail é enviado pelo sistema.
 
-### Troca de titular
+1. Escolha a Promotoria, informe o e-mail institucional e clique em **"Aprovar e ativar cadastro"**.
+2. O painel confirma que o cadastro está ativo e mostra os dados a repassar à Promotoria: o e-mail cadastrado e a senha provisória padrão **`feminicidio0`** (a mesma para todas).
+3. No primeiro acesso, a Promotoria entra com esse e-mail e `feminicidio0` e é obrigada a criar uma senha definitiva (mínimo de 10 caracteres, diferente da provisória). Até lá, o formulário fica bloqueado, inclusive no banco.
 
-Não exige nenhuma ação do CAOCRIM:
-- o novo titular usa **"Esqueci minha senha"** na tela de acesso do módulo;
-- informa o próprio nome e a condição no diagnóstico;
-- o histórico preserva quem assinou cada envio anterior.
+A troca deve ocorrer em até **72 horas**; depois disso, a coluna **Situação** mostra "Senha provisória expirada" e é preciso redefinir a senha. Até a troca, a situação é "Aguardando troca de senha". A coluna **Senha definida em** mostra quando a Promotoria criou a senha atual, para ela confirmar que foi ela. Aprovar de novo uma conta de Promotoria que já tem senha definitiva só a vincula, sem trocar a senha.
 
-Recomenda-se trocar a senha sempre que o titular mudar.
+### Esquecimento de senha e troca de titular
+
+- Clique em **"Redefinir senha"** na linha da conta e confirme. A senha volta a ser `feminicidio0`, a senha anterior deixa de valer, e a troca é exigida no próximo acesso.
+- O novo titular informa o próprio nome e a condição no diagnóstico; o histórico preserva quem assinou cada envio anterior.
+
+Recomenda-se redefinir a senha sempre que o titular mudar.
 
 ### Revisar e publicar diagnósticos
 
@@ -510,7 +502,7 @@ Recomenda-se trocar a senha sempre que o titular mudar.
 
 - **Edição direta da base:** a página `/base` permite ao CAOCRIM editar `municipios` diretamente, fora do fluxo de validação. Use-a só para correções da carga histórica.
 - **Campos sem pergunta no formulário:** `tem_atendimento_juridico`, `tem_equipe_multiprofissional`, `tem_articulacao_rede` e `treinamento_especifico_feminicidio` não têm pergunta e aparecem como "Sem informação" enquanto não houver carga. Isso reduz os índices IMF e IQT.
-- **Convites no Lovable Cloud:** são enviados um a um pela tela do Lovable, que não oferece convite em lote sem chave de serviço.
+- **Senha provisória única:** todas as contas aprovadas ou redefinidas começam com a mesma senha (`feminicidio0`). Ela vale só até o primeiro acesso e por no máximo 72 horas, mas, nesse intervalo, quem souber o e-mail de uma conta ainda não usada pode entrar antes da Promotoria. Por isso: aprove cada conta perto do momento de repassar o acesso, mantenha o cadastro público desligado no Supabase e peça à Promotoria que confira a data em "Senha definida em".
 - **Dois clientes Supabase:** `src/lib/supabase.ts`, o usado, e `src/integrations/supabase/`, gerado e mantido pelo Lovable.
 - **Dois gerenciadores de pacotes:** o projeto usa npm (`package-lock.json`), mas o ambiente Lovable mantém `bun.lock` e `bunfig.toml`. Ao mudar dependências, convém atualizar os dois ou padronizar num só.
 - **`.env` versionado:** o arquivo está no repositório, hoje só com a chave pública. Recomenda-se incluí-lo no `.gitignore` e configurar as variáveis em cada ambiente.

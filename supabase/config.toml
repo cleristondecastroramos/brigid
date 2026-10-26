@@ -1,1 +1,5 @@
 project_id = "kinurnnabyuleiltzhkv"
+
+# Cadastro e senhas das contas das Promotorias (chave de serviço só no servidor)
+[functions.contas-promotorias]
+verify_jwt = true

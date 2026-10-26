@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { RiscoNivel, SimNao } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { chamarContasPromotorias } from "@/services/promotorias-service";
 
 export interface Weights {
   pesoFeminicidios: number;
@@ -35,6 +36,9 @@ interface AppContextProps {
   // Usuário autenticado no Supabase (qualquer perfil)
   userEmail: string | null;
   isAuthenticated: boolean;
+  // Conta com a senha provisória padrão: a troca é obrigatória antes de usar o Diagnóstico
+  senhaProvisoria: boolean;
+  trocarSenhaProvisoria: (novaSenha: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   weights: Weights;
   thresholds: Thresholds;
@@ -57,6 +61,13 @@ const DEFAULT_THRESHOLDS: Thresholds = {
   critico: 390,
 };
 
+// Lida do banco a cada verificação (e não do token), para valer logo após uma redefinição
+async function verificarSenhaProvisoria(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("senha_provisoria_ativa");
+  if (error) console.error("Erro ao verificar a senha provisória:", error);
+  return data === true;
+}
+
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -71,6 +82,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [senhaProvisoria, setSenhaProvisoria] = useState(false);
   const userRole: UserRole = isAdmin ? "admin" : isPublic ? "public" : null;
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [thresholds, setThresholds] = useState<Thresholds>(DEFAULT_THRESHOLDS);
@@ -88,14 +100,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!session) {
         if (active) {
           setIsAdmin(false);
+          setSenhaProvisoria(false);
           setAuthLoading(false);
         }
         return;
       }
-      const { data, error } = await supabase.rpc("is_admin");
+      const [{ data, error }, provisoria] = await Promise.all([
+        supabase.rpc("is_admin"),
+        verificarSenhaProvisoria(),
+      ]);
       if (error) console.error("Erro ao verificar perfil de administrador:", error);
       if (active) {
         setIsAdmin(data === true);
+        setSenhaProvisoria(provisoria);
         setAuthLoading(false);
       }
     };
@@ -147,15 +164,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (error) {
       return { error: "Credenciais inválidas. Verifique o e-mail e a senha informados." };
     }
-    const { data: admin } = await supabase.rpc("is_admin");
+    const [{ data: admin }, provisoria] = await Promise.all([
+      supabase.rpc("is_admin"),
+      verificarSenhaProvisoria(),
+    ]);
     setIsAdmin(admin === true);
+    setSenhaProvisoria(provisoria);
     setUserEmail(data.user?.email ?? null);
+    return {};
+  };
+
+  // A troca passa pela função de borda, que confere a nova senha e retira a marca provisória
+  const trocarSenhaProvisoria = async (novaSenha: string): Promise<{ error?: string }> => {
+    try {
+      await chamarContasPromotorias({ acao: "trocar_senha", nova_senha: novaSenha });
+    } catch (e) {
+      return { error: (e as Error).message };
+    }
+    await supabase.auth.refreshSession();
+    setSenhaProvisoria(await verificarSenhaProvisoria());
     return {};
   };
 
   const logout = async () => {
     setIsAdmin(false);
     setUserEmail(null);
+    setSenhaProvisoria(false);
     setIsPublic(false);
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("brigid_publicAccess");
@@ -201,6 +235,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         loginRespondente,
         userEmail,
         isAuthenticated: userEmail !== null,
+        senhaProvisoria,
+        trocarSenhaProvisoria,
         logout,
         weights,
         thresholds,

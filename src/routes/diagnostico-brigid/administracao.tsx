@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   promotoriasService,
+  senhaProvisoriaExpirada,
+  VALIDADE_PROVISORIA_HORAS,
+  type ContaAtivada,
   type Promotoria,
   type VinculoAdmin,
 } from "@/services/promotorias-service";
@@ -26,7 +29,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Database, Link2, Search, UserPlus } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, CheckCircle2, Database, KeyRound, Search, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/diagnostico-brigid/administracao")({
@@ -113,8 +126,8 @@ function AdministracaoPage() {
             </h1>
           </div>
           <p className="text-muted-foreground mt-1">
-            Defina a atribuição funcional de cada Promotoria e vincule os usuários autorizados a
-            responder por ela. As alterações são gravadas diretamente na base.
+            Defina a atribuição funcional de cada Promotoria e aprove a conta institucional que
+            responde por ela. As alterações são gravadas diretamente na base.
           </p>
         </div>
         <div className="flex gap-2">
@@ -253,15 +266,33 @@ function AdministracaoPage() {
           )}
         </CardContent>
       </Card>
-      <VinculosUsuarios promotorias={promotorias} />
+      <VinculosUsuarios
+        promotorias={promotorias}
+        onEmailRegistrado={(id, email) =>
+          setPromotorias((prev) =>
+            prev.map((x) => (x.id === id ? { ...x, email_institucional: email } : x)),
+          )
+        }
+      />
     </div>
   );
 }
 
-function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
+function VinculosUsuarios({
+  promotorias,
+  onEmailRegistrado,
+}: {
+  promotorias: Promotoria[];
+  onEmailRegistrado: (promotoriaId: string, email: string) => void;
+}) {
   const [vinculos, setVinculos] = useState<VinculoAdmin[]>([]);
-  const [novo, setNovo] = useState({ email: "", promotoria: "", descricao: "" });
+  const [novo, setNovo] = useState({ email: "", promotoria: "" });
   const [salvando, setSalvando] = useState(false);
+  // Última conta aprovada ou redefinida: o painel informa o e-mail e a senha provisória
+  const [aviso, setAviso] = useState<
+    (ContaAtivada & { tipo: "ativada" | "redefinida"; promotoria: string }) | null
+  >(null);
+  const [redefinir, setRedefinir] = useState<VinculoAdmin | null>(null);
 
   const carregar = async () => {
     try {
@@ -275,12 +306,40 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
     carregar();
   }, []);
 
-  const vincular = async () => {
+  const ativar = async (promotoriaId: string, email: string) => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      toast.error("Informe um e-mail válido para a Promotoria.");
+      return;
+    }
     setSalvando(true);
     try {
-      await promotoriasService.vincularUsuario(novo.email, novo.promotoria, novo.descricao);
-      toast.success("Conta vinculada à Promotoria.");
-      setNovo({ email: "", promotoria: "", descricao: "" });
+      const r = await promotoriasService.ativarConta(promotoriaId, email);
+      const nome = promotorias.find((p) => p.id === promotoriaId)?.nome ?? "";
+      setAviso({ ...r, tipo: "ativada", promotoria: nome });
+      onEmailRegistrado(promotoriaId, r.email);
+      setNovo({ email: "", promotoria: "" });
+      toast.success(
+        r.senha_mantida
+          ? "Conta vinculada; a senha atual foi mantida."
+          : "Cadastro aprovado e ativo.",
+      );
+      await carregar();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const confirmarRedefinicao = async () => {
+    if (!redefinir) return;
+    const v = redefinir;
+    setRedefinir(null);
+    setSalvando(true);
+    try {
+      const r = await promotoriasService.redefinirSenha(v.user_id);
+      setAviso({ ...r, tipo: "redefinida", promotoria: v.promotoria_nome });
+      toast.success("Senha redefinida para a senha provisória.");
       await carregar();
     } catch (e) {
       toast.error((e as Error).message);
@@ -298,74 +357,41 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
     }
   };
 
-  const [pendentes, setPendentes] = useState<{ nome: string; email: string }[] | null>(null);
-  const vincularEmLote = async () => {
-    setSalvando(true);
-    try {
-      const r = await promotoriasService.vincularContasPorEmail();
-      const novas = r.filter((x) => x.situacao === "vinculada").length;
-      const ja = r.filter((x) => x.situacao === "ja_vinculada").length;
-      const sem = r.filter((x) => x.situacao === "conta_inexistente");
-      setPendentes(sem.map((x) => ({ nome: x.promotoria_nome, email: x.email })));
-      toast.success(
-        `${novas} conta(s) vinculada(s), ${ja} já vinculada(s), ${sem.length} sem conta criada.`,
-      );
-      await carregar();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const semEmail = promotorias.filter((p) => !p.email_institucional).length;
-
   return (
     <Card>
       <CardHeader className="border-b pb-3">
         <CardTitle className="text-base">Contas das Promotorias</CardTitle>
         <p className="text-sm text-muted-foreground">
           O acesso ao formulário é feito pela conta do e-mail institucional da Promotoria, não pelo
-          e-mail pessoal do titular. Na troca de titular não é preciso alterar nada: o novo titular
-          redefine a senha pelo próprio e-mail institucional.
+          e-mail pessoal do titular. Nenhum e-mail é enviado pelo sistema: o CAOCRIM informa os
+          dados de acesso à Promotoria.
         </p>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
           <li>
-            Preencha o e-mail institucional de cada Promotoria na tabela acima ({semEmail} sem
-            e-mail).
+            Escolha a Promotoria, informe o e-mail institucional e clique em "Aprovar e ativar
+            cadastro".
           </li>
           <li>
-            Convide cada e-mail no painel do Lovable Cloud: More → Users → Add user → Send
-            invitation.
+            A conta é criada com a senha provisória padrão, a mesma para todas as Promotorias. Ela é
+            exibida aqui após a aprovação, para ser informada à Promotoria.
           </li>
           <li>
-            Clique em "Vincular contas pelo e-mail institucional". Pode repetir quantas vezes
-            quiser.
+            No primeiro acesso, a Promotoria é obrigada a trocar a senha provisória por uma senha
+            definitiva antes de usar o Diagnóstico. A troca deve ocorrer em até{" "}
+            {VALIDADE_PROVISORIA_HORAS} horas; depois disso, é preciso redefinir a senha.
+          </li>
+          <li>
+            Esquecimento de senha ou troca de titular: use "Redefinir senha". A senha volta a ser a
+            provisória e a troca é exigida de novo no próximo acesso.
           </li>
         </ol>
-        <div className="pt-2">
-          <Button variant="outline" onClick={vincularEmLote} disabled={salvando}>
-            <Link2 className="mr-2 h-4 w-4" /> Vincular contas pelo e-mail institucional
-          </Button>
-        </div>
-        {pendentes && pendentes.length > 0 && (
-          <details className="pt-2 text-sm">
-            <summary className="cursor-pointer text-warning-foreground">
-              {pendentes.length} Promotoria(s) com e-mail cadastrado, mas sem conta criada
-            </summary>
-            <ul className="mt-2 max-h-48 space-y-0.5 overflow-y-auto text-xs text-muted-foreground">
-              {pendentes.map((p) => (
-                <li key={p.email}>
-                  {p.nome} — {p.email}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
+        <p className="mt-2 text-sm text-muted-foreground">
+          Como a senha provisória é a mesma para todas as contas, aprove ou redefina somente quando
+          a Promotoria estiver pronta para entrar, e peça que confira a data em "Senha definida em".
+        </p>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
-        <p className="text-xs text-muted-foreground">Vínculo individual (opcional):</p>
-        <div className="grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_auto]">
+        <div className="grid gap-2 md:grid-cols-[1.5fr_1fr_auto]">
           <Select
             value={novo.promotoria}
             onValueChange={(v) =>
@@ -376,7 +402,7 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
               }))
             }
           >
-            <SelectTrigger>
+            <SelectTrigger aria-label="Promotoria">
               <SelectValue placeholder="Promotoria" />
             </SelectTrigger>
             <SelectContent>
@@ -388,35 +414,87 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
             </SelectContent>
           </Select>
           <Input
+            type="email"
+            aria-label="E-mail institucional da Promotoria"
             placeholder="E-mail institucional da Promotoria"
             value={novo.email}
             onChange={(e) => setNovo((n) => ({ ...n, email: e.target.value }))}
           />
-          <Input
-            placeholder="Descrição (opcional)"
-            value={novo.descricao}
-            onChange={(e) => setNovo((n) => ({ ...n, descricao: e.target.value }))}
-          />
-          <Button onClick={vincular} disabled={salvando || !novo.email || !novo.promotoria}>
-            <UserPlus className="mr-2 h-4 w-4" /> Vincular
+          <Button
+            onClick={() => ativar(novo.promotoria, novo.email)}
+            disabled={salvando || !novo.email || !novo.promotoria}
+          >
+            <UserCheck className="mr-2 h-4 w-4" />
+            {salvando ? "Processando..." : "Aprovar e ativar cadastro"}
           </Button>
         </div>
+
+        {aviso && (
+          <div
+            role="status"
+            className="flex gap-3 rounded-md border border-success/40 bg-success/10 p-4 text-sm"
+          >
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">
+                {aviso.tipo === "ativada" ? "Cadastro ativo" : "Senha redefinida"}
+                {aviso.promotoria ? ` — ${aviso.promotoria}` : ""}.
+              </p>
+              {aviso.senha_mantida ? (
+                <p className="text-muted-foreground">
+                  A conta <span className="font-medium text-foreground">{aviso.email}</span> já
+                  tinha senha definitiva e foi apenas vinculada; a senha não mudou. Se a Promotoria
+                  não lembrar a senha, use "Redefinir senha".
+                </p>
+              ) : (
+                <>
+                  <p className="text-muted-foreground">
+                    Informe à Promotoria os dados de acesso ao Diagnóstico BRIGID:
+                  </p>
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+                    <dt className="text-muted-foreground">E-mail</dt>
+                    <dd className="font-medium text-foreground">{aviso.email}</dd>
+                    <dt className="text-muted-foreground">Senha provisória</dt>
+                    <dd className="font-mono font-medium text-foreground">
+                      {aviso.senha_provisoria}
+                    </dd>
+                  </dl>
+                  <p className="text-muted-foreground">
+                    No próximo acesso, em até {VALIDADE_PROVISORIA_HORAS} horas, a Promotoria deverá
+                    trocar a senha provisória por uma senha definitiva.
+                    {aviso.conta_existente &&
+                      " A conta já existia: a senha anterior deixou de valer."}
+                  </p>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setAviso(null)}
+              className="ml-auto self-start text-xs text-muted-foreground hover:text-foreground"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Conta (e-mail)</TableHead>
                 <TableHead>Promotoria</TableHead>
-                <TableHead>Descrição</TableHead>
                 <TableHead>Situação</TableHead>
+                <TableHead>Senha definida em</TableHead>
+                <TableHead>Último acesso</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {vinculos.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
-                    Nenhum vínculo cadastrado.
+                  <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                    Nenhuma conta cadastrada.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -424,20 +502,55 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
                   <TableRow key={v.id}>
                     <TableCell className="text-sm">{v.email}</TableCell>
                     <TableCell className="text-sm">{v.promotoria_nome}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {v.nome_responsavel ?? "—"}
-                    </TableCell>
                     <TableCell>
-                      {v.ativo ? (
-                        <Badge className="bg-success text-success-foreground">Ativo</Badge>
+                      {!v.ativo ? (
+                        <Badge variant="outline">Inativa</Badge>
+                      ) : v.senha_provisoria && senhaProvisoriaExpirada(v) ? (
+                        <Badge variant="outline" className="border-destructive/40 text-destructive">
+                          Senha provisória expirada
+                        </Badge>
+                      ) : v.senha_provisoria ? (
+                        <Badge variant="outline">Aguardando troca de senha</Badge>
                       ) : (
-                        <Badge variant="outline">Inativo</Badge>
+                        <Badge className="bg-success text-success-foreground">Ativa</Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {v.ativo && (
-                        <Button variant="ghost" size="sm" onClick={() => desativar(v.id)}>
-                          Desativar
+                    <TableCell className="text-sm text-muted-foreground">
+                      {v.senha_definida_em
+                        ? new Date(v.senha_definida_em).toLocaleString("pt-BR", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {v.ultimo_acesso
+                        ? new Date(v.ultimo_acesso).toLocaleDateString("pt-BR")
+                        : "Nunca"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-right">
+                      {v.ativo ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={salvando}
+                            onClick={() => setRedefinir(v)}
+                          >
+                            <KeyRound className="mr-1.5 h-3.5 w-3.5" /> Redefinir senha
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => desativar(v.id)}>
+                            Desativar
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={salvando}
+                          onClick={() => ativar(v.promotoria_id, v.email)}
+                        >
+                          Reativar
                         </Button>
                       )}
                     </TableCell>
@@ -448,6 +561,23 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
           </Table>
         </div>
       </CardContent>
+
+      <AlertDialog open={redefinir !== null} onOpenChange={(o) => !o && setRedefinir(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir a senha da Promotoria?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A senha de <strong>{redefinir?.email}</strong> ({redefinir?.promotoria_nome}) volta a
+              ser a senha provisória padrão. A senha atual deixa de valer e a Promotoria deverá
+              criar uma nova senha no próximo acesso, em até {VALIDADE_PROVISORIA_HORAS} horas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarRedefinicao}>Redefinir senha</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

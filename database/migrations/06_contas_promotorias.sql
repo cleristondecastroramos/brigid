@@ -1,5 +1,7 @@
 -- =====================================================================================
 -- Migration: vínculo em lote das contas institucionais das Promotorias
+-- SUBSTITUÍDA por 08_senha_provisoria.sql: as contas agora são criadas pelo CAOCRIM no painel,
+-- com senha provisória. A 08 remove a função abaixo; mantida só para o histórico.
 -- =====================================================================================
 -- Executar depois de 05_fluxo_diagnostico.sql.
 --

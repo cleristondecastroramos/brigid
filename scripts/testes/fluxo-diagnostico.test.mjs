@@ -141,7 +141,9 @@ before(async () => {
     CREATE ROLE anon NOLOGIN;
     CREATE ROLE authenticated NOLOGIN;
     CREATE SCHEMA auth;
-    CREATE TABLE auth.users (id UUID PRIMARY KEY, email TEXT);
+    CREATE TABLE auth.users (id UUID PRIMARY KEY, email TEXT,
+      raw_app_meta_data JSONB NOT NULL DEFAULT '{}', last_sign_in_at TIMESTAMPTZ,
+      encrypted_password TEXT);
     CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS
       $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
     GRANT USAGE ON SCHEMA auth TO anon, authenticated;
@@ -168,6 +170,7 @@ before(async () => {
     "database/migrations/04_rls_admin.sql",
     "database/migrations/05_fluxo_diagnostico.sql",
     "database/migrations/06_contas_promotorias.sql",
+    "database/migrations/08_senha_provisoria.sql",
   ]) {
     await db.exec(sql(f));
   }
@@ -996,7 +999,7 @@ test("perguntas novas: recursos incompletos viram NAO e capacitação antiga pub
   await q("super", "DELETE FROM public.diagnostico_brigid WHERE id = $1", [id]);
 });
 
-test("vínculo em lote liga cada Promotoria à conta do seu e-mail institucional", async () => {
+test("aprovação pelo CAOCRIM: valida a Promotoria e o e-mail e vincula a conta criada", async () => {
   const CONTA_C = "00000000-0000-0000-0000-0000000000c1";
   const [pC, pD] = (
     await q(
@@ -1005,35 +1008,192 @@ test("vínculo em lote liga cada Promotoria à conta do seu e-mail institucional
       [ctx.pA, ctx.pB],
     )
   ).map((r) => r.id);
-  await q("super", "INSERT INTO auth.users (id, email) VALUES ($1, 'pj.c@mppi.mp.br')", [CONTA_C]);
-  await q(
-    "super",
-    "UPDATE public.promotorias_justica SET email_institucional = 'PJ.C@mppi.mp.br' WHERE id = $1",
-    [pC],
-  );
+  const preparar = "SELECT * FROM public.admin_preparar_conta_promotoria($1, $2)";
+
+  await falha(PROMOTOR_A, preparar, [pC, "pj.c@mppi.mp.br"], /restrita ao CAOCRIM/);
+  await falha(ADMIN, preparar, [pC, "sem-arroba"], /E-mail inválido/);
+  await falha(ADMIN, preparar, [pC, "caocrim@mppi.mp.br"], /conta do CAOCRIM/);
   await q(
     "super",
     "UPDATE public.promotorias_justica SET email_institucional = 'pj.d@mppi.mp.br' WHERE id = $1",
     [pD],
   );
+  await falha(ADMIN, preparar, [pC, "PJ.D@mppi.mp.br"], /já é o e-mail institucional/);
+  const [inexistente] = await q(ADMIN, preparar, [pC, " PJ.C@mppi.mp.br "]);
+  assert.deepEqual(
+    inexistente,
+    { user_id: null, manter_senha: false },
+    "sem conta: a função de borda deve criá-la",
+  );
 
+  // A função de borda cria a conta com a senha provisória e a marca em app_metadata
+  await q(
+    "super",
+    `INSERT INTO auth.users (id, email, raw_app_meta_data)
+     VALUES ($1, 'pj.c@mppi.mp.br', '{"provider":"email","senha_provisoria":true}')`,
+    [CONTA_C],
+  );
+  const [existente] = await q(ADMIN, preparar, [pC, "pj.c@mppi.mp.br"]);
+  assert.deepEqual(existente, { user_id: CONTA_C, manter_senha: false });
   await falha(
     PROMOTOR_A,
-    "SELECT * FROM public.admin_vincular_contas_por_email()",
+    "SELECT public.admin_vincular_conta_promotoria($1, $2)",
+    [CONTA_C, pC],
+    /restrita ao CAOCRIM/,
+  );
+  await rpc(ADMIN, "admin_vincular_conta_promotoria", CONTA_C, pC);
+  await rpc(ADMIN, "admin_vincular_conta_promotoria", CONTA_C, pC);
+  const [{ email_institucional }] = await q(
+    "super",
+    "SELECT email_institucional FROM public.promotorias_justica WHERE id = $1",
+    [pC],
+  );
+  assert.equal(email_institucional, "pj.c@mppi.mp.br");
+  const lista = (await q(ADMIN, "SELECT * FROM public.admin_listar_vinculos()")).filter(
+    (v) => v.user_id === CONTA_C,
+  );
+  assert.equal(lista.length, 1, "repetir a aprovação não duplica o vínculo");
+  assert.equal(lista[0].senha_provisoria, true);
+});
+
+test("senha provisória bloqueia os diagnósticos até a troca, e a redefinição bloqueia de novo", async () => {
+  const marcar = (v) =>
+    q(
+      "super",
+      `UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || jsonb_build_object('senha_provisoria', $2::boolean)
+       WHERE id = $1`,
+      [PROMOTOR_A, v],
+    );
+  const criar = "SELECT public.diagnostico_criar($1, $2, '2024', NULL, 'Fulano de Tal', 'titular')";
+
+  await marcar(true);
+  assert.equal(await rpc(PROMOTOR_A, "senha_provisoria_ativa"), true);
+  assert.equal(await rpc(PROMOTOR_A, "usuario_vinculado", ctx.pA), false);
+  assert.deepEqual(await q(PROMOTOR_A, "SELECT * FROM public.meus_vinculos()"), []);
+  await falha(PROMOTOR_A, criar, [ctx.pA, ctx.ibge], /não vinculado/);
+
+  // Troca de senha pela função de borda: a marca sai e o acesso volta
+  await marcar(false);
+  assert.equal(await rpc(PROMOTOR_A, "senha_provisoria_ativa"), false);
+  assert.equal(await rpc(PROMOTOR_A, "usuario_vinculado", ctx.pA), true);
+
+  // Redefinição: só pelo CAOCRIM e só para contas de Promotoria
+  await falha(
+    PROMOTOR_B,
+    "SELECT public.admin_conferir_conta_promotoria($1)",
+    [PROMOTOR_A],
+    /restrita ao CAOCRIM/,
+  );
+  await falha(
+    ADMIN,
+    "SELECT public.admin_conferir_conta_promotoria($1)",
+    [ADMIN],
+    /Contas do CAOCRIM/,
+  );
+  await falha(
+    ADMIN,
+    "SELECT public.admin_conferir_conta_promotoria($1)",
+    [INTRUSO],
+    /não está vinculada/,
+  );
+  assert.equal(
+    await rpc(ADMIN, "admin_conferir_conta_promotoria", PROMOTOR_A),
+    "promotor.a@mppi.mp.br",
+  );
+  await marcar(true);
+  assert.equal(await rpc(PROMOTOR_A, "usuario_vinculado", ctx.pA), false);
+  await marcar(false);
+});
+
+test("aprovação mantém a senha só de conta de Promotoria com senha definitiva", async () => {
+  const preparar = "SELECT * FROM public.admin_preparar_conta_promotoria($1, $2)";
+  const meta = (uid, senha, json) =>
+    q(
+      "super",
+      "UPDATE auth.users SET encrypted_password = $2, raw_app_meta_data = $3::jsonb WHERE id = $1",
+      [uid, senha, json],
+    );
+
+  // Conta de Promotoria com senha definitiva: só vincula
+  await meta(PROMOTOR_A, "hash-definitivo", '{"senha_provisoria":false}');
+  let [r] = await q(ADMIN, preparar, [ctx.pA, "promotor.a@mppi.mp.br"]);
+  assert.deepEqual(r, { user_id: PROMOTOR_A, manter_senha: true });
+
+  // Ainda com a senha provisória, ou sem senha (convite antigo nunca concluído): volta à provisória
+  await meta(PROMOTOR_A, "hash-provisorio", '{"senha_provisoria":true}');
+  [r] = await q(ADMIN, preparar, [ctx.pA, "promotor.a@mppi.mp.br"]);
+  assert.equal(r.manter_senha, false);
+  await meta(PROMOTOR_A, null, "{}");
+  [r] = await q(ADMIN, preparar, [ctx.pA, "promotor.a@mppi.mp.br"]);
+  assert.equal(r.manter_senha, false);
+
+  // Conta com senha, mas que não é de Promotoria (ex.: criada por fora): não mantém a senha
+  await meta(INTRUSO, "hash-qualquer", "{}");
+  [r] = await q(ADMIN, preparar, [ctx.pA, "intruso@mppi.mp.br"]);
+  assert.deepEqual(r, { user_id: INTRUSO, manter_senha: false });
+  await meta(INTRUSO, null, "{}");
+  await meta(PROMOTOR_A, null, "{}");
+});
+
+test("senha provisória bloqueia também a leitura direta das tabelas do diagnóstico", async () => {
+  const contar = async (tabela, filtro) =>
+    Number(
+      (await q(PROMOTOR_A, `SELECT count(*)::int AS n FROM public.${tabela} WHERE ${filtro}`))[0].n,
+    );
+  const filtroDiag = `promotoria_id = '${ctx.pA}'`;
+  const filtroVersoes = `diagnostico_id IN (SELECT id FROM public.diagnostico_brigid WHERE ${filtroDiag})`;
+  const marcar = (v) =>
+    q(
+      "super",
+      "UPDATE auth.users SET raw_app_meta_data = jsonb_build_object('senha_provisoria', $2::boolean) WHERE id = $1",
+      [PROMOTOR_A, v],
+    );
+
+  const diagAntes = await contar("diagnostico_brigid", filtroDiag);
+  const versoesAntes = await contar("diagnostico_versoes", filtroVersoes);
+  assert.ok(diagAntes > 0, "os testes anteriores criaram diagnósticos da Promotoria A");
+  assert.ok(versoesAntes > 0);
+
+  await marcar(true);
+  assert.equal(await contar("diagnostico_brigid", filtroDiag), 0);
+  assert.equal(await contar("diagnostico_anexos", "true"), 0);
+  // Sem a marca, o vínculo volta a liberar a leitura
+  await marcar(false);
+  assert.equal(await contar("diagnostico_brigid", filtroDiag), diagAntes);
+  assert.equal(await contar("diagnostico_versoes", filtroVersoes), versoesAntes);
+});
+
+test("painel do CAOCRIM mostra as datas da senha provisória e da senha definitiva", async () => {
+  await q(
+    "super",
+    `UPDATE auth.users SET raw_app_meta_data = jsonb_build_object(
+       'senha_provisoria', false, 'senha_provisoria_em', null,
+       'senha_definida_em', '2026-10-20T13:45:00.000Z') WHERE id = $1`,
+    [PROMOTOR_A],
+  );
+  await q(
+    "super",
+    `UPDATE auth.users SET raw_app_meta_data = jsonb_build_object(
+       'senha_provisoria', true, 'senha_provisoria_em', 'data-invalida') WHERE id = $1`,
+    [PROMOTOR_B],
+  );
+  const lista = await q(ADMIN, "SELECT * FROM public.admin_listar_vinculos()");
+  const a = lista.find((v) => v.user_id === PROMOTOR_A);
+  const b = lista.find((v) => v.user_id === PROMOTOR_B);
+  assert.equal(new Date(a.senha_definida_em).toISOString(), "2026-10-20T13:45:00.000Z");
+  assert.equal(a.senha_provisoria_em, null);
+  assert.equal(b.senha_provisoria, true);
+  assert.equal(b.senha_provisoria_em, null, "data inválida não quebra a listagem");
+  await falha(
+    PROMOTOR_A,
+    "SELECT * FROM public.admin_listar_vinculos()",
     [],
     /restrita ao CAOCRIM/,
   );
-  const r1 = await q(ADMIN, "SELECT * FROM public.admin_vincular_contas_por_email()");
-  const sit = (rows, id) => rows.find((x) => x.promotoria_id === id)?.situacao;
-  assert.equal(sit(r1, pC), "vinculada");
-  assert.equal(sit(r1, pD), "conta_inexistente", "sem conta criada, nada é vinculado");
-  const r2 = await q(ADMIN, "SELECT * FROM public.admin_vincular_contas_por_email()");
-  assert.equal(sit(r2, pC), "ja_vinculada", "repetir não duplica");
-  const vinc = await q(CONTA_C, "SELECT * FROM public.meus_vinculos()");
-  assert.deepEqual(
-    vinc.map((v) => v.promotoria_id),
-    [pC],
-  );
+  await q("super", "UPDATE auth.users SET raw_app_meta_data = '{}' WHERE id IN ($1, $2)", [
+    PROMOTOR_A,
+    PROMOTOR_B,
+  ]);
 });
 
 test("conta da Promotoria: cada envio registra quem assinou, mesmo após troca de titular", async () => {

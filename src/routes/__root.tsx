@@ -16,9 +16,11 @@ import { toast } from "sonner";
 import logo from "@/assets/logo-mppi.png";
 import { AppProvider, useApp } from "@/context/AppContext";
 import AdminAccessDialog from "@/components/ui/admin-access-dialog";
-import { AcessoDiagnostico } from "@/components/diagnostico/AcessoDiagnostico";
+import {
+  AcessoDiagnostico,
+  TrocaSenhaObrigatoria,
+} from "@/components/diagnostico/AcessoDiagnostico";
 import { RodapeInstitucional } from "@/components/rodape-institucional";
-import { tipoLinkAutenticacao } from "@/lib/supabase";
 
 function NotFoundComponent() {
   return (
@@ -158,22 +160,8 @@ function RootComponent() {
 
 function RootInner() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { userRole, authLoading, isAuthenticated } = useApp();
+  const { userRole, authLoading, isAuthenticated, senhaProvisoria } = useApp();
   const navigate = useNavigate();
-
-  // Quem chega por convite ou "Esqueci minha senha" vai direto definir a senha
-  useEffect(() => {
-    if (
-      !authLoading &&
-      isAuthenticated &&
-      (tipoLinkAutenticacao === "invite" || tipoLinkAutenticacao === "recovery") &&
-      pathname !== "/diagnostico-brigid/redefinir-senha" &&
-      !sessionStorage.getItem("brigid_senhaDefinida")
-    ) {
-      sessionStorage.setItem("brigid_senhaDefinida", "pendente");
-      navigate({ to: "/diagnostico-brigid/redefinir-senha" });
-    }
-  }, [authLoading, isAuthenticated, pathname, navigate]);
 
   useEffect(() => {
     // Aguarda a restauração da sessão para não expulsar um admin já autenticado ao recarregar
@@ -199,6 +187,8 @@ function RootInner() {
                   <div className="py-16 text-center text-sm text-muted-foreground">
                     Verificando acesso…
                   </div>
+                ) : isAuthenticated && senhaProvisoria ? (
+                  <TrocaSenhaObrigatoria />
                 ) : isAuthenticated ? (
                   <Outlet />
                 ) : (

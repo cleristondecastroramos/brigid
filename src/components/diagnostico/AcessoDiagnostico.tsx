@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Lock, ShieldCheck, User } from "lucide-react";
+import { ArrowLeft, KeyRound, Lock, LogOut, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/lib/supabase";
 
 // Acesso ao módulo de coleta: somente contas criadas pelo CAOCRIM e vinculadas a uma
 // Promotoria (ou o próprio CAOCRIM). O vínculo é conferido no banco a cada ação.
@@ -34,25 +33,6 @@ export function AcessoDiagnostico() {
     toast.success("Acesso ao módulo de diagnóstico autorizado.");
   };
 
-  // O link chega à caixa institucional da Promotoria: o novo titular redefine a senha sozinho
-  const esqueciSenha = async () => {
-    setErro("");
-    if (!email) {
-      setErro("Informe o e-mail institucional da Promotoria para receber o link.");
-      return;
-    }
-    setEnviando(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-      redirectTo: `${window.location.origin}/diagnostico-brigid/redefinir-senha`,
-    });
-    setEnviando(false);
-    if (error) {
-      setErro("Não foi possível enviar o link agora. Tente novamente em alguns minutos.");
-      return;
-    }
-    toast.success("Se o e-mail estiver cadastrado, o link para definir a senha foi enviado.");
-  };
-
   return (
     <div className="mx-auto max-w-md space-y-6 py-8">
       <Button variant="outline" size="sm" asChild>
@@ -68,8 +48,9 @@ export function AcessoDiagnostico() {
           </div>
           <CardTitle>Diagnóstico BRIGID</CardTitle>
           <CardDescription>
-            Acesso pela conta institucional da Promotoria de Justiça, cadastrada pelo CAOCRIM. Em
-            caso de mudança de titular, use "Esqueci minha senha" para definir uma nova senha.
+            Acesso pela conta institucional da Promotoria de Justiça, cadastrada pelo CAOCRIM. No
+            primeiro acesso, use a senha provisória informada pelo CAOCRIM; o sistema pedirá uma
+            senha definitiva antes de liberar o formulário.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -107,18 +88,111 @@ export function AcessoDiagnostico() {
             <Button type="submit" className="w-full" disabled={enviando}>
               {enviando ? "Verificando..." : "Entrar"}
             </Button>
-            <button
-              type="button"
-              onClick={esqueciSenha}
-              disabled={enviando}
-              className="w-full text-center text-sm text-primary hover:underline"
-            >
-              Esqueci minha senha
-            </button>
+            <p className="text-xs text-muted-foreground">
+              Esqueceu a senha ou houve mudança de titular? Solicite ao CAOCRIM a redefinição: a
+              senha volta a ser a provisória e deverá ser trocada no próximo acesso.
+            </p>
             <p className="text-xs text-muted-foreground">
               As respostas registradas aqui não são publicadas automaticamente: somente diagnósticos
               completos e validados pelo CAOCRIM passam a integrar o painel público.
             </p>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Exibida no lugar do módulo enquanto a conta usa a senha provisória padrão (primeiro acesso
+// ou após redefinição pelo CAOCRIM). O banco também bloqueia os diagnósticos nesse estado.
+export function TrocaSenhaObrigatoria() {
+  const { userEmail, trocarSenhaProvisoria, logout } = useApp();
+  const [senha, setSenha] = useState("");
+  const [confirmacao, setConfirmacao] = useState("");
+  const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  const salvar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro("");
+    if (senha.length < 10) {
+      setErro("A nova senha deve ter pelo menos 10 caracteres.");
+      return;
+    }
+    if (senha !== confirmacao) {
+      setErro("As senhas não conferem.");
+      return;
+    }
+    setSalvando(true);
+    const { error } = await trocarSenhaProvisoria(senha);
+    setSalvando(false);
+    if (error) {
+      setErro(error);
+      return;
+    }
+    toast.success("Senha alterada. Use a nova senha nos próximos acessos.");
+  };
+
+  return (
+    <div className="mx-auto max-w-md py-8">
+      <Card>
+        <CardHeader>
+          <div className="mb-1 w-fit text-muted-foreground">
+            <KeyRound className="h-6 w-6" />
+          </div>
+          <CardTitle>Troca de senha obrigatória</CardTitle>
+          <CardDescription>
+            A conta <span className="font-medium text-foreground">{userEmail}</span> está usando a
+            senha provisória. Defina uma senha definitiva para liberar o acesso ao Diagnóstico
+            BRIGID.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={salvar} className="space-y-4">
+            {erro && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                {erro}
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <label htmlFor="nova_senha" className="text-sm font-medium">
+                Nova senha
+              </label>
+              <Input
+                id="nova_senha"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Mínimo de 10 caracteres"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="confirma_senha" className="text-sm font-medium">
+                Confirme a nova senha
+              </label>
+              <Input
+                id="confirma_senha"
+                type="password"
+                autoComplete="new-password"
+                value={confirmacao}
+                onChange={(e) => setConfirmacao(e.target.value)}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar nova senha"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              A senha é da conta institucional da Promotoria. Guarde-a em local seguro; em caso de
+              esquecimento, o CAOCRIM pode redefini-la para a senha provisória.
+            </p>
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Sair
+            </button>
           </form>
         </CardContent>
       </Card>

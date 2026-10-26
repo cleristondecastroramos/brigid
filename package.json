@@ -10,9 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:diagnostico": "node --test scripts/testes/fluxo-diagnostico.test.mjs",
-    "gerar:regras": "node scripts/diagnostico/gerar-regras-diagnostico.mjs",
-    "contas:modelo": "node scripts/diagnostico/convidar-contas-promotorias.mjs --modelo contas-promotorias.csv"
+    "test:diagnostico": "node --test scripts/testes/fluxo-diagnostico.test.mjs scripts/testes/contas-promotorias.test.mjs",
+    "gerar:regras": "node scripts/diagnostico/gerar-regras-diagnostico.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

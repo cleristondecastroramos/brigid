@@ -10,13 +10,17 @@ Execute no SQL Editor do Supabase, nesta ordem:
 2. `database/migrations/03_diagnostico.sql`
 3. `database/migrations/04_rls_admin.sql`
 4. `database/migrations/05_fluxo_diagnostico.sql`
-5. `database/migrations/06_contas_promotorias.sql` (vínculo em lote das contas)
+5. `database/migrations/06_contas_promotorias.sql`
+6. `database/migrations/08_senha_provisoria.sql` (cadastro das contas com senha provisória)
 
 A ordem completa, incluindo a carga inicial da base municipal, está em [`database/README.md`](../database/README.md).
 
+Publique também a função de borda **`contas-promotorias`** (`supabase/functions/contas-promotorias/index.ts`). É ela que cria as contas e altera senhas, com a chave de serviço que existe só no servidor. No Lovable Cloud, as funções da pasta `supabase/functions` são publicadas pelo próprio Lovable; se a função não aparecer em **More → Edge Functions**, peça no chat do Lovable para publicá-la. No Supabase próprio: `supabase functions deploy contas-promotorias`.
+
 Depois, no **Lovable Cloud** (no Supabase próprio, os mesmos itens ficam em Authentication):
 
-- **More → Users → Settings:** ative "Disable sign-up". Em **Advanced**, defina a **Site URL** como `https://brigid-mppi.vercel.app` e inclua `https://brigid-mppi.vercel.app/diagnostico-brigid/redefinir-senha` em **Redirect URLs**. Se o Lovable não aceitar alterar esses campos, peça no chat do Lovable para configurá-los. O app leva quem chega por convite ou recuperação para "definir senha" mesmo que o link caia na página inicial, mas a Site URL precisa apontar para o site da Vercel (se apontar para `localhost` ou para o domínio do Lovable, o link não chega ao BRIGID).
+- **More → Users → Settings:** ative "Disable sign-up". As contas são criadas só pelo CAOCRIM, e o sistema não envia e-mails de convite nem de recuperação de senha. Isso é obrigatório: com o cadastro aberto, um estranho poderia criar antes uma conta com o e-mail de uma Promotoria.
+- **Política de senhas** (Authentication → Policies/Password): confirme que aceita a senha provisória padrão (12 caracteres, letras minúsculas e um dígito). Se a política exigir maiúsculas ou símbolos, a aprovação falha com uma mensagem que aponta para essa configuração.
 - **More → Users → Add user → Create new user:** crie a conta do CAOCRIM e marque-a como administradora com o SQL `INSERT INTO public.admin_users (user_id) SELECT id FROM auth.users WHERE email = 'caocrim@mppi.mp.br';`
 - Contas das Promotorias: veja a seção abaixo.
 
@@ -24,38 +28,25 @@ Depois, no **Lovable Cloud** (no Supabase próprio, os mesmos itens ficam em Aut
 
 - Cada Promotoria acessa com a conta do seu e-mail institucional (`promotorias_justica.email_institucional`). Os diagnósticos pertencem à Promotoria, não à pessoa.
 - Quem preenche informa nome e condição (titular, substituto(a), em respondência) ao criar o diagnóstico e declara esses dados a cada envio. A declaração fica gravada na versão enviada (`enviado_por_nome`, `enviado_por_condicao`) e nunca é publicada.
-- **Troca de titular:** nada muda no sistema. O novo titular usa "Esqueci minha senha" na tela de acesso; o link chega ao e-mail institucional e leva a `/diagnostico-brigid/redefinir-senha`. Recomenda-se trocar a senha a cada mudança de titular.
-### Cadastro das contas no Lovable Cloud (sem chave de serviço)
 
-Os comandos rodam num terminal aberto na pasta `brigid` do projeto (a que tem o `package.json`), depois de `npm install`.
+### Cadastro e senha (tudo pela tela Administração)
 
-1. **Gerar a planilha** com as 162 Promotorias. Usa as credenciais públicas do `.env`:
+1. **Aprovar o cadastro:** em **Diagnóstico BRIGID → Administração → Contas das Promotorias**, escolha a Promotoria, informe o e-mail institucional e clique em **"Aprovar e ativar cadastro"**. A conta é criada com a senha provisória padrão **`feminicidio0`**, a mesma para todas as Promotorias, e já fica vinculada à Promotoria. O painel confirma que o cadastro está ativo e mostra o e-mail e a senha provisória para repassar à Promotoria (a senha fica só no servidor e não está no código do navegador). Se já existir uma conta de Promotoria com esse e-mail e senha definitiva, ela é só vinculada e a senha é mantida; outra conta existente com esse e-mail é reaproveitada e volta à senha provisória.
+2. **Primeiro acesso:** a Promotoria entra com o e-mail cadastrado e a senha `feminicidio0`.
+3. **Troca obrigatória:** enquanto a senha provisória estiver em uso, o sistema mostra apenas a tela "Troca de senha obrigatória". A nova senha precisa ter pelo menos 10 caracteres e não pode ser `feminicidio0`. Até a troca, o banco também recusa qualquer leitura, criação ou envio de diagnóstico pela conta. A troca vale por **72 horas** a partir da aprovação ou redefinição; depois disso, o CAOCRIM precisa redefinir a senha de novo.
+4. **Esquecimento de senha ou troca de titular:** o CAOCRIM clica em **"Redefinir senha"** na linha da conta. A senha volta a ser `feminicidio0` e a troca é exigida de novo no próximo acesso.
 
-   ```bash
-   node scripts/diagnostico/convidar-contas-promotorias.mjs --modelo contas.csv
-   ```
+A coluna **Situação** mostra "Aguardando troca de senha" enquanto a conta usa a senha provisória e "Senha provisória expirada" após as 72 horas. **Senha definida em** mostra quando a senha atual foi criada: peça à Promotoria que confira essa data, para ter certeza de que foi ela quem a definiu. "Último acesso" ajuda a identificar contas nunca usadas. "Desativar" retira o vínculo sem apagar a conta; "Reativar" vincula de novo, mantendo a senha definitiva.
 
-   Abra `contas.csv` no Excel (separador `;`), preencha a coluna `email` e salve como CSV. Linhas sem e-mail são ignoradas.
-2. **Gerar o SQL dos e-mails** e executá-lo no banco, do mesmo jeito que as migrations:
+Como a senha provisória é a mesma para todas as contas e os e-mails institucionais são conhecidos, aprove ou redefina uma conta só quando a Promotoria estiver pronta para entrar.
 
-   ```bash
-   node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
-   ```
+Como funciona por dentro:
 
-   O script recusa e-mails inválidos ou repetidos. Por padrão não troca um e-mail já cadastrado; use `--substituir-email` para trocar. Também é possível preencher os e-mails um a um na tabela da tela Administração.
-3. **Convidar cada e-mail** em More → Users → Add user → Send invitation. O convite chega à caixa da Promotoria; o link abre o BRIGID na tela "Definir senha da Promotoria".
-4. **Vincular:** na tela Administração do BRIGID, clique em "Vincular contas pelo e-mail institucional". As Promotorias cujo e-mail já tem conta passam a acessar o formulário; as demais aparecem na lista de pendentes. Repita depois de novos convites.
-
-### Com Supabase próprio (com chave de serviço)
-
-O mesmo script convida e vincula de uma vez. A chave fica só no ambiente, nunca em arquivos do projeto.
-
-```bash
-node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv --simular
-node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv
-```
-
-Variáveis: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `BRIGID_URL` (padrão `https://brigid-mppi.vercel.app`).
+- A marca `senha_provisoria` fica em `app_metadata` da conta, que só a chave de serviço altera: a Promotoria não consegue retirá-la sem trocar a senha pela função de borda.
+- `senha_provisoria_ativa()`, `usuario_vinculado()` e `meus_vinculos()` (migration 08) leem a marca direto de `auth.users`, então o bloqueio vale logo após uma redefinição, mesmo para uma sessão já aberta.
+- A função de borda confere o CAOCRIM e os dados com `admin_preparar_conta_promotoria`, `admin_vincular_conta_promotoria` e `admin_conferir_conta_promotoria`. Contas do CAOCRIM nunca são criadas nem redefinidas por essa tela.
+- A troca de senha pela função de borda só é aceita para a conta que está com a marca provisória e dentro das 72 horas (`senha_provisoria_em`); qualquer outra conta recebe recusa. Ao trocar, a função grava `senha_definida_em`.
+- As regras das ações ficam em `supabase/functions/contas-promotorias/acoes.ts`, testadas por `scripts/testes/contas-promotorias.test.mjs`.
 
 Se o dicionário (`src/lib/dicionario-diagnostico.ts`) mudar, rode `npm run gerar:regras` e reaplique a migration. Os testes conferem que a completude calculada no navegador e no banco é a mesma: `npm run test:diagnostico`.
 
