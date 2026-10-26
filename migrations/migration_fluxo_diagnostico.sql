@@ -50,6 +50,10 @@ ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS tem_protocolo_pericial VA
 ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS capacitado_perspectiva_genero VARCHAR(10);
 ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS grau_aderencia_protocolo VARCHAR(20);
 ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS gargalos_identificados TEXT;
+ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS tem_recursos_minimos TEXT;
+ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS grau_suficiencia_estrutura TEXT;
+ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS qtd_capacitacoes_realizadas INT;
+ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS data_ultima_capacitacao VARCHAR(10);
 
 -- Eventos publicados pelo diagnóstico ficam rastreáveis até a publicação de origem
 DO $$
@@ -61,18 +65,28 @@ END;
 $$;
 
 -- -------------------------------------------------------------------------------------
--- 2. Vínculo usuário ↔ Promotoria (quem pode responder em nome de qual unidade)
+-- 2. Conta da Promotoria ↔ Promotoria (quem pode responder em nome de qual unidade)
 -- -------------------------------------------------------------------------------------
+-- O acesso é pelo e-mail institucional da Promotoria, não pelo e-mail pessoal do titular:
+-- a troca de titular não exige transferir diagnósticos. Quem preenche se identifica no
+-- próprio diagnóstico e declara nome e condição a cada envio.
+ALTER TABLE public.promotorias_justica ADD COLUMN IF NOT EXISTS email_institucional TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_promotoria_email_institucional
+  ON public.promotorias_justica (lower(email_institucional))
+  WHERE email_institucional IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS public.usuarios_promotoria (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     promotoria_id TEXT NOT NULL REFERENCES public.promotorias_justica(id) ON DELETE CASCADE,
-    nome_responsavel TEXT NOT NULL,
+    -- Descrição opcional da conta (ex.: "Conta institucional"); não identifica o responsável
+    nome_responsavel TEXT,
     ativo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by UUID REFERENCES auth.users(id),
     UNIQUE (user_id, promotoria_id)
 );
+ALTER TABLE public.usuarios_promotoria ALTER COLUMN nome_responsavel DROP NOT NULL;
 
 CREATE OR REPLACE FUNCTION public.usuario_vinculado(p_promotoria_id TEXT)
 RETURNS BOOLEAN
@@ -99,6 +113,7 @@ ALTER TABLE public.diagnostico_brigid
   ADD COLUMN IF NOT EXISTS periodo_referencia TEXT,
   ADD COLUMN IF NOT EXISTS responsavel_id UUID REFERENCES auth.users(id),
   ADD COLUMN IF NOT EXISTS responsavel_nome TEXT,
+  ADD COLUMN IF NOT EXISTS responsavel_condicao TEXT,
   ADD COLUMN IF NOT EXISTS versao_atual INT NOT NULL DEFAULT 1,
   ADD COLUMN IF NOT EXISTS versao_publicada INT,
   ADD COLUMN IF NOT EXISTS percentual_preenchimento INT NOT NULL DEFAULT 0,
@@ -115,6 +130,10 @@ ALTER TABLE public.diagnostico_brigid ADD CONSTRAINT diagnostico_brigid_status_c
   'em_preenchimento', 'enviado', 'em_analise', 'devolvido', 'validado', 'publicado', 'substituido'
 ));
 ALTER TABLE public.diagnostico_brigid ALTER COLUMN status SET DEFAULT 'em_preenchimento';
+
+ALTER TABLE public.diagnostico_brigid DROP CONSTRAINT IF EXISTS diagnostico_brigid_condicao_chk;
+ALTER TABLE public.diagnostico_brigid ADD CONSTRAINT diagnostico_brigid_condicao_chk
+  CHECK (responsavel_condicao IS NULL OR responsavel_condicao IN ('titular', 'substituto', 'respondendo'));
 
 DO $$
 BEGIN
@@ -149,6 +168,9 @@ CREATE TABLE IF NOT EXISTS public.diagnostico_versoes (
     atualizado_por UUID,
     enviado_em TIMESTAMPTZ,
     enviado_por UUID,
+    -- Declaração de quem assinou o envio (a conta da Promotoria é compartilhada)
+    enviado_por_nome TEXT,
+    enviado_por_condicao TEXT,
     analise_iniciada_em TIMESTAMPTZ,
     analise_por UUID,
     devolvido_em TIMESTAMPTZ,
@@ -267,52 +289,56 @@ VALUES
   ('FLX_PROTOCOLO', 'fluxos', 'select', true, NULL, NULL, NULL, 'Existe protocolo local ou regional de atendimento?', 28),
   ('FLX_PROTOCOLO_DETALHES', 'fluxos', 'textarea', false, 'FLX_PROTOCOLO', ARRAY['vigente', 'desatualizado']::text[], NULL, 'O protocolo define responsabilidades, prazos, riscos, e abrange tentativa/consumação?', 29),
   ('FLX_SALA', 'fluxos', 'select', true, NULL, NULL, NULL, 'Existe sala ou ambiente especializado para atendimento?', 30),
-  ('FLX_RECURSOS', 'fluxos', 'textarea', true, NULL, NULL, NULL, 'A rede municipal dispõe dos recursos mínimos necessários?', 31),
-  ('FLX_PSICO', 'fluxos', 'select', true, NULL, NULL, NULL, 'Existe atendimento psicossocial especializado?', 32),
-  ('FLX_PSICO_DETALHES', 'fluxos', 'textarea', false, 'FLX_PSICO', ARRAY['regular', 'eventual', 'encaminhamento']::text[], NULL, 'Detalhes do atendimento psicossocial (órgão, profissionais, acesso, etc)', 33),
-  ('FLX_FONTE', 'fluxos', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 34),
-  ('FLX_CONFIABILIDADE', 'fluxos', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 35),
-  ('FLX_DATA_REF', 'fluxos', 'text', true, NULL, NULL, NULL, 'Data de referência', 36),
-  ('FLX_OBSERVACOES', 'fluxos', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 37),
-  ('SOC_PROTOCOLO', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Existe protocolo específico da assistência social para atendimento?', 38),
-  ('SOC_FLUXO', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Há fluxo formal de encaminhamento entre Promotoria, CREAS, CRAS, etc?', 39),
-  ('SOC_FLUXO_DETALHES', 'socioassistencial', 'textarea', false, 'SOC_FLUXO', ARRAY['integrado', 'parcialmente', 'informal']::text[], NULL, 'Detalhes (órgão de entrada, referência, prazos, etc)', 40),
-  ('SOC_ARTIC_CREAS', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Como ocorre a articulação com o CREAS?', 41),
-  ('SOC_EQUIPE', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'O CREAS possui equipe mínima suficiente para atendimento?', 42),
-  ('SOC_EQUIPE_DETALHES', 'socioassistencial', 'textarea', false, 'SOC_EQUIPE', ARRAY['sim', 'parcialmente', 'nao']::text[], NULL, 'Detalhes da equipe (número de assistentes sociais, psicólogos, etc)', 43),
-  ('SOC_CAPACITA_QTD', 'socioassistencial', 'number', false, NULL, NULL, NULL, 'Quantos profissionais da rede foram capacitados em violência de gênero?', 44),
-  ('SOC_CAPACITA_DETALHES', 'socioassistencial', 'textarea', false, NULL, NULL, NULL, 'Detalhes da capacitação (temas, instituição, última data)', 45),
-  ('SOC_FONTE', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 46),
-  ('SOC_CONFIABILIDADE', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 47),
-  ('SOC_DATA_REF', 'socioassistencial', 'text', true, NULL, NULL, NULL, 'Data de referência', 48),
-  ('SOC_OBSERVACOES', 'socioassistencial', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 49),
-  ('SEG_PROTO_INV', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Existe protocolo de investigação para crimes de violência de gênero e feminicídio?', 50),
-  ('SEG_PROTO_INV_DETALHES', 'penal_seguranca', 'textarea', false, 'SEG_PROTO_INV', ARRAY['sim_aplicado', 'sim_parcial', 'nao_aplicado']::text[], NULL, 'Detalhes do protocolo de investigação', 51),
-  ('SEG_PROTO_PER', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Existe protocolo ou procedimento operacional para realização das perícias?', 52),
-  ('SEG_PROTO_PER_DETALHES', 'penal_seguranca', 'textarea', false, 'SEG_PROTO_PER', ARRAY['sim_aplicado', 'sim_parcial', 'nao_aplicado']::text[], NULL, 'Detalhes da perícia (preservação do local, prazo, exames, etc)', 53),
-  ('SEG_CAPACITA', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'As equipes de investigação e atendimento receberam capacitação em perspectiva de gênero?', 54),
-  ('SEG_ADERENCIA', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Como a unidade avalia a aderência dos procedimentos locais aos protocolos técnicos?', 55),
-  ('SEG_ADERENCIA_JUST', 'penal_seguranca', 'textarea', false, NULL, NULL, NULL, 'Justificativa / Procedimento exemplificativo', 56),
-  ('SEG_FONTE', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 57),
-  ('SEG_CONFIABILIDADE', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 58),
-  ('SEG_DATA_REF', 'penal_seguranca', 'text', true, NULL, NULL, NULL, 'Data de referência', 59),
-  ('SEG_OBSERVACOES', 'penal_seguranca', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 60),
-  ('VIO_ANO', 'penal_violencia', 'select', true, NULL, NULL, NULL, 'Ano de Referência', 61),
-  ('VIO_PERIODO', 'penal_violencia', 'text', false, NULL, NULL, NULL, 'Período de referência (Ex: Jan-Jun)', 62),
-  ('VIO_TENTADOS', 'penal_violencia', 'number', true, NULL, NULL, NULL, 'Quantidade de feminicídios tentados', 63),
-  ('VIO_TENTADOS_DETALHES', 'penal_violencia', 'textarea', false, 'VIO_TENTADOS', NULL, 0, 'Detalhes (vítimas, inquéritos, processos, prisões, autoria, andamento)', 64),
-  ('VIO_CONSUMADOS', 'penal_violencia', 'number', true, NULL, NULL, NULL, 'Quantidade de feminicídios consumados', 65),
-  ('VIO_CONSUMADOS_DETALHES', 'penal_violencia', 'textarea', false, 'VIO_CONSUMADOS', NULL, 0, 'Detalhes (vítimas, histórico de violência, medidas protetivas, situação do inquérito)', 66),
-  ('VIO_FONTE', 'penal_violencia', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 67),
-  ('VIO_CONFIABILIDADE', 'penal_violencia', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 68),
-  ('VIO_DATA_REF', 'penal_violencia', 'text', true, NULL, NULL, NULL, 'Data de referência', 69),
-  ('VIO_OBSERVACOES', 'penal_violencia', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 70),
-  ('GAR_LISTA', 'gargalos', 'checkbox_group', true, NULL, NULL, NULL, 'Selecione os principais gargalos identificados', 71),
-  ('GAR_DETALHES', 'gargalos', 'textarea', true, NULL, NULL, NULL, 'Descreva os gargalos selecionados (impacto, frequência, órgão responsável, solução sugerida)', 72),
-  ('GAR_FONTE', 'gargalos', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 73),
-  ('GAR_CONFIABILIDADE', 'gargalos', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 74),
-  ('GAR_DATA_REF', 'gargalos', 'text', true, NULL, NULL, NULL, 'Data de referência', 75),
-  ('GAR_OBSERVACOES', 'gargalos', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 76);
+  ('FLX_RECURSOS_ITENS', 'fluxos', 'checkbox_group', true, NULL, NULL, NULL, 'Quais recursos mínimos a rede municipal dispõe para o atendimento?', 31),
+  ('FLX_RECURSOS', 'fluxos', 'textarea', false, NULL, NULL, NULL, 'Detalhes sobre os recursos disponíveis e as carências observadas', 32),
+  ('FLX_SUFICIENCIA', 'fluxos', 'select', true, NULL, NULL, NULL, 'Como avalia a suficiência da estrutura da rede para atender a demanda do município?', 33),
+  ('FLX_PSICO', 'fluxos', 'select', true, NULL, NULL, NULL, 'Existe atendimento psicossocial especializado?', 34),
+  ('FLX_PSICO_DETALHES', 'fluxos', 'textarea', false, 'FLX_PSICO', ARRAY['regular', 'eventual', 'encaminhamento']::text[], NULL, 'Detalhes do atendimento psicossocial (órgão, profissionais, acesso, etc)', 35),
+  ('FLX_FONTE', 'fluxos', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 36),
+  ('FLX_CONFIABILIDADE', 'fluxos', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 37),
+  ('FLX_DATA_REF', 'fluxos', 'text', true, NULL, NULL, NULL, 'Data de referência', 38),
+  ('FLX_OBSERVACOES', 'fluxos', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 39),
+  ('SOC_PROTOCOLO', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Existe protocolo específico da assistência social para atendimento?', 40),
+  ('SOC_FLUXO', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Há fluxo formal de encaminhamento entre Promotoria, CREAS, CRAS, etc?', 41),
+  ('SOC_FLUXO_DETALHES', 'socioassistencial', 'textarea', false, 'SOC_FLUXO', ARRAY['integrado', 'parcialmente', 'informal']::text[], NULL, 'Detalhes (órgão de entrada, referência, prazos, etc)', 42),
+  ('SOC_ARTIC_CREAS', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Como ocorre a articulação com o CREAS?', 43),
+  ('SOC_EQUIPE', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'O CREAS possui equipe mínima suficiente para atendimento?', 44),
+  ('SOC_EQUIPE_DETALHES', 'socioassistencial', 'textarea', false, 'SOC_EQUIPE', ARRAY['sim', 'parcialmente', 'nao']::text[], NULL, 'Detalhes da equipe (número de assistentes sociais, psicólogos, etc)', 45),
+  ('SOC_CAPACITA_QTD', 'socioassistencial', 'number', false, NULL, NULL, NULL, 'Quantos profissionais da rede foram capacitados em violência de gênero?', 46),
+  ('SOC_CAPACITA_DETALHES', 'socioassistencial', 'textarea', false, NULL, NULL, NULL, 'Detalhes da capacitação (temas, instituição)', 47),
+  ('SOC_CAPACITA_DATA', 'socioassistencial', 'date', false, NULL, NULL, NULL, 'Data da última capacitação da rede em violência de gênero', 48),
+  ('SOC_FONTE', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 49),
+  ('SOC_CONFIABILIDADE', 'socioassistencial', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 50),
+  ('SOC_DATA_REF', 'socioassistencial', 'text', true, NULL, NULL, NULL, 'Data de referência', 51),
+  ('SOC_OBSERVACOES', 'socioassistencial', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 52),
+  ('SEG_PROTO_INV', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Existe protocolo de investigação para crimes de violência de gênero e feminicídio?', 53),
+  ('SEG_PROTO_INV_DETALHES', 'penal_seguranca', 'textarea', false, 'SEG_PROTO_INV', ARRAY['sim_aplicado', 'sim_parcial', 'nao_aplicado']::text[], NULL, 'Detalhes do protocolo de investigação', 54),
+  ('SEG_PROTO_PER', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Existe protocolo ou procedimento operacional para realização das perícias?', 55),
+  ('SEG_PROTO_PER_DETALHES', 'penal_seguranca', 'textarea', false, 'SEG_PROTO_PER', ARRAY['sim_aplicado', 'sim_parcial', 'nao_aplicado']::text[], NULL, 'Detalhes da perícia (preservação do local, prazo, exames, etc)', 56),
+  ('SEG_CAPACITA', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'As equipes de investigação e atendimento receberam capacitação em perspectiva de gênero?', 57),
+  ('SEG_CAPACITA_QTD', 'penal_seguranca', 'number', true, 'SEG_CAPACITA', ARRAY['sim_recent', 'eventual']::text[], NULL, 'Quantas ações de capacitação as equipes de investigação e atendimento receberam nos últimos 12 meses?', 58),
+  ('SEG_ADERENCIA', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Como a unidade avalia a aderência dos procedimentos locais aos protocolos técnicos?', 59),
+  ('SEG_ADERENCIA_JUST', 'penal_seguranca', 'textarea', false, NULL, NULL, NULL, 'Justificativa / Procedimento exemplificativo', 60),
+  ('SEG_FONTE', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 61),
+  ('SEG_CONFIABILIDADE', 'penal_seguranca', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 62),
+  ('SEG_DATA_REF', 'penal_seguranca', 'text', true, NULL, NULL, NULL, 'Data de referência', 63),
+  ('SEG_OBSERVACOES', 'penal_seguranca', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 64),
+  ('VIO_ANO', 'penal_violencia', 'select', true, NULL, NULL, NULL, 'Ano de Referência', 65),
+  ('VIO_PERIODO', 'penal_violencia', 'text', false, NULL, NULL, NULL, 'Período de referência (Ex: Jan-Jun)', 66),
+  ('VIO_TENTADOS', 'penal_violencia', 'number', true, NULL, NULL, NULL, 'Quantidade de feminicídios tentados', 67),
+  ('VIO_TENTADOS_DETALHES', 'penal_violencia', 'textarea', false, 'VIO_TENTADOS', NULL, 0, 'Detalhes (vítimas, inquéritos, processos, prisões, autoria, andamento)', 68),
+  ('VIO_CONSUMADOS', 'penal_violencia', 'number', true, NULL, NULL, NULL, 'Quantidade de feminicídios consumados', 69),
+  ('VIO_CONSUMADOS_DETALHES', 'penal_violencia', 'textarea', false, 'VIO_CONSUMADOS', NULL, 0, 'Detalhes (vítimas, histórico de violência, medidas protetivas, situação do inquérito)', 70),
+  ('VIO_FONTE', 'penal_violencia', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 71),
+  ('VIO_CONFIABILIDADE', 'penal_violencia', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 72),
+  ('VIO_DATA_REF', 'penal_violencia', 'text', true, NULL, NULL, NULL, 'Data de referência', 73),
+  ('VIO_OBSERVACOES', 'penal_violencia', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 74),
+  ('GAR_LISTA', 'gargalos', 'checkbox_group', true, NULL, NULL, NULL, 'Selecione os principais gargalos identificados', 75),
+  ('GAR_DETALHES', 'gargalos', 'textarea', true, NULL, NULL, NULL, 'Descreva os gargalos selecionados (impacto, frequência, órgão responsável, solução sugerida)', 76),
+  ('GAR_FONTE', 'gargalos', 'select', true, NULL, NULL, NULL, 'Fonte da informação', 77),
+  ('GAR_CONFIABILIDADE', 'gargalos', 'select', true, NULL, NULL, NULL, 'Grau de confiabilidade', 78),
+  ('GAR_DATA_REF', 'gargalos', 'text', true, NULL, NULL, NULL, 'Data de referência', 79),
+  ('GAR_OBSERVACOES', 'gargalos', 'textarea', false, NULL, NULL, NULL, 'Observações do bloco e indicação de Anexos', 80);
 -- <<< REGRAS GERADAS <<<
 
 -- -------------------------------------------------------------------------------------
@@ -320,15 +346,18 @@ VALUES
 -- -------------------------------------------------------------------------------------
 -- tipo_destino:
 --   texto         valor convertido pela regra (origem → destino); chave com valor null = não altera
---   inteiro       quantidade inteira copiada
+--   inteiro       quantidade inteira copiada; regra {"zero_se": {"campo", "valores"}} publica 0
+--                 quando a pergunta-mãe indica que não houve ocorrência (a quantidade fica oculta)
 --   lista_rotulos lista de opções convertida nos rótulos, separados por "; "
+--   todos_itens   SIM somente quando todas as opções de regra.exigidos foram marcadas; senão NAO
+--   data          data AAAA-MM-DD copiada
 --   fonte         texto de procedência gerado na publicação
 --   evento        quantidade gravada em eventos_feminicidio (fora do score: considera_no_score = false)
 -- "Não soube informar" nunca altera o valor publicado. Respostas sem regra são ignoradas.
 CREATE TABLE IF NOT EXISTS public.diagnostico_mapeamento_publicacao (
     codigo TEXT NOT NULL,
     campo_destino TEXT NOT NULL,
-    tipo_destino TEXT NOT NULL CHECK (tipo_destino IN ('texto', 'inteiro', 'lista_rotulos', 'fonte', 'evento')),
+    tipo_destino TEXT NOT NULL,
     regra JSONB,
     afeta_score BOOLEAN NOT NULL DEFAULT false,
     painel TEXT NOT NULL,
@@ -336,6 +365,10 @@ CREATE TABLE IF NOT EXISTS public.diagnostico_mapeamento_publicacao (
     ordem INT NOT NULL,
     PRIMARY KEY (codigo, campo_destino)
 );
+ALTER TABLE public.diagnostico_mapeamento_publicacao DROP CONSTRAINT IF EXISTS diagnostico_mapeamento_publicacao_tipo_destino_check;
+ALTER TABLE public.diagnostico_mapeamento_publicacao DROP CONSTRAINT IF EXISTS diagnostico_mapeamento_tipo_chk;
+ALTER TABLE public.diagnostico_mapeamento_publicacao ADD CONSTRAINT diagnostico_mapeamento_tipo_chk
+  CHECK (tipo_destino IN ('texto', 'inteiro', 'lista_rotulos', 'todos_itens', 'data', 'fonte', 'evento'));
 
 DELETE FROM public.diagnostico_mapeamento_publicacao;
 INSERT INTO public.diagnostico_mapeamento_publicacao
@@ -406,7 +439,21 @@ VALUES
    'Quantidade gravada em eventos_feminicidio com origem DIAGNOSTICO_MP e considera_no_score = false', 21),
   ('VIO_TENTADOS', 'feminicidios_tentados_informados', 'evento', '{"tipo_evento":"TENTADO"}',
    false, 'Ficha municipal (informado pela Promotoria, fora do score)',
-   'Quantidade gravada em eventos_feminicidio com origem DIAGNOSTICO_MP e considera_no_score = false', 22);
+   'Quantidade gravada em eventos_feminicidio com origem DIAGNOSTICO_MP e considera_no_score = false', 22),
+  ('FLX_RECURSOS_ITENS', 'tem_recursos_minimos', 'todos_itens',
+   '{"exigidos":["equipe","espaco","transporte","psicologo","juridico","acolhimento"]}',
+   false, 'Diagnóstico da Rede (IER), Relatórios',
+   'SIM somente quando todos os seis recursos foram marcados; caso contrário NAO', 23),
+  ('FLX_SUFICIENCIA', 'grau_suficiencia_estrutura', 'texto',
+   '{"adequada":"ADEQUADO","parcial":"PARCIAL","insuficiente":"INSUFICIENTE"}',
+   false, 'Diagnóstico da Rede (IER), Relatórios',
+   'Adequada = ADEQUADO, Parcialmente adequada = PARCIAL, Insuficiente = INSUFICIENTE', 24),
+  ('SEG_CAPACITA_QTD', 'qtd_capacitacoes_realizadas', 'inteiro',
+   '{"zero_se":{"campo":"SEG_CAPACITA","valores":["nao","sim_antigo"]}}',
+   false, 'Diagnóstico da Rede (Investigação: Total de Capacitações)',
+   'Quantidade nos últimos 12 meses; 0 quando não houve capacitação nesse intervalo', 25),
+  ('SOC_CAPACITA_DATA', 'data_ultima_capacitacao', 'data', NULL,
+   false, 'Diagnóstico da Rede (Assistência)', 'Data informada (AAAA-MM-DD)', 26);
 
 -- -------------------------------------------------------------------------------------
 -- 10. Base publicada: valores aprovados por município, campo e período (leitura pública)
@@ -659,10 +706,6 @@ BEGIN
     WHERE c.secao = ANY (public._diagnostico_secoes_aplicaveis(d.atribuicao))
     ORDER BY mp.ordem
   LOOP
-    IF NOT public._diagnostico_campo_visivel(r, m.cond_campo, m.cond_valores, m.cond_maior_que) THEN
-      CONTINUE;
-    END IF;
-
     prefixo := CASE m.c_secao
       WHEN 'cidadania' THEN 'CID' WHEN 'fluxos' THEN 'FLX' WHEN 'socioassistencial' THEN 'SOC'
       WHEN 'penal_seguranca' THEN 'SEG' WHEN 'penal_violencia' THEN 'VIO' WHEN 'gargalos' THEN 'GAR'
@@ -680,6 +723,32 @@ BEGIN
     periodo := d.periodo_referencia;
     valor := NULL;
     ignorado := NULL;
+
+    -- Quantidade oculta porque a pergunta-mãe indica que não houve ocorrência: publica zero
+    IF m.tipo_destino = 'inteiro' AND m.regra ? 'zero_se'
+       AND btrim(COALESCE(r ->> (m.regra -> 'zero_se' ->> 'campo'), '')) IN (
+         SELECT jsonb_array_elements_text(m.regra -> 'zero_se' -> 'valores')) THEN
+      valor := '0';
+      valor_original := 'Zero por resposta em ' || (m.regra -> 'zero_se' ->> 'campo') || ': '
+                        || (r ->> (m.regra -> 'zero_se' ->> 'campo'));
+      RETURN NEXT;
+      CONTINUE;
+    END IF;
+
+    IF NOT public._diagnostico_campo_visivel(r, m.cond_campo, m.cond_valores, m.cond_maior_que) THEN
+      CONTINUE;
+    END IF;
+
+    IF m.tipo_destino = 'todos_itens' THEN
+      valor_original := (r -> m.codigo)::text;
+      IF jsonb_typeof(r -> m.codigo) <> 'array' OR jsonb_array_length(r -> m.codigo) = 0 THEN
+        ignorado := 'Sem resposta';
+      ELSE
+        valor := CASE WHEN (r -> m.codigo) @> (m.regra -> 'exigidos') THEN 'SIM' ELSE 'NAO' END;
+      END IF;
+      RETURN NEXT;
+      CONTINUE;
+    END IF;
 
     IF m.tipo_destino = 'lista_rotulos' THEN
       valor_original := (r -> m.codigo)::text;
@@ -720,6 +789,8 @@ BEGIN
           IF periodo !~ '^\d{4}$' THEN ignorado := 'Ano de referência ausente'; valor := NULL; END IF;
         END IF;
       END IF;
+    ELSIF m.tipo_destino = 'data' THEN
+      IF orig ~ '^\d{4}-\d{2}-\d{2}$' THEN valor := orig; ELSE ignorado := 'Data inválida'; END IF;
     ELSIF m.tipo_destino = 'fonte' THEN
       valor := 'Diagnóstico BRIGID — ' || COALESCE(promotoria_nome, d.promotoria_id)
                || ' — período ' || d.periodo_referencia;
@@ -748,8 +819,30 @@ AS $$
   ORDER BY p.nome;
 $$;
 
+-- Valida a identificação de quem responde pela conta (compartilhada) da Promotoria
+CREATE OR REPLACE FUNCTION public._diagnostico_validar_responsavel(p_nome TEXT, p_condicao TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+IMMUTABLE
+SET search_path = ''
+AS $$
+BEGIN
+  IF length(btrim(COALESCE(p_nome, ''))) < 3 THEN
+    RAISE EXCEPTION 'Informe o nome do(a) Promotor(a) de Justiça responsável.';
+  END IF;
+  IF COALESCE(p_condicao, '') NOT IN ('titular', 'substituto', 'respondendo') THEN
+    RAISE EXCEPTION 'Informe a condição do(a) responsável (titular, substituto(a) ou em respondência).';
+  END IF;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS public.diagnostico_criar(TEXT, TEXT, TEXT, TEXT[]);
+DROP FUNCTION IF EXISTS public.diagnostico_salvar_rascunho(TEXT, JSONB, TEXT[]);
+DROP FUNCTION IF EXISTS public.diagnostico_enviar(TEXT);
+
 CREATE OR REPLACE FUNCTION public.diagnostico_criar(
-  p_promotoria_id TEXT, p_codigo_ibge TEXT, p_periodo TEXT, p_atribuicao TEXT[] DEFAULT NULL
+  p_promotoria_id TEXT, p_codigo_ibge TEXT, p_periodo TEXT, p_atribuicao TEXT[],
+  p_responsavel_nome TEXT, p_responsavel_condicao TEXT
 )
 RETURNS TEXT
 LANGUAGE plpgsql
@@ -761,9 +854,9 @@ DECLARE
   atrib TEXT[];
   existente TEXT;
   novo_id TEXT;
-  responsavel TEXT;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Autenticação obrigatória.'; END IF;
+  PERFORM public._diagnostico_validar_responsavel(p_responsavel_nome, p_responsavel_condicao);
   IF NOT public.usuario_vinculado(p_promotoria_id) THEN
     RAISE EXCEPTION 'Usuário não vinculado a esta Promotoria de Justiça.';
   END IF;
@@ -796,15 +889,12 @@ BEGIN
     RAISE EXCEPTION 'DIAGNOSTICO_EXISTENTE:%', existente;
   END IF;
 
-  SELECT nome_responsavel INTO responsavel FROM public.usuarios_promotoria
-  WHERE user_id = auth.uid() AND promotoria_id = p_promotoria_id;
-
   INSERT INTO public.diagnostico_brigid (
     codigo_ibge, promotoria_id, usuario_id, status, atribuicao, periodo_referencia,
-    responsavel_id, responsavel_nome, versao_atual
+    responsavel_id, responsavel_nome, responsavel_condicao, versao_atual
   ) VALUES (
     p_codigo_ibge, p_promotoria_id, auth.uid()::text, 'em_preenchimento', atrib, p_periodo,
-    auth.uid(), responsavel, 1
+    auth.uid(), btrim(p_responsavel_nome), p_responsavel_condicao, 1
   ) RETURNING id INTO novo_id;
 
   INSERT INTO public.diagnostico_versoes (diagnostico_id, numero, status, respostas, hash_conteudo, criado_por, atualizado_por)
@@ -812,13 +902,15 @@ BEGIN
 
   PERFORM public._diagnostico_auditar(novo_id, 1, 'criacao', NULL,
     jsonb_build_object('promotoria_id', p_promotoria_id, 'codigo_ibge', p_codigo_ibge,
-                       'periodo_referencia', p_periodo, 'atribuicao', atrib));
+                       'periodo_referencia', p_periodo, 'atribuicao', atrib,
+                       'responsavel', btrim(p_responsavel_nome), 'condicao', p_responsavel_condicao));
   RETURN novo_id;
 END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.diagnostico_salvar_rascunho(
-  p_id TEXT, p_respostas JSONB, p_atribuicao TEXT[] DEFAULT NULL
+  p_id TEXT, p_respostas JSONB, p_atribuicao TEXT[] DEFAULT NULL,
+  p_responsavel_nome TEXT DEFAULT NULL, p_responsavel_condicao TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -858,6 +950,14 @@ BEGIN
     atrib := p_atribuicao;
   END IF;
 
+  -- Troca de responsável durante o preenchimento (ex.: substituição do titular)
+  IF p_responsavel_nome IS NOT NULL OR p_responsavel_condicao IS NOT NULL THEN
+    PERFORM public._diagnostico_validar_responsavel(p_responsavel_nome, p_responsavel_condicao);
+    UPDATE public.diagnostico_brigid
+    SET responsavel_nome = btrim(p_responsavel_nome), responsavel_condicao = p_responsavel_condicao
+    WHERE id = p_id;
+  END IF;
+
   limpas := public._diagnostico_sanitizar(COALESCE(p_respostas, '{}'), atrib);
   comp := public.diagnostico_completude(limpas, atrib, d.promotoria_id, d.codigo_ibge, d.periodo_referencia);
 
@@ -881,7 +981,8 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.diagnostico_enviar(p_id TEXT)
+-- O envio exige a declaração de quem assina: fica gravada na versão enviada
+CREATE OR REPLACE FUNCTION public.diagnostico_enviar(p_id TEXT, p_responsavel_nome TEXT, p_responsavel_condicao TEXT)
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -897,6 +998,7 @@ BEGIN
   IF NOT public.usuario_vinculado(d.promotoria_id) THEN
     RAISE EXCEPTION 'Usuário não vinculado a esta Promotoria de Justiça.';
   END IF;
+  PERFORM public._diagnostico_validar_responsavel(p_responsavel_nome, p_responsavel_condicao);
 
   SELECT * INTO v FROM public.diagnostico_versoes
   WHERE diagnostico_id = p_id AND numero = d.versao_atual FOR UPDATE;
@@ -910,12 +1012,15 @@ BEGIN
       jsonb_array_length(comp -> 'pendencias');
   END IF;
 
-  UPDATE public.diagnostico_versoes SET status = 'enviado', enviado_em = now(), enviado_por = auth.uid()
+  UPDATE public.diagnostico_versoes SET status = 'enviado', enviado_em = now(), enviado_por = auth.uid(),
+    enviado_por_nome = btrim(p_responsavel_nome), enviado_por_condicao = p_responsavel_condicao
   WHERE id = v.id;
-  UPDATE public.diagnostico_brigid SET status = 'enviado', data_envio = now(), data_atualizacao = now()
+  UPDATE public.diagnostico_brigid SET status = 'enviado', data_envio = now(), data_atualizacao = now(),
+    responsavel_nome = btrim(p_responsavel_nome), responsavel_condicao = p_responsavel_condicao
   WHERE id = p_id;
   PERFORM public._diagnostico_auditar(p_id, v.numero, 'envio_analise', jsonb_build_object('status', v.status),
-    jsonb_build_object('status', 'enviado', 'hash', v.hash_conteudo));
+    jsonb_build_object('status', 'enviado', 'hash', v.hash_conteudo,
+                       'responsavel', btrim(p_responsavel_nome), 'condicao', p_responsavel_condicao));
 END;
 $$;
 
@@ -1409,7 +1514,10 @@ END;
 $$;
 
 -- Vínculos de usuários (gestão pelo CAOCRIM; a conta é criada no painel do Supabase)
-CREATE OR REPLACE FUNCTION public.admin_vincular_usuario(p_email TEXT, p_promotoria_id TEXT, p_nome TEXT)
+DROP FUNCTION IF EXISTS public.admin_vincular_usuario(TEXT, TEXT, TEXT);
+-- Vincula a conta (normalmente o e-mail institucional da Promotoria) e registra esse e-mail
+-- na Promotoria quando ela ainda não tiver um
+CREATE OR REPLACE FUNCTION public.admin_vincular_usuario(p_email TEXT, p_promotoria_id TEXT, p_descricao TEXT DEFAULT NULL)
 RETURNS BIGINT
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -1424,11 +1532,13 @@ BEGIN
   IF uid IS NULL THEN
     RAISE EXCEPTION 'Usuário % não encontrado. Crie a conta em Authentication > Users no Supabase.', p_email;
   END IF;
-  IF btrim(COALESCE(p_nome, '')) = '' THEN RAISE EXCEPTION 'Informe o nome do responsável.'; END IF;
   INSERT INTO public.usuarios_promotoria (user_id, promotoria_id, nome_responsavel, ativo, created_by)
-  VALUES (uid, p_promotoria_id, btrim(p_nome), true, auth.uid())
-  ON CONFLICT (user_id, promotoria_id) DO UPDATE SET ativo = true, nome_responsavel = EXCLUDED.nome_responsavel
+  VALUES (uid, p_promotoria_id, NULLIF(btrim(COALESCE(p_descricao, '')), ''), true, auth.uid())
+  ON CONFLICT (user_id, promotoria_id) DO UPDATE SET ativo = true,
+    nome_responsavel = COALESCE(EXCLUDED.nome_responsavel, public.usuarios_promotoria.nome_responsavel)
   RETURNING id INTO novo;
+  UPDATE public.promotorias_justica SET email_institucional = lower(btrim(p_email))
+  WHERE id = p_promotoria_id AND email_institucional IS NULL;
   RETURN novo;
 END;
 $$;

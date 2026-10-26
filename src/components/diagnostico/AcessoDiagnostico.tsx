@@ -6,6 +6,7 @@ import { useApp } from "@/context/AppContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
 
 // Acesso ao módulo de coleta: somente contas criadas pelo CAOCRIM e vinculadas a uma
 // Promotoria (ou o próprio CAOCRIM). O vínculo é conferido no banco a cada ação.
@@ -33,6 +34,25 @@ export function AcessoDiagnostico() {
     toast.success("Acesso ao módulo de diagnóstico autorizado.");
   };
 
+  // O link chega à caixa institucional da Promotoria: o novo titular redefine a senha sozinho
+  const esqueciSenha = async () => {
+    setErro("");
+    if (!email) {
+      setErro("Informe o e-mail institucional da Promotoria para receber o link.");
+      return;
+    }
+    setEnviando(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/diagnostico-brigid/redefinir-senha`,
+    });
+    setEnviando(false);
+    if (error) {
+      setErro("Não foi possível enviar o link agora. Tente novamente em alguns minutos.");
+      return;
+    }
+    toast.success("Se o e-mail estiver cadastrado, o link para definir a senha foi enviado.");
+  };
+
   return (
     <div className="mx-auto max-w-md space-y-6 py-8">
       <Button variant="outline" size="sm" asChild>
@@ -48,8 +68,8 @@ export function AcessoDiagnostico() {
           </div>
           <CardTitle>Diagnóstico BRIGID</CardTitle>
           <CardDescription>
-            Acesso restrito aos Promotores de Justiça cadastrados pelo CAOCRIM. Use o e-mail
-            institucional e a senha recebidos.
+            Acesso pela conta institucional da Promotoria de Justiça, cadastrada pelo CAOCRIM. Em
+            caso de mudança de titular, use "Esqueci minha senha" para definir uma nova senha.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -61,7 +81,7 @@ export function AcessoDiagnostico() {
             )}
             <div className="space-y-1.5">
               <label htmlFor="diag_email" className="flex items-center gap-1.5 text-sm font-medium">
-                <User className="h-3.5 w-3.5" /> E-mail institucional
+                <User className="h-3.5 w-3.5" /> E-mail institucional da Promotoria
               </label>
               <Input
                 id="diag_email"
@@ -69,7 +89,7 @@ export function AcessoDiagnostico() {
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="exemplo@mppi.mp.br"
+                placeholder="promotoria@mppi.mp.br"
               />
             </div>
             <div className="space-y-1.5">
@@ -87,6 +107,14 @@ export function AcessoDiagnostico() {
             <Button type="submit" className="w-full" disabled={enviando}>
               {enviando ? "Verificando..." : "Entrar"}
             </Button>
+            <button
+              type="button"
+              onClick={esqueciSenha}
+              disabled={enviando}
+              className="w-full text-center text-sm text-primary hover:underline"
+            >
+              Esqueci minha senha
+            </button>
             <p className="text-xs text-muted-foreground">
               As respostas registradas aqui não são publicadas automaticamente: somente diagnósticos
               completos e validados pelo CAOCRIM passam a integrar o painel público.

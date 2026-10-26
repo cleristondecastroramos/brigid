@@ -6,6 +6,7 @@ export interface Promotoria {
   nome_normalizado?: string;
   comarca_sede: string;
   tipo_atribuicao: string;
+  email_institucional?: string | null;
 }
 
 export interface PromotoriaMunicipio {
@@ -21,7 +22,7 @@ export interface Vinculo {
   nome: string;
   comarca_sede: string;
   tipo_atribuicao: string;
-  nome_responsavel: string;
+  nome_responsavel: string | null;
 }
 
 export interface VinculoAdmin {
@@ -30,7 +31,7 @@ export interface VinculoAdmin {
   promotoria_id: string;
   promotoria_nome: string;
   comarca_sede: string;
-  nome_responsavel: string;
+  nome_responsavel: string | null;
   ativo: boolean;
   created_at: string;
 }
@@ -45,7 +46,7 @@ class PromotoriasService {
   async listarPromotorias(): Promise<Promotoria[]> {
     const { data, error } = await supabase
       .from("promotorias_justica")
-      .select("id, nome, nome_normalizado, comarca_sede, tipo_atribuicao")
+      .select("id, nome, nome_normalizado, comarca_sede, tipo_atribuicao, email_institucional")
       .eq("ativa", true)
       .order("nome");
     erro(error);
@@ -92,13 +93,25 @@ class PromotoriasService {
     return data as VinculoAdmin[];
   }
 
-  async vincularUsuario(email: string, promotoriaId: string, nome: string) {
+  // Vincula a conta (normalmente o e-mail institucional da Promotoria)
+  async vincularUsuario(email: string, promotoriaId: string, descricao?: string) {
     const { error } = await supabase.rpc("admin_vincular_usuario", {
       p_email: email,
       p_promotoria_id: promotoriaId,
-      p_nome: nome,
+      p_descricao: descricao || null,
     });
     erro(error);
+  }
+
+  async atualizarEmailInstitucional(id: string, email: string) {
+    const valor = email.trim().toLowerCase() || null;
+    const { data, error } = await supabase
+      .from("promotorias_justica")
+      .update({ email_institucional: valor, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("id");
+    erro(error);
+    if (!data || data.length === 0) throw new Error("Sem permissão para alterar o e-mail.");
   }
 
   async desativarVinculo(id: number) {

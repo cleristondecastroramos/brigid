@@ -91,7 +91,16 @@ function respostasCompletas({
       FLX_FORMAL: "formal_ato",
       FLX_PROTOCOLO: "desatualizado",
       FLX_SALA: "adequado",
+      FLX_RECURSOS_ITENS: [
+        "equipe",
+        "espaco",
+        "transporte",
+        "psicologo",
+        "juridico",
+        "acolhimento",
+      ],
       FLX_RECURSOS: "Equipe reduzida",
+      FLX_SUFICIENCIA: "parcial",
       FLX_PSICO: "eventual",
       ...transversal("FLX"),
       SOC_PROTOCOLO: "vigente",
@@ -99,6 +108,7 @@ function respostasCompletas({
       SOC_ARTIC_CREAS: "formal_regular",
       SOC_EQUIPE: "nao_aplica",
       SOC_CAPACITA_QTD: 0,
+      SOC_CAPACITA_DATA: "2025-11-20",
       ...transversal("SOC"),
     };
   }
@@ -109,6 +119,7 @@ function respostasCompletas({
       SEG_PROTO_PER: "nao_sabe",
       SEG_PROTO_PER_JUSTIFICATIVA: "Delegacia não respondeu ao ofício",
       SEG_CAPACITA: "sim_recent",
+      SEG_CAPACITA_QTD: 3,
       SEG_ADERENCIA: "parcialmente",
       ...transversal("SEG"),
       VIO_ANO: ano,
@@ -196,13 +207,13 @@ test("vínculo: só o CAOCRIM vincula usuários, e o vínculo limita a Promotori
   );
   await falha(
     INTRUSO,
-    "SELECT public.diagnostico_criar($1, $2, '2026')",
+    "SELECT public.diagnostico_criar($1, $2, '2026', NULL, 'Fulano de Tal', 'titular')",
     [ctx.pA, ctx.ibge],
     /não vinculado/,
   );
   await falha(
     PROMOTOR_A,
-    "SELECT public.diagnostico_criar($1, $2, '2026')",
+    "SELECT public.diagnostico_criar($1, $2, '2026', NULL, 'Fulano de Tal', 'titular')",
     [ctx.pB, ctx.ibge],
     /não vinculado/,
   );
@@ -222,11 +233,20 @@ test("vínculo: só o CAOCRIM vincula usuários, e o vínculo limita a Promotori
 test("ciclo completo: rascunho, 100%, envio e devolução não alteram a base pública", async () => {
   const antes = await retratoPublico();
 
-  const id = await rpc(PROMOTOR_A, "diagnostico_criar", ctx.pA, ctx.ibge, "2026", null);
+  const id = await rpc(
+    PROMOTOR_A,
+    "diagnostico_criar",
+    ctx.pA,
+    ctx.ibge,
+    "2026",
+    null,
+    "Dra. Ana Titular",
+    "titular",
+  );
   ctx.diagA = id;
   await falha(
     PROMOTOR_A,
-    "SELECT public.diagnostico_criar($1, $2, '2026')",
+    "SELECT public.diagnostico_criar($1, $2, '2026', NULL, 'Fulano de Tal', 'titular')",
     [ctx.pA, ctx.ibge],
     /DIAGNOSTICO_EXISTENTE/,
   );
@@ -240,7 +260,12 @@ test("ciclo completo: rascunho, 100%, envio e devolução não alteram a base p�
     null,
   );
   assert.ok(parcial.percentual < 100);
-  await falha(PROMOTOR_A, "SELECT public.diagnostico_enviar($1)", [id], /pendência/);
+  await falha(
+    PROMOTOR_A,
+    "SELECT public.diagnostico_enviar($1, 'Fulano de Tal', 'titular')",
+    [id],
+    /pendência/,
+  );
   assert.deepEqual(await retratoPublico(), antes, "rascunho parcial alterou a base pública");
 
   // Visitante anônimo e outro Promotor não leem a coleta
@@ -273,7 +298,7 @@ test("ciclo completo: rascunho, 100%, envio e devolução não alteram a base p�
   assert.deepEqual(await retratoPublico(), antes, "diagnóstico 100% sem aprovação alterou a base");
 
   // Enviado para análise
-  await rpc(PROMOTOR_A, "diagnostico_enviar", id);
+  await rpc(PROMOTOR_A, "diagnostico_enviar", id, "Dra. Ana Titular", "titular");
   assert.deepEqual(await retratoPublico(), antes, "diagnóstico enviado alterou a base");
   await falha(
     PROMOTOR_A,
@@ -340,7 +365,7 @@ test("somente o CAOCRIM publica, inclusive por chamada direta à API", async () 
     }),
     null,
   );
-  await rpc(PROMOTOR_A, "diagnostico_enviar", id);
+  await rpc(PROMOTOR_A, "diagnostico_enviar", id, "Dra. Ana Titular", "titular");
   await rpc(ADMIN, "diagnostico_iniciar_analise", id);
   const [{ hash_conteudo: hash }] = await q(
     ADMIN,
@@ -372,7 +397,12 @@ test("somente o CAOCRIM publica, inclusive por chamada direta à API", async () 
     [id],
     /restrita ao CAOCRIM/,
   );
-  await falha("anon", "SELECT public.diagnostico_enviar($1)", [id], /permission denied/);
+  await falha(
+    "anon",
+    "SELECT public.diagnostico_enviar($1, 'Fulano de Tal', 'titular')",
+    [id],
+    /permission denied/,
+  );
 
   // Escrita direta nas tabelas é bloqueada pelo RLS
   const upd = await q(
@@ -412,7 +442,16 @@ test("validação exige a versão revisada e diagnóstico completo", async () =>
   );
 
   // Diagnóstico incompleto forçado para "em análise" não pode ser validado
-  const idInc = await rpc(PROMOTOR_B, "diagnostico_criar", ctx.pB, ctx.ibge, "2025", null);
+  const idInc = await rpc(
+    PROMOTOR_B,
+    "diagnostico_criar",
+    ctx.pB,
+    ctx.ibge,
+    "2025",
+    null,
+    "Dr. Bruno Titular",
+    "titular",
+  );
   await rpc(
     PROMOTOR_B,
     "diagnostico_salvar_rascunho",
@@ -487,6 +526,9 @@ test("validar e publicar integra os dados aprovados à base consolidada", async 
   assert.equal(mun.tem_sala_especializada, "SIM");
   assert.equal(mun.articulacao_creas_rede, "SIM");
   assert.equal(mun.profissionais_capacitados, 0, "quantidade zero é publicada como zero");
+  assert.equal(mun.tem_recursos_minimos, "SIM", "todos os recursos marcados");
+  assert.equal(mun.grau_suficiencia_estrutura, "PARCIAL");
+  assert.equal(mun.data_ultima_capacitacao, "2025-11-20");
   assert.equal(
     mun.tem_equipe_minima_creas,
     munAntes.tem_equipe_minima_creas,
@@ -553,7 +595,7 @@ test("nova versão em rascunho ou análise preserva a versão pública anterior"
     JSON.stringify({ ...respostasCompletas({ civel: true, opm: "nao" }), CID_POL_EXISTE: "nao" }),
     null,
   );
-  await rpc(PROMOTOR_A, "diagnostico_enviar", id);
+  await rpc(PROMOTOR_A, "diagnostico_enviar", id, "Dra. Ana Titular", "titular");
   await rpc(ADMIN, "diagnostico_iniciar_analise", id);
   assert.deepEqual(await retratoPublico(), antes, "nova versão não aprovada alterou a base");
   const [mun] = await q("anon", "SELECT opm_possui FROM public.municipios WHERE codigo_ibge = $1", [
@@ -629,7 +671,16 @@ test("publicar o bloco criminal preserva os dados cíveis já consolidados", asy
     "SELECT tem_protocolo_pericial FROM public.municipios WHERE codigo_ibge = $1",
     [ctx.ibge],
   );
-  const id = await rpc(PROMOTOR_B, "diagnostico_criar", ctx.pB, ctx.ibge, "2026", null);
+  const id = await rpc(
+    PROMOTOR_B,
+    "diagnostico_criar",
+    ctx.pB,
+    ctx.ibge,
+    "2026",
+    null,
+    "Dr. Bruno Titular",
+    "titular",
+  );
   ctx.diagB = id;
   const comp = await rpc(
     PROMOTOR_B,
@@ -639,7 +690,7 @@ test("publicar o bloco criminal preserva os dados cíveis já consolidados", asy
     null,
   );
   assert.equal(comp.percentual, 100, JSON.stringify(comp.pendencias));
-  await rpc(PROMOTOR_B, "diagnostico_enviar", id);
+  await rpc(PROMOTOR_B, "diagnostico_enviar", id, "Dr. Bruno Titular", "titular");
   await rpc(ADMIN, "diagnostico_iniciar_analise", id);
   const [{ hash_conteudo: hash }] = await q(
     ADMIN,
@@ -662,6 +713,7 @@ test("publicar o bloco criminal preserva os dados cíveis já consolidados", asy
   );
   assert.equal(mun.tem_protocolo_investigacao, "SIM");
   assert.equal(mun.grau_aderencia_protocolo, "MEDIO");
+  assert.equal(mun.qtd_capacitacoes_realizadas, 3);
   assert.equal(mun.gargalos_identificados, "Demora pericial; Ausência de OPM");
 
   // "Não soube informar" não altera o valor publicado
@@ -701,7 +753,7 @@ test("respostas conflitantes de outra unidade exigem confirmação expressa", as
     CID_POL_EXISTE: "nao",
   };
   await rpc(PROMOTOR_B, "diagnostico_salvar_rascunho", ctx.diagB, JSON.stringify(r), null);
-  await rpc(PROMOTOR_B, "diagnostico_enviar", ctx.diagB);
+  await rpc(PROMOTOR_B, "diagnostico_enviar", ctx.diagB, "Dr. Bruno Titular", "titular");
   await rpc(ADMIN, "diagnostico_iniciar_analise", ctx.diagB);
   const [{ hash_conteudo: hash }] = await q(
     ADMIN,
@@ -892,4 +944,122 @@ test("'Não soube informar' exige justificativa e não vira 'Não' nem zero", as
     100,
     "blocos criminais não podem ser exigidos de atribuição cível",
   );
+});
+
+test("perguntas novas: recursos incompletos viram NAO e capacitação antiga publica zero", async () => {
+  const id = await rpc(
+    PROMOTOR_B,
+    "diagnostico_criar",
+    ctx.pB,
+    ctx.ibge,
+    "2024",
+    null,
+    "Dr. Bruno Titular",
+    "titular",
+  );
+  const r = {
+    ...respostasCompletas({ civel: true, criminal: true }),
+    FLX_RECURSOS_ITENS: ["equipe", "espaco"],
+    FLX_SUFICIENCIA: "nao_sabe",
+    FLX_SUFICIENCIA_JUSTIFICATIVA: "Sem dados de demanda",
+    SEG_CAPACITA: "sim_antigo",
+    SEG_CAPACITA_QTD: 7,
+  };
+  const comp = await rpc(
+    PROMOTOR_B,
+    "diagnostico_salvar_rascunho",
+    id,
+    JSON.stringify(r),
+    null,
+    null,
+    null,
+  );
+  assert.equal(comp.percentual, 100, JSON.stringify(comp.pendencias));
+  const itens = await q("super", "SELECT * FROM public._diagnostico_itens_publicaveis($1, 1)", [
+    id,
+  ]);
+  const item = (c) => itens.find((i) => i.campo_destino === c);
+  assert.equal(item("tem_recursos_minimos").valor, "NAO");
+  assert.match(item("grau_suficiencia_estrutura").ignorado, /Não soube informar/);
+  assert.equal(
+    item("qtd_capacitacoes_realizadas").valor,
+    "0",
+    "capacitação há mais de 12 meses = 0 nos últimos 12 meses",
+  );
+  const [{ respostas }] = await q(
+    ADMIN,
+    "SELECT respostas FROM public.diagnostico_versoes WHERE diagnostico_id = $1",
+    [id],
+  );
+  assert.equal(respostas.SEG_CAPACITA_QTD, undefined, "quantidade oculta não deve ser guardada");
+  await q("super", "DELETE FROM public.diagnostico_brigid WHERE id = $1", [id]);
+});
+
+test("conta da Promotoria: cada envio registra quem assinou, mesmo após troca de titular", async () => {
+  await falha(
+    PROMOTOR_B,
+    "SELECT public.diagnostico_criar($1, $2, '2023', NULL, '', 'titular')",
+    [ctx.pB, ctx.ibge],
+    /nome do\(a\) Promotor/,
+  );
+  await falha(
+    PROMOTOR_B,
+    "SELECT public.diagnostico_criar($1, $2, '2023', NULL, 'Dr. Bruno', 'estagiario')",
+    [ctx.pB, ctx.ibge],
+    /condição/,
+  );
+
+  // diagB: v1 enviada pelo titular; v2 aberta e enviada pela substituta, na mesma conta
+  await rpc(PROMOTOR_B, "diagnostico_nova_versao", ctx.diagB);
+  await rpc(
+    PROMOTOR_B,
+    "diagnostico_salvar_rascunho",
+    ctx.diagB,
+    JSON.stringify(respostasCompletas({ civel: true, criminal: true })),
+    null,
+    "Dra. Carla Substituta",
+    "substituto",
+  );
+  await falha(
+    PROMOTOR_B,
+    "SELECT public.diagnostico_enviar($1, NULL, NULL)",
+    [ctx.diagB],
+    /nome do\(a\) Promotor/,
+  );
+  await rpc(PROMOTOR_B, "diagnostico_enviar", ctx.diagB, "Dra. Carla Substituta", "substituto");
+
+  const versoes = await q(
+    ADMIN,
+    "SELECT numero, enviado_por_nome, enviado_por_condicao FROM public.diagnostico_versoes WHERE diagnostico_id = $1 ORDER BY numero",
+    [ctx.diagB],
+  );
+  assert.deepEqual(
+    versoes.map((v) => [v.numero, v.enviado_por_nome, v.enviado_por_condicao]),
+    [
+      [1, "Dr. Bruno Titular", "titular"],
+      [2, "Dr. Bruno Titular", "titular"],
+      [3, "Dra. Carla Substituta", "substituto"],
+    ],
+  );
+  const [d] = await q(
+    ADMIN,
+    "SELECT responsavel_nome, responsavel_condicao FROM public.diagnostico_brigid WHERE id = $1",
+    [ctx.diagB],
+  );
+  assert.deepEqual(d, {
+    responsavel_nome: "Dra. Carla Substituta",
+    responsavel_condicao: "substituto",
+  });
+
+  // A conta institucional fica registrada na Promotoria; o responsável não é publicado
+  const [pB] = await q(
+    "super",
+    "SELECT email_institucional FROM public.promotorias_justica WHERE id = $1",
+    [ctx.pB],
+  );
+  assert.equal(pB.email_institucional, "promotor.b@mppi.mp.br");
+  const publico = JSON.stringify(
+    await q("anon", "SELECT * FROM public.municipio_dados_publicados"),
+  );
+  assert.ok(!publico.includes("Carla") && !publico.includes("Bruno"));
 });

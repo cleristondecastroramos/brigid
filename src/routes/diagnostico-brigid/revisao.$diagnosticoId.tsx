@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import {
   diagnosticoService,
   STATUS_DIAGNOSTICO,
+  rotuloCondicao,
   type AnexoDiagnostico,
   type DiagnosticoResumo,
   type EventoAuditoria,
@@ -316,7 +317,9 @@ function RevisaoDiagnosticoPage() {
             </div>
             <div>
               <strong className="text-foreground">Responsável:</strong>{" "}
-              {diag.responsavel_nome ?? "—"}
+              {diag.responsavel_nome
+                ? `${diag.responsavel_nome} (${rotuloCondicao(diag.responsavel_condicao)})`
+                : "—"}
             </div>
             <div>
               <strong className="text-foreground">Enviado em:</strong>{" "}
@@ -695,7 +698,11 @@ function RevisaoDiagnosticoPage() {
                   </div>
                   <div className="mt-1 grid gap-1 text-xs text-muted-foreground sm:grid-cols-2">
                     {v.enviado_em && (
-                      <span>Enviada: {new Date(v.enviado_em).toLocaleString("pt-BR")}</span>
+                      <span>
+                        Enviada: {new Date(v.enviado_em).toLocaleString("pt-BR")}
+                        {v.enviado_por_nome &&
+                          ` — por ${v.enviado_por_nome} (${rotuloCondicao(v.enviado_por_condicao)})`}
+                      </span>
                     )}
                     {v.devolvido_em && (
                       <span>

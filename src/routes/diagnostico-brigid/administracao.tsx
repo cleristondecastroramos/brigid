@@ -179,6 +179,7 @@ function AdministracaoPage() {
                     <TableHead className="w-[100px]">ID</TableHead>
                     <TableHead>Promotoria de Justiça</TableHead>
                     <TableHead>Comarca Sede</TableHead>
+                    <TableHead className="min-w-[240px]">E-mail institucional</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="w-[250px]">Atribuição Funcional</TableHead>
                   </TableRow>
@@ -186,7 +187,7 @@ function AdministracaoPage() {
                 <TableBody>
                   {promotoriasFiltradas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         Nenhuma promotoria encontrada na busca.
                       </TableCell>
                     </TableRow>
@@ -198,6 +199,18 @@ function AdministracaoPage() {
                         </TableCell>
                         <TableCell className="font-medium">{p.nome}</TableCell>
                         <TableCell>{p.comarca_sede}</TableCell>
+                        <TableCell>
+                          <EmailInstitucional
+                            promotoria={p}
+                            onSalvo={(email) =>
+                              setPromotorias((prev) =>
+                                prev.map((x) =>
+                                  x.id === p.id ? { ...x, email_institucional: email } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </TableCell>
                         <TableCell>
                           {p.tipo_atribuicao === "pendente_configuracao" ? (
                             <Badge variant="destructive">Pendente</Badge>
@@ -247,7 +260,7 @@ function AdministracaoPage() {
 
 function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
   const [vinculos, setVinculos] = useState<VinculoAdmin[]>([]);
-  const [novo, setNovo] = useState({ email: "", promotoria: "", nome: "" });
+  const [novo, setNovo] = useState({ email: "", promotoria: "", descricao: "" });
   const [salvando, setSalvando] = useState(false);
 
   const carregar = async () => {
@@ -265,9 +278,9 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
   const vincular = async () => {
     setSalvando(true);
     try {
-      await promotoriasService.vincularUsuario(novo.email, novo.promotoria, novo.nome);
-      toast.success("Usuário vinculado à Promotoria.");
-      setNovo({ email: "", promotoria: "", nome: "" });
+      await promotoriasService.vincularUsuario(novo.email, novo.promotoria, novo.descricao);
+      toast.success("Conta vinculada à Promotoria.");
+      setNovo({ email: "", promotoria: "", descricao: "" });
       await carregar();
     } catch (e) {
       toast.error((e as Error).message);
@@ -288,27 +301,26 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
   return (
     <Card>
       <CardHeader className="border-b pb-3">
-        <CardTitle className="text-base">Usuários vinculados às Promotorias</CardTitle>
+        <CardTitle className="text-base">Contas das Promotorias</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Crie a conta do Promotor em Authentication &gt; Users no Supabase e vincule-a aqui.
-          Somente usuários vinculados podem preencher diagnósticos em nome da Promotoria.
+          O acesso ao formulário é feito pela conta do e-mail institucional da Promotoria, não pelo
+          e-mail pessoal do titular. Crie as contas em lote com{" "}
+          <code className="text-xs">scripts/convidar-contas-promotorias.mjs</code> ou, uma a uma, em
+          Authentication &gt; Users no Supabase, e vincule-as aqui. Na troca de titular não é
+          preciso alterar nada: o novo titular redefine a senha pelo próprio e-mail institucional.
         </p>
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
-        <div className="grid gap-2 md:grid-cols-[1fr_1fr_1.5fr_auto]">
-          <Input
-            placeholder="E-mail da conta"
-            value={novo.email}
-            onChange={(e) => setNovo((n) => ({ ...n, email: e.target.value }))}
-          />
-          <Input
-            placeholder="Nome do responsável"
-            value={novo.nome}
-            onChange={(e) => setNovo((n) => ({ ...n, nome: e.target.value }))}
-          />
+        <div className="grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_auto]">
           <Select
             value={novo.promotoria}
-            onValueChange={(v) => setNovo((n) => ({ ...n, promotoria: v }))}
+            onValueChange={(v) =>
+              setNovo((n) => ({
+                ...n,
+                promotoria: v,
+                email: promotorias.find((p) => p.id === v)?.email_institucional ?? n.email,
+              }))
+            }
           >
             <SelectTrigger>
               <SelectValue placeholder="Promotoria" />
@@ -321,10 +333,17 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
               ))}
             </SelectContent>
           </Select>
-          <Button
-            onClick={vincular}
-            disabled={salvando || !novo.email || !novo.nome || !novo.promotoria}
-          >
+          <Input
+            placeholder="E-mail institucional da Promotoria"
+            value={novo.email}
+            onChange={(e) => setNovo((n) => ({ ...n, email: e.target.value }))}
+          />
+          <Input
+            placeholder="Descrição (opcional)"
+            value={novo.descricao}
+            onChange={(e) => setNovo((n) => ({ ...n, descricao: e.target.value }))}
+          />
+          <Button onClick={vincular} disabled={salvando || !novo.email || !novo.promotoria}>
             <UserPlus className="mr-2 h-4 w-4" /> Vincular
           </Button>
         </div>
@@ -332,9 +351,9 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Responsável</TableHead>
-                <TableHead>E-mail</TableHead>
+                <TableHead>Conta (e-mail)</TableHead>
                 <TableHead>Promotoria</TableHead>
+                <TableHead>Descrição</TableHead>
                 <TableHead>Situação</TableHead>
                 <TableHead />
               </TableRow>
@@ -349,9 +368,11 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
               ) : (
                 vinculos.map((v) => (
                   <TableRow key={v.id}>
-                    <TableCell>{v.nome_responsavel}</TableCell>
                     <TableCell className="text-sm">{v.email}</TableCell>
                     <TableCell className="text-sm">{v.promotoria_nome}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {v.nome_responsavel ?? "—"}
+                    </TableCell>
                     <TableCell>
                       {v.ativo ? (
                         <Badge className="bg-success text-success-foreground">Ativo</Badge>
@@ -374,5 +395,45 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function EmailInstitucional({
+  promotoria,
+  onSalvo,
+}: {
+  promotoria: Promotoria;
+  onSalvo: (email: string | null) => void;
+}) {
+  const [valor, setValor] = useState(promotoria.email_institucional ?? "");
+  const original = promotoria.email_institucional ?? "";
+
+  const salvar = async () => {
+    const novo = valor.trim().toLowerCase();
+    if (novo === original) return;
+    if (novo && !/^[^s@]+@[^s@]+.[^s@]+$/.test(novo)) {
+      toast.error("E-mail institucional inválido.");
+      setValor(original);
+      return;
+    }
+    try {
+      await promotoriasService.atualizarEmailInstitucional(promotoria.id, novo);
+      onSalvo(novo || null);
+      toast.success("E-mail institucional atualizado.");
+    } catch (e) {
+      toast.error((e as Error).message);
+      setValor(original);
+    }
+  };
+
+  return (
+    <Input
+      className="h-8 text-xs"
+      placeholder="promotoria@mppi.mp.br"
+      value={valor}
+      onChange={(e) => setValor(e.target.value)}
+      onBlur={salvar}
+      onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+    />
   );
 }

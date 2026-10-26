@@ -13,9 +13,24 @@ Execute no SQL Editor do Supabase, nesta ordem:
 
 Depois:
 
-- Crie as contas em **Authentication → Users** (CAOCRIM e Promotores) e desative o cadastro aberto ("Allow new users to sign up").
-- Marque o CAOCRIM: `INSERT INTO public.admin_users (user_id) SELECT id FROM auth.users WHERE email = 'caocrim@mppi.mp.br';`
-- Vincule cada Promotor à sua Promotoria em **Diagnóstico BRIGID → Promotorias e usuários**.
+- Desative o cadastro aberto ("Allow new users to sign up") e inclua `<endereço do site>/diagnostico-brigid/redefinir-senha` em **Authentication → URL Configuration → Redirect URLs**.
+- Crie a conta do CAOCRIM em **Authentication → Users** e marque-a como administradora: `INSERT INTO public.admin_users (user_id) SELECT id FROM auth.users WHERE email = 'caocrim@mppi.mp.br';`
+- Crie as contas das Promotorias, que usam o **e-mail institucional da Promotoria**, não o pessoal do titular. Use o script de convites (seção abaixo) ou crie uma a uma e vincule em **Diagnóstico BRIGID → Promotorias e usuários**.
+
+## Contas das Promotorias
+
+- Cada Promotoria acessa com a conta do seu e-mail institucional (`promotorias_justica.email_institucional`). Os diagnósticos pertencem à Promotoria, não à pessoa.
+- Quem preenche informa nome e condição (titular, substituto(a), em respondência) ao criar o diagnóstico e declara esses dados a cada envio. A declaração fica gravada na versão enviada (`enviado_por_nome`, `enviado_por_condicao`) e nunca é publicada.
+- **Troca de titular:** nada muda no sistema. O novo titular usa "Esqueci minha senha" na tela de acesso; o link chega ao e-mail institucional e leva a `/diagnostico-brigid/redefinir-senha`. Recomenda-se trocar a senha a cada mudança de titular.
+- **Convites em lote** (rodam na sua máquina, com a chave de serviço só no ambiente — nunca em arquivos do projeto):
+
+```bash
+node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
+node scripts/convidar-contas-promotorias.mjs contas.csv --simular
+node scripts/convidar-contas-promotorias.mjs contas.csv
+```
+
+  O primeiro comando gera a planilha com todas as Promotorias; preencha a coluna `email`. Variáveis: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `BRIGID_URL` (endereço do site, usado no link do convite).
 
 Se o dicionário (`src/lib/dicionario-diagnostico.ts`) mudar, rode `npm run gerar:regras` e reaplique a migration. Os testes conferem que a completude calculada no navegador e no banco é a mesma: `npm run test:diagnostico`.
 
@@ -37,8 +52,8 @@ Nenhuma tabela de coleta aceita escrita direta pela API, nem do CAOCRIM. Toda es
 
 | Ação | Quem | Função |
 | --- | --- | --- |
-| Criar / salvar rascunho | Promotor vinculado | `diagnostico_criar`, `diagnostico_salvar_rascunho` |
-| Enviar (exige 100%) | Promotor vinculado | `diagnostico_enviar` |
+| Criar / salvar rascunho (com nome e condição do responsável) | Conta da Promotoria | `diagnostico_criar`, `diagnostico_salvar_rascunho` |
+| Enviar (exige 100% e declaração de quem assina) | Conta da Promotoria | `diagnostico_enviar` |
 | Iniciar análise | CAOCRIM | `diagnostico_iniciar_analise` |
 | Devolver com motivo e comentários por bloco/campo | CAOCRIM | `diagnostico_devolver` |
 | Validar e publicar (versão + hash revisados, 100%, conflitos confirmados) | CAOCRIM | `diagnostico_validar_e_publicar` |
@@ -93,5 +108,9 @@ A lista é fechada: só estes campos podem chegar ao painel. "Não soube informa
 | SEG_ADERENCIA | grau_aderencia_protocolo | ALTO/MEDIO/BAIXO | adequada/parcial/inadequada; "não avaliável" não altera | Investigação | Não |
 | GAR_LISTA | gargalos_identificados | texto | rótulos das opções, separados por "; " | Gargalos | Não |
 | VIO_CONSUMADOS / VIO_TENTADOS | eventos_feminicidio | inteiro | ano = VIO_ANO; `considera_no_score = false` | Ficha (informado pela Promotoria) | Não |
+| FLX_RECURSOS_ITENS | tem_recursos_minimos | SIM/NAO | SIM só quando os 6 recursos foram marcados (equipe, espaço, transporte, psicólogo, assistência jurídica, acolhimento) | Diagnóstico da Rede (IER), Relatórios | Não |
+| FLX_SUFICIENCIA | grau_suficiencia_estrutura | ADEQUADO/PARCIAL/INSUFICIENTE | adequada/parcial/insuficiente | Diagnóstico da Rede (IER), Relatórios | Não |
+| SEG_CAPACITA_QTD | qtd_capacitacoes_realizadas | inteiro | ações nos últimos 12 meses; 0 quando SEG_CAPACITA = "Não" ou "há mais de 12 meses" | Investigação (Total de Capacitações) | Não |
+| SOC_CAPACITA_DATA | data_ultima_capacitacao | data | cópia (AAAA-MM-DD) | Assistência | Não |
 
-Os campos `tem_recursos_minimos`, `grau_suficiencia_estrutura`, `tem_atendimento_juridico`, `tem_equipe_multiprofissional`, `tem_articulacao_rede`, `treinamento_especifico_feminicidio`, `qtd_capacitacoes_realizadas` e `data_ultima_capacitacao` não têm pergunta equivalente no formulário. Eles continuam vindo da carga existente e, quando vazios, aparecem como "Sem informação".
+Os campos `tem_atendimento_juridico`, `tem_equipe_multiprofissional`, `tem_articulacao_rede` e `treinamento_especifico_feminicidio` não têm pergunta equivalente no formulário. Eles continuam vindo da carga existente e, quando vazios, aparecem como "Sem informação".

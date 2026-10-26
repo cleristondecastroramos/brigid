@@ -41,6 +41,25 @@ export const STATUS_DIAGNOSTICO: Record<StatusDiagnostico, { label: string; clas
 
 export const STATUS_EDITAVEIS: StatusDiagnostico[] = ["em_preenchimento", "devolvido"];
 
+// A conta é da Promotoria (e-mail institucional); a pessoa que responde se identifica
+// no diagnóstico e declara nome e condição a cada envio.
+export type CondicaoResponsavel = "titular" | "substituto" | "respondendo";
+
+export const CONDICOES_RESPONSAVEL: { value: CondicaoResponsavel; label: string }[] = [
+  { value: "titular", label: "Titular" },
+  { value: "substituto", label: "Substituto(a)" },
+  { value: "respondendo", label: "Em respondência" },
+];
+
+export function rotuloCondicao(c?: string | null) {
+  return CONDICOES_RESPONSAVEL.find((x) => x.value === c)?.label ?? "—";
+}
+
+export interface Responsavel {
+  nome: string;
+  condicao: CondicaoResponsavel;
+}
+
 export interface DiagnosticoResumo {
   id: string;
   codigo_ibge: string;
@@ -48,6 +67,7 @@ export interface DiagnosticoResumo {
   atribuicao: string[];
   periodo_referencia: string;
   responsavel_nome: string | null;
+  responsavel_condicao: CondicaoResponsavel | null;
   status: StatusDiagnostico;
   versao_atual: number;
   versao_publicada: number | null;
@@ -72,6 +92,8 @@ export interface VersaoDiagnostico {
   criado_em: string;
   atualizado_em: string;
   enviado_em: string | null;
+  enviado_por_nome: string | null;
+  enviado_por_condicao: CondicaoResponsavel | null;
   analise_iniciada_em: string | null;
   devolvido_em: string | null;
   motivo_devolucao: string | null;
@@ -244,12 +266,20 @@ class DiagnosticoService {
 
   // --- Promotor ---
 
-  async criar(promotoriaId: string, codigoIbge: string, periodo: string, atribuicao?: string[]) {
+  async criar(
+    promotoriaId: string,
+    codigoIbge: string,
+    periodo: string,
+    responsavel: Responsavel,
+    atribuicao?: string[],
+  ) {
     const { data, error } = await supabase.rpc("diagnostico_criar", {
       p_promotoria_id: promotoriaId,
       p_codigo_ibge: codigoIbge,
       p_periodo: periodo,
       p_atribuicao: atribuicao ?? null,
+      p_responsavel_nome: responsavel.nome,
+      p_responsavel_condicao: responsavel.condicao,
     });
     if (error) {
       const existente = error.message.match(/DIAGNOSTICO_EXISTENTE:(\S+)/);
@@ -263,18 +293,31 @@ class DiagnosticoService {
     return data as string;
   }
 
-  async salvarRascunho(id: string, respostas: Respostas, atribuicao?: string[]) {
+  // responsavel: informado apenas quando a pessoa que responde pela conta mudou
+  async salvarRascunho(
+    id: string,
+    respostas: Respostas,
+    atribuicao?: string[],
+    responsavel?: Responsavel,
+  ) {
     const { data, error } = await supabase.rpc("diagnostico_salvar_rascunho", {
       p_id: id,
       p_respostas: respostas,
       p_atribuicao: atribuicao ?? null,
+      p_responsavel_nome: responsavel?.nome ?? null,
+      p_responsavel_condicao: responsavel?.condicao ?? null,
     });
     erro(error);
     return data as { percentual: number };
   }
 
-  async enviar(id: string) {
-    const { error } = await supabase.rpc("diagnostico_enviar", { p_id: id });
+  // A declaração de quem assina fica gravada na versão enviada
+  async enviar(id: string, responsavel: Responsavel) {
+    const { error } = await supabase.rpc("diagnostico_enviar", {
+      p_id: id,
+      p_responsavel_nome: responsavel.nome,
+      p_responsavel_condicao: responsavel.condicao,
+    });
     erro(error);
   }
 

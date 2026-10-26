@@ -1497,6 +1497,10 @@ const ROTULOS_PUBLICADOS: Record<string, string> = {
   capacitado_perspectiva_genero: "Capacitação em gênero (12 meses)",
   grau_aderencia_protocolo: "Aderência aos protocolos",
   gargalos_identificados: "Gargalos identificados",
+  tem_recursos_minimos: "Todos os recursos mínimos disponíveis",
+  grau_suficiencia_estrutura: "Suficiência da estrutura da rede",
+  qtd_capacitacoes_realizadas: "Capacitações na segurança (12 meses)",
+  data_ultima_capacitacao: "Última capacitação na assistência",
   feminicidios_consumados_informados: "Feminicídios consumados (informado pela Promotoria)",
   feminicidios_tentados_informados: "Feminicídios tentados (informado pela Promotoria)",
 };

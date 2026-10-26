@@ -54,6 +54,35 @@ export function verificarInconsistencias(
       nivel: "inconsistencia",
     });
   }
+  // Suficiência declarada × recursos marcados (6 recursos avaliados)
+  const recursos = Array.isArray(r.FLX_RECURSOS_ITENS)
+    ? (r.FLX_RECURSOS_ITENS as string[]).filter((x) => x !== "nenhum")
+    : null;
+  if (recursos && v("FLX_SUFICIENCIA") === "adequada" && recursos.length < 3) {
+    out.push({
+      secao: "fluxos",
+      campos: ["FLX_SUFICIENCIA", "FLX_RECURSOS_ITENS"],
+      mensagem: `Estrutura avaliada como adequada, mas apenas ${recursos.length} de 6 recursos mínimos foram marcados.`,
+      nivel: "atencao",
+    });
+  }
+  if (recursos && v("FLX_SUFICIENCIA") === "insuficiente" && recursos.length === 6) {
+    out.push({
+      secao: "fluxos",
+      campos: ["FLX_SUFICIENCIA", "FLX_RECURSOS_ITENS"],
+      mensagem:
+        "Estrutura avaliada como insuficiente, embora todos os recursos mínimos tenham sido marcados.",
+      nivel: "atencao",
+    });
+  }
+  if (recursos && recursos.length > 0 && (r.FLX_RECURSOS_ITENS as string[]).includes("nenhum")) {
+    out.push({
+      secao: "fluxos",
+      campos: ["FLX_RECURSOS_ITENS"],
+      mensagem: "'Nenhum dos recursos' foi marcado junto com recursos disponíveis.",
+      nivel: "inconsistencia",
+    });
+  }
   if (v("FLX_FORMAL") === "nao" && v("SOC_FLUXO") === "integrado") {
     out.push({
       secao: "fluxos",

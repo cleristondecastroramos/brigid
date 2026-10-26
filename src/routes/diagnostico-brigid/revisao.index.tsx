@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   diagnosticoService,
   STATUS_DIAGNOSTICO,
+  rotuloCondicao,
   type DiagnosticoResumo,
   type StatusDiagnostico,
 } from "@/services/diagnostico-service";
@@ -206,7 +207,14 @@ function FilaRevisaoPage() {
                         </div>
                       </TableCell>
                       <TableCell>{d.promotoria_nome}</TableCell>
-                      <TableCell className="text-sm">{d.responsavel_nome ?? "—"}</TableCell>
+                      <TableCell className="text-sm">
+                        {d.responsavel_nome ?? "—"}
+                        {d.responsavel_condicao && (
+                          <div className="text-[11px] text-muted-foreground">
+                            {rotuloCondicao(d.responsavel_condicao)}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="text-xs">
                         {d.atribuicao.map(rotuloAtribuicao).join(", ")}
                       </TableCell>

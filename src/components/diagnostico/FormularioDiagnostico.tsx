@@ -32,6 +32,10 @@ import {
   diagnosticoService,
   STATUS_DIAGNOSTICO,
   STATUS_EDITAVEIS,
+  CONDICOES_RESPONSAVEL,
+  rotuloCondicao,
+  type CondicaoResponsavel,
+  type Responsavel,
   type AnexoDiagnostico,
   type DiagnosticoResumo,
   type ObservacaoDiagnostico,
@@ -102,6 +106,10 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
   const [periodo, setPeriodo] = useState("2026");
   const [atribuicao, setAtribuicao] = useState<string[]>([]);
   const [respostas, setRespostas] = useState<Respostas>({});
+  // Quem responde pela conta institucional da Promotoria neste diagnóstico
+  const [respNome, setRespNome] = useState("");
+  const [respCondicao, setRespCondicao] = useState<CondicaoResponsavel | "">("");
+  const [declaracao, setDeclaracao] = useState(false);
 
   const vinculo = vinculos.find((v) => v.promotoria_id === (diag?.promotoria_id ?? promotoriaId));
   const atribuicaoPendente = vinculo?.tipo_atribuicao === "pendente_configuracao";
@@ -126,6 +134,8 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
       setAnexos(ax);
       setAtribuicao(d.atribuicao);
       setRespostas(atual?.respostas ?? {});
+      setRespNome(d.responsavel_nome ?? "");
+      setRespCondicao(d.responsavel_condicao ?? "");
     },
     [navigate],
   );
@@ -199,8 +209,26 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
     setRespostas((prev) => ({ ...prev, [codigo]: valor }));
   };
 
+  const responsavelValido = respNome.trim().length >= 3 && respCondicao !== "";
+  const responsavel = (): Responsavel => ({
+    nome: respNome.trim(),
+    condicao: respCondicao as CondicaoResponsavel,
+  });
+  const responsavelAlterado =
+    !!diag &&
+    responsavelValido &&
+    (respNome.trim() !== (diag.responsavel_nome ?? "") ||
+      respCondicao !== (diag.responsavel_condicao ?? ""));
+
   const salvar = async (): Promise<string | null> => {
     if (!editavel) return null;
+    if (!responsavelValido) {
+      toast.error(
+        "Informe o nome e a condição do(a) Promotor(a) responsável na aba Identificação.",
+      );
+      setActiveTab("identificacao");
+      return null;
+    }
     setSalvando(true);
     try {
       let id = diag?.id;
@@ -214,6 +242,7 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
             promotoriaId,
             codigoIbge,
             periodo,
+            responsavel(),
             atribuicaoPendente ? atribuicao : undefined,
           );
         } catch (e) {
@@ -236,6 +265,7 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
         id,
         limpas,
         atribuicaoPendente && status === "em_preenchimento" ? atribuicao : undefined,
+        responsavelAlterado ? responsavel() : undefined,
       );
       toast.success("Rascunho salvo. Nenhuma informação foi publicada.");
       if (isNew) {
@@ -260,7 +290,7 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
     const id = await salvar();
     if (!id) return;
     try {
-      await diagnosticoService.enviar(id);
+      await diagnosticoService.enviar(id, responsavel());
       toast.success("Diagnóstico enviado para análise do CAOCRIM.");
       navigate({ to: "/diagnostico-brigid/meus-diagnosticos" });
     } catch (e) {
@@ -321,8 +351,8 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
     return (
       <Card>
         <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Seu usuário ainda não está vinculado a nenhuma Promotoria de Justiça. Solicite o vínculo
-          ao CAOCRIM.
+          Esta conta ainda não está vinculada a nenhuma Promotoria de Justiça. Solicite o vínculo ao
+          CAOCRIM.
         </CardContent>
       </Card>
     );
@@ -392,7 +422,7 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
               {status === "em_analise" && "Em análise pelo CAOCRIM. A edição fica bloqueada."}
               {status === "validado" && "Validado pelo CAOCRIM; publicação em processamento."}
               {status === "publicado" && "Esta versão está publicada no painel público."}
-              {!vinculo && "Somente leitura: seu usuário não está vinculado a esta Promotoria."}
+              {!vinculo && "Somente leitura: esta conta não está vinculada a esta Promotoria."}
             </div>
             {status === "publicado" && vinculo && (
               <Button size="sm" variant="outline" onClick={novaVersao}>
@@ -565,6 +595,46 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
                       </div>
                     )}
 
+                  {(isNew ? promotoriaId : diag) && (
+                    <div className="space-y-3 rounded-md border bg-background p-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground">
+                          Promotor(a) de Justiça responsável{" "}
+                          <span className="text-destructive">*</span>
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          O acesso é feito pela conta institucional da Promotoria. Identifique quem
+                          responde por este diagnóstico; em caso de substituição ou mudança de
+                          titular, atualize estes dados antes do envio.
+                        </p>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+                        <Input
+                          placeholder="Nome completo"
+                          value={respNome}
+                          disabled={!editavel}
+                          onChange={(e) => setRespNome(e.target.value)}
+                        />
+                        <Select
+                          value={respCondicao}
+                          disabled={!editavel}
+                          onValueChange={(v) => setRespCondicao(v as CondicaoResponsavel)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Condição" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CONDICOES_RESPONSAVEL.map((c) => (
+                              <SelectItem key={c.value} value={c.value}>
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
                   {(diag || codigoIbge) && (
                     <div className="space-y-2 rounded-md border bg-background p-4 text-sm">
                       <h4 className="mb-3 font-semibold text-foreground">
@@ -594,7 +664,7 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
                         </div>
                         <div>
                           <strong className="text-foreground">Responsável:</strong>{" "}
-                          {diag?.responsavel_nome ?? vinculo?.nome_responsavel}
+                          {respNome ? `${respNome} (${rotuloCondicao(respCondicao)})` : "—"}
                         </div>
                       </div>
                     </div>
@@ -674,7 +744,13 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
         )}
       </CardFooter>
 
-      <AlertDialog open={confirmarEnvio} onOpenChange={setConfirmarEnvio}>
+      <AlertDialog
+        open={confirmarEnvio}
+        onOpenChange={(o) => {
+          setConfirmarEnvio(o);
+          if (!o) setDeclaracao(false);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Enviar diagnóstico para análise?</AlertDialogTitle>
@@ -683,9 +759,49 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
               dados: as informações só passam ao painel público após validação expressa do CAOCRIM.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="grid gap-2 sm:grid-cols-[2fr_1fr]">
+              <Input
+                placeholder="Nome do(a) Promotor(a) responsável"
+                value={respNome}
+                onChange={(e) => setRespNome(e.target.value)}
+              />
+              <Select
+                value={respCondicao}
+                onValueChange={(v) => setRespCondicao(v as CondicaoResponsavel)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Condição" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONDICOES_RESPONSAVEL.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="flex items-start gap-2 rounded-md border p-3">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4"
+                checked={declaracao}
+                onChange={(e) => setDeclaracao(e.target.checked)}
+              />
+              <span>
+                Declaro que sou {respNome.trim() || "[nome]"},{" "}
+                {respCondicao ? rotuloCondicao(respCondicao).toLowerCase() : "[condição]"} da{" "}
+                {diag?.promotoria_nome ?? vinculo?.nome}, e que as informações deste diagnóstico
+                foram revisadas por mim.
+              </span>
+            </label>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={enviar}>Confirmar envio</AlertDialogAction>
+            <AlertDialogAction onClick={enviar} disabled={!declaracao || !responsavelValido}>
+              Confirmar envio
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
