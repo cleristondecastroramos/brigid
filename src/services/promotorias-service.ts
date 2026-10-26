@@ -1,75 +1,113 @@
-import { promotorias, promotoriaMunicipios, Promotoria, PromotoriaMunicipio } from "@/data/promotorias-seed";
+import { supabase } from "@/lib/supabase";
 
+export interface Promotoria {
+  id: string;
+  nome: string;
+  nome_normalizado?: string;
+  comarca_sede: string;
+  tipo_atribuicao: string;
+}
+
+export interface PromotoriaMunicipio {
+  promotoria_id: string;
+  codigo_ibge: string;
+  municipio: string;
+  comarca: string;
+  polo_regional: string;
+}
+
+export interface Vinculo {
+  promotoria_id: string;
+  nome: string;
+  comarca_sede: string;
+  tipo_atribuicao: string;
+  nome_responsavel: string;
+}
+
+export interface VinculoAdmin {
+  id: number;
+  email: string;
+  promotoria_id: string;
+  promotoria_nome: string;
+  comarca_sede: string;
+  nome_responsavel: string;
+  ativo: boolean;
+  created_at: string;
+}
+
+function erro(e: { message: string } | null) {
+  if (e) throw new Error(e.message);
+}
+
+// Promotorias e abrangência territorial lidas do banco (promotorias_justica,
+// promotoria_municipios). A atribuição funcional é alterada só pelo CAOCRIM (RLS).
 class PromotoriasService {
-  private readonly OVERRIDES_KEY = "brigid_promotorias_overrides";
-
-  private getOverrides(): Record<string, Partial<Promotoria>> {
-    try {
-      const data = localStorage.getItem(this.OVERRIDES_KEY);
-      return data ? JSON.parse(data) : {};
-    } catch {
-      return {};
-    }
-  }
-
-  private saveOverrides(overrides: Record<string, Partial<Promotoria>>) {
-    localStorage.setItem(this.OVERRIDES_KEY, JSON.stringify(overrides));
-  }
-
-  // Retorna a lista mesclada (Seed + LocalStorage)
-  private getPromotoriasList(): Promotoria[] {
-    const overrides = this.getOverrides();
-    return promotorias.map(p => ({
-      ...p,
-      ...overrides[p.id]
-    }));
-  }
-
   async listarPromotorias(): Promise<Promotoria[]> {
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simulando delay
-    return this.getPromotoriasList().sort((a, b) => a.nome.localeCompare(b.nome));
-  }
-
-  async buscarPromotoriaPorId(id: string): Promise<Promotoria | undefined> {
-    const list = this.getPromotoriasList();
-    return list.find(p => p.id === id);
+    const { data, error } = await supabase
+      .from("promotorias_justica")
+      .select("id, nome, nome_normalizado, comarca_sede, tipo_atribuicao")
+      .eq("ativa", true)
+      .order("nome");
+    erro(error);
+    return data as Promotoria[];
   }
 
   async listarMunicipiosDaPromotoria(promotoriaId: string): Promise<PromotoriaMunicipio[]> {
-    return promotoriaMunicipios
-      .filter(pm => pm.promotoria_id === promotoriaId)
-      .sort((a, b) => a.municipio.localeCompare(b.municipio));
+    const { data, error } = await supabase
+      .from("promotoria_municipios")
+      .select("promotoria_id, codigo_ibge, municipio, comarca, municipios(polo_regional)")
+      .eq("promotoria_id", promotoriaId)
+      .eq("ativo", true)
+      .order("municipio");
+    erro(error);
+    // Relação muitos-para-um: o PostgREST devolve objeto (a inferência sem tipos gerados supõe lista)
+    return (
+      data as unknown as (Omit<PromotoriaMunicipio, "polo_regional"> & {
+        municipios: { polo_regional: string } | null;
+      })[]
+    ).map(({ municipios, ...m }) => ({ ...m, polo_regional: municipios?.polo_regional ?? "" }));
   }
 
-  async buscarDadosTerritoriais(codigoIbge: string): Promise<PromotoriaMunicipio | undefined> {
-    return promotoriaMunicipios.find(pm => pm.codigo_ibge === codigoIbge);
+  async meusVinculos(): Promise<Vinculo[]> {
+    const { data, error } = await supabase.rpc("meus_vinculos");
+    erro(error);
+    return data as Vinculo[];
   }
 
-  // --- Funções de Administração --- //
+  // --- CAOCRIM ---
 
   async atualizarAtribuicao(id: string, tipo_atribuicao: string): Promise<void> {
-    const overrides = this.getOverrides();
-    overrides[id] = { ...overrides[id], tipo_atribuicao };
-    this.saveOverrides(overrides);
+    const { data, error } = await supabase
+      .from("promotorias_justica")
+      .update({ tipo_atribuicao, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select("id");
+    erro(error);
+    if (!data || data.length === 0) throw new Error("Sem permissão para alterar a atribuição.");
   }
 
-  // Retorna todos os dados para backup JSON
-  async exportarBackupJson(): Promise<string> {
-    const list = this.getPromotoriasList();
-    return JSON.stringify(list, null, 2);
+  async listarVinculos(): Promise<VinculoAdmin[]> {
+    const { data, error } = await supabase.rpc("admin_listar_vinculos");
+    erro(error);
+    return data as VinculoAdmin[];
   }
 
-  // Retorna os UPDATEs SQL
-  async exportarScriptSql(): Promise<string> {
-    const list = this.getPromotoriasList();
-    let sql = "-- Script gerado para atualização de atribuições das Promotorias\n";
-    sql += "-- Executar no banco de dados para consolidar as escolhas feitas no painel\n\n";
-
-    list.forEach(p => {
-      sql += `UPDATE public.promotorias_justica SET tipo_atribuicao = '${p.tipo_atribuicao}', updated_at = NOW() WHERE id = '${p.id}';\n`;
+  async vincularUsuario(email: string, promotoriaId: string, nome: string) {
+    const { error } = await supabase.rpc("admin_vincular_usuario", {
+      p_email: email,
+      p_promotoria_id: promotoriaId,
+      p_nome: nome,
     });
+    erro(error);
+  }
 
-    return sql;
+  async desativarVinculo(id: number) {
+    const { error } = await supabase.rpc("admin_desativar_vinculo", { p_vinculo_id: id });
+    erro(error);
+  }
+
+  async exportarBackupJson(): Promise<string> {
+    return JSON.stringify(await this.listarPromotorias(), null, 2);
   }
 }
 

@@ -50,6 +50,8 @@ import {
   LabelList,
 } from "recharts";
 import type { Municipio } from "@/lib/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 
@@ -1469,7 +1471,99 @@ function MunicipioNetworkSection({ m }: { m: Municipio }) {
           </CardContent>
         </Card>
       </div>
+
+      <DiagnosticoPublicadoCard m={m} />
     </section>
+  );
+}
+
+// Dados do Diagnóstico BRIGID aprovados pelo CAOCRIM (somente a lista pública de campos)
+const ROTULOS_PUBLICADOS: Record<string, string> = {
+  opm_possui: "OPM em funcionamento regular",
+  opm_status_politicas_publicas: "OPM com capacidade integral de execução",
+  creas_possui: "CREAS em funcionamento regular",
+  creas_status: "Situação do CREAS",
+  tem_fluxo_formal: "Fluxo formal de atendimento",
+  tem_protocolo_local_regional: "Protocolo local/regional vigente",
+  tem_sala_especializada: "Sala especializada adequada",
+  tem_atendimento_psicossocial: "Atendimento psicossocial regular",
+  tem_protocolo_assistencial: "Protocolo da assistência social vigente",
+  tem_fluxo_encaminhamento: "Fluxo de encaminhamento integrado",
+  articulacao_creas_rede: "Articulação formal e regular com o CREAS",
+  tem_equipe_minima_creas: "Equipe mínima do CREAS",
+  profissionais_capacitados: "Profissionais capacitados",
+  tem_protocolo_investigacao: "Protocolo de investigação aplicado",
+  tem_protocolo_pericial: "Protocolo pericial aplicado",
+  capacitado_perspectiva_genero: "Capacitação em gênero (12 meses)",
+  grau_aderencia_protocolo: "Aderência aos protocolos",
+  gargalos_identificados: "Gargalos identificados",
+  feminicidios_consumados_informados: "Feminicídios consumados (informado pela Promotoria)",
+  feminicidios_tentados_informados: "Feminicídios tentados (informado pela Promotoria)",
+};
+
+const ROTULOS_CONFIABILIDADE: Record<string, string> = {
+  documento: "confirmado por documento",
+  multiplas_fontes: "mais de uma fonte",
+  declaratoria: "declaratória",
+  estimativa: "estimativa",
+  pendente: "pendente de validação",
+  nao_sabe: "não informada",
+};
+
+interface DadoPublicado {
+  campo_destino: string;
+  periodo_referencia: string;
+  valor: string | null;
+  confiabilidade: string | null;
+  carater: "preliminar" | "definitivo";
+  publicado_em: string;
+}
+
+function DiagnosticoPublicadoCard({ m }: { m: Municipio }) {
+  const { data: dados = [] } = useQuery({
+    queryKey: ["municipio_dados_publicados", m.codigo_ibge],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("municipio_dados_publicados")
+        .select("campo_destino, periodo_referencia, valor, confiabilidade, carater, publicado_em")
+        .eq("codigo_ibge", m.codigo_ibge)
+        .not("campo_destino", "like", "fonte_base_%")
+        .order("periodo_referencia", { ascending: false });
+      // Sem a migration do fluxo de diagnóstico a tabela não existe: o quadro fica oculto
+      if (error) return [];
+      return data as DadoPublicado[];
+    },
+  });
+
+  if (dados.length === 0) return null;
+
+  return (
+    <Card className="shadow-sm border-border/60">
+      <CardHeader className="pb-3 border-b border-border/50">
+        <CardTitle className="text-base">Diagnóstico BRIGID — dados validados pelo CAOCRIM</CardTitle>
+        <span className="text-xs text-muted-foreground">
+          Informações prestadas pelas Promotorias de Justiça e aprovadas para publicação. Dados de ciclo aberto
+          permanecem preliminares; contagens informadas não entram no score de risco.
+        </span>
+      </CardHeader>
+      <CardContent className="pt-4 space-y-3">
+        {dados.map((d) => (
+          <Row
+            key={`${d.campo_destino}-${d.periodo_referencia}`}
+            k={ROTULOS_PUBLICADOS[d.campo_destino] ?? d.campo_destino}
+            v={
+              <span className="text-right">
+                <span className="font-medium">{d.valor ?? "—"}</span>
+                <span className="block text-[11px] text-muted-foreground">
+                  {d.periodo_referencia} · {d.carater}
+                  {d.confiabilidade ? ` · ${ROTULOS_CONFIABILIDADE[d.confiabilidade] ?? d.confiabilidade}` : ""}
+                </span>
+              </span>
+            }
+          />
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 

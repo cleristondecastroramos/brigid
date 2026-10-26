@@ -54,6 +54,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ChartHelper } from "@/components/chart-helper";
+import { SimNaoIcone, SimNaoTexto } from "@/components/sim-nao";
+import type { Municipio } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
@@ -323,6 +325,11 @@ function DiagnosticoPanel() {
         totalProfCapacitados: 0,
       };
 
+    // Percentual de municípios com SIM; quando nenhum município do recorte tem o campo
+    // consolidado, exibe "Sem informação" em vez de 0%.
+    const pctSim = (campo: keyof Municipio, sim: number) =>
+      filteredMunicipios.some((m) => m[campo] === "SIM" || m[campo] === "NAO") ? pct(sim, count) : "Sem informação";
+
     const sumIER = filteredMunicipios.reduce((acc, m) => acc + (m.ier_score ?? 0), 0);
     const sumIMF = filteredMunicipios.reduce((acc, m) => acc + (m.imf_score ?? 0), 0);
     const sumIQT = filteredMunicipios.reduce((acc, m) => acc + (m.iqt_score ?? 0), 0);
@@ -374,25 +381,25 @@ function DiagnosticoPanel() {
       ierMedio: Number((sumIER / count).toFixed(1)),
       imfMedio: Number((sumIMF / count).toFixed(1)),
       iqtMedio: Number((sumIQT / count).toFixed(1)),
-      pctFluxoFormal: pct(fluxos, count),
-      pctSalaEsp: pct(salaEsp, count),
-      pctRecursosMin: pct(recursos, count),
-      pctAtendPsicossocial: pct(psico, count),
-      pctAtendJuridico: pct(jur, count),
-      pctArticulacaoRede: pct(articulacao, count),
+      pctFluxoFormal: pctSim("tem_fluxo_formal", fluxos),
+      pctSalaEsp: pctSim("tem_sala_especializada", salaEsp),
+      pctRecursosMin: pctSim("tem_recursos_minimos", recursos),
+      pctAtendPsicossocial: pctSim("tem_atendimento_psicossocial", psico),
+      pctAtendJuridico: pctSim("tem_atendimento_juridico", jur),
+      pctArticulacaoRede: pctSim("tem_articulacao_rede", articulacao),
 
       totalFeminicidiosConsumados: femCons,
       totalFeminicidiosTentados: femTent,
-      pctProtInvestigacao: pct(protInv, count),
-      pctProtPericial: pct(protPer, count),
-      pctCapacitadoPersp: pct(capPersp, count),
-      pctTreinamentoFem: pct(treinFem, count),
+      pctProtInvestigacao: pctSim("tem_protocolo_investigacao", protInv),
+      pctProtPericial: pctSim("tem_protocolo_pericial", protPer),
+      pctCapacitadoPersp: pctSim("capacitado_perspectiva_genero", capPersp),
+      pctTreinamentoFem: pctSim("treinamento_especifico_feminicidio", treinFem),
       totalCapacitacoes: totalCaps,
 
-      pctProtAssistencial: pct(protAssist, count),
-      pctFluxoEncam: pct(fluxoEncam, count),
-      pctArticCreasRede: pct(articCreas, count),
-      pctEquipeMinimaCreas: pct(equipeMinCreas, count),
+      pctProtAssistencial: pctSim("tem_protocolo_assistencial", protAssist),
+      pctFluxoEncam: pctSim("tem_fluxo_encaminhamento", fluxoEncam),
+      pctArticCreasRede: pctSim("articulacao_creas_rede", articCreas),
+      pctEquipeMinimaCreas: pctSim("tem_equipe_minima_creas", equipeMinCreas),
       totalProfCapacitados: profCaps,
     };
   }, [filteredMunicipios]);
@@ -1092,7 +1099,7 @@ function DiagnosticoPanel() {
                       <span className="font-bold text-primary">{stats.pctFluxoFormal}</span>
                     </div>
                     <Progress
-                      value={parseFloat(stats.pctFluxoFormal)}
+                      value={parseFloat(stats.pctFluxoFormal) || 0}
                       className="h-5 md:h-6 bg-muted/60 border border-border/50"
                     />
                   </div>
@@ -1104,7 +1111,7 @@ function DiagnosticoPanel() {
                       <span className="font-bold text-primary">{stats.pctSalaEsp}</span>
                     </div>
                     <Progress
-                      value={parseFloat(stats.pctSalaEsp)}
+                      value={parseFloat(stats.pctSalaEsp) || 0}
                       className="h-5 md:h-6 bg-muted/60 border border-border/50"
                     />
                   </div>
@@ -1116,7 +1123,7 @@ function DiagnosticoPanel() {
                       <span className="font-bold text-primary">{stats.pctRecursosMin}</span>
                     </div>
                     <Progress
-                      value={parseFloat(stats.pctRecursosMin)}
+                      value={parseFloat(stats.pctRecursosMin) || 0}
                       className="h-5 md:h-6 bg-muted/60 border border-border/50"
                     />
                   </div>
@@ -1128,7 +1135,7 @@ function DiagnosticoPanel() {
                       <span className="font-bold text-primary">{stats.pctAtendPsicossocial}</span>
                     </div>
                     <Progress
-                      value={parseFloat(stats.pctAtendPsicossocial)}
+                      value={parseFloat(stats.pctAtendPsicossocial) || 0}
                       className="h-5 md:h-6 bg-muted/60 border border-border/50"
                     />
                   </div>
@@ -1140,7 +1147,7 @@ function DiagnosticoPanel() {
                       <span className="font-bold text-primary">{stats.pctAtendJuridico}</span>
                     </div>
                     <Progress
-                      value={parseFloat(stats.pctAtendJuridico)}
+                      value={parseFloat(stats.pctAtendJuridico) || 0}
                       className="h-5 md:h-6 bg-muted/60 border border-border/50"
                     />
                   </div>
@@ -1152,7 +1159,7 @@ function DiagnosticoPanel() {
                       <span className="font-bold text-primary">{stats.pctArticulacaoRede}</span>
                     </div>
                     <Progress
-                      value={parseFloat(stats.pctArticulacaoRede)}
+                      value={parseFloat(stats.pctArticulacaoRede) || 0}
                       className="h-5 md:h-6 bg-muted/60 border border-border/50"
                     />
                   </div>
@@ -1592,74 +1599,34 @@ function DiagnosticoPanel() {
                             {m.comarca}
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_sala_especializada === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_sala_especializada} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_recursos_minimos === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_recursos_minimos} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_atendimento_psicossocial === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_atendimento_psicossocial} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_atendimento_juridico === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_atendimento_juridico} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_fluxo_formal === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_fluxo_formal} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_protocolo_local_regional === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_protocolo_local_regional} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_articulacao_rede === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_articulacao_rede} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_equipe_multiprofissional === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_equipe_multiprofissional} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.capacitado_perspectiva_genero === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.capacitado_perspectiva_genero} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.treinamento_especifico_feminicidio === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.treinamento_especifico_feminicidio} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
                             <span
@@ -1669,10 +1636,12 @@ function DiagnosticoPanel() {
                                   ? "bg-success/15 text-[color:var(--color-success)]"
                                   : m.grau_suficiencia_estrutura === "PARCIAL"
                                     ? "bg-warning/15 text-warning-foreground"
-                                    : "bg-destructive/15 text-destructive",
+                                    : m.grau_suficiencia_estrutura
+                                      ? "bg-destructive/15 text-destructive"
+                                      : "text-muted-foreground font-normal",
                               )}
                             >
-                              {m.grau_suficiencia_estrutura}
+                              {m.grau_suficiencia_estrutura ?? "Sem informação"}
                             </span>
                           </TableCell>
                           <TableCell className="text-right py-2 font-bold text-base">
@@ -2033,43 +2002,19 @@ function DiagnosticoPanel() {
                           {m.municipio}
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.tem_protocolo_investigacao === "SIM" ? (
-                            <span className="text-base font-bold text-[color:var(--color-success)]">
-                              SIM
-                            </span>
-                          ) : (
-                            <span className="text-base text-destructive">NÃO</span>
-                          )}
+                          <SimNaoTexto valor={m.tem_protocolo_investigacao} />
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.tem_protocolo_pericial === "SIM" ? (
-                            <span className="text-base font-bold text-[color:var(--color-success)]">
-                              SIM
-                            </span>
-                          ) : (
-                            <span className="text-base text-destructive">NÃO</span>
-                          )}
+                          <SimNaoTexto valor={m.tem_protocolo_pericial} />
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.capacitado_perspectiva_genero === "SIM" ? (
-                            <span className="text-base font-bold text-[color:var(--color-success)]">
-                              SIM
-                            </span>
-                          ) : (
-                            <span className="text-base text-destructive">NÃO</span>
-                          )}
+                          <SimNaoTexto valor={m.capacitado_perspectiva_genero} />
                         </TableCell>
                         <TableCell className="py-2 text-center">
-                          {m.treinamento_especifico_feminicidio === "SIM" ? (
-                            <span className="text-base font-bold text-[color:var(--color-success)]">
-                              SIM
-                            </span>
-                          ) : (
-                            <span className="text-base text-destructive">NÃO</span>
-                          )}
+                          <SimNaoTexto valor={m.treinamento_especifico_feminicidio} />
                         </TableCell>
                         <TableCell className="py-2 text-center text-base font-medium">
-                          {m.qtd_capacitacoes_realizadas}
+                          {m.qtd_capacitacoes_realizadas ?? "—"}
                         </TableCell>
                         <TableCell className="py-2 text-center">
                           <span
@@ -2079,10 +2024,12 @@ function DiagnosticoPanel() {
                                 ? "bg-success/15 text-[color:var(--color-success)]"
                                 : m.grau_aderencia_protocolo === "MEDIO"
                                   ? "bg-warning/15 text-warning-foreground"
-                                  : "bg-destructive/15 text-destructive",
+                                  : m.grau_aderencia_protocolo
+                                    ? "bg-destructive/15 text-destructive"
+                                    : "text-muted-foreground font-normal shadow-none",
                             )}
                           >
-                            {m.grau_aderencia_protocolo}
+                            {m.grau_aderencia_protocolo ?? "Sem informação"}
                           </span>
                         </TableCell>
                       </TableRow>
@@ -2347,21 +2294,13 @@ function DiagnosticoPanel() {
                             )}
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.tem_equipe_minima_creas === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.tem_equipe_minima_creas} />
                           </TableCell>
                           <TableCell className="py-2 text-center">
-                            {m.articulacao_creas_rede === "SIM" ? (
-                              <CheckCircle className="h-4 w-4 text-[color:var(--color-success)] mx-auto" />
-                            ) : (
-                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                            )}
+                            <SimNaoIcone valor={m.articulacao_creas_rede} />
                           </TableCell>
                           <TableCell className="py-2 text-center text-base font-bold">
-                            {m.profissionais_capacitados}
+                            {m.profissionais_capacitados ?? "—"}
                           </TableCell>
                           <TableCell className="py-2 text-base text-muted-foreground">
                             {m.data_ultima_capacitacao

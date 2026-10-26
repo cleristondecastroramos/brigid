@@ -14,12 +14,10 @@ function FormularioDiagnosticoPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Continuar Diagnóstico
         </h1>
-        <p className="text-muted-foreground">
-          ID: {diagnosticoId}
-        </p>
+        <p className="text-muted-foreground">Identificador: {diagnosticoId}</p>
       </div>
 
-      <FormularioDiagnostico isNew={false} diagnosticoId={diagnosticoId} />
+      <FormularioDiagnostico diagnosticoId={diagnosticoId} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PlusCircle, History, List, ArrowLeft } from "lucide-react";
+import { PlusCircle, History, List, ArrowLeft, ClipboardCheck, Settings } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -8,6 +9,7 @@ export const Route = createFileRoute("/diagnostico-brigid/")({
 });
 
 function DiagnosticoBrigidPage() {
+  const { userRole } = useApp();
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col gap-2 mb-6">
@@ -23,8 +25,8 @@ function DiagnosticoBrigidPage() {
           </h1>
         </div>
         <p className="text-muted-foreground mt-1">
-          Coleta padronizada e rastreável de informações sobre a rede de proteção, políticas públicas, 
-          segurança e violência de gênero nos municípios piauienses.
+          Coleta padronizada e rastreável de informações sobre a rede de proteção, políticas
+          públicas, segurança e violência de gênero nos municípios piauienses.
         </p>
       </div>
 
@@ -78,6 +80,41 @@ function DiagnosticoBrigidPage() {
         </Link>
       </div>
 
+      {userRole === "admin" && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <Link to="/diagnostico-brigid/revisao" className="block group">
+            <Card className="h-full border-amber-500/40 bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <div className="flex flex-col gap-3">
+                  <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-600 w-fit group-hover:scale-110 transition-all duration-300">
+                    <ClipboardCheck className="w-7 h-7" />
+                  </div>
+                  <CardTitle className="text-xl font-bold mt-2">Revisão CAOCRIM</CardTitle>
+                </div>
+                <CardDescription className="text-sm leading-relaxed mt-2">
+                  Analisar diagnósticos enviados, devolver para correção ou validar e publicar.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+          <Link to="/diagnostico-brigid/administracao" className="block group">
+            <Card className="h-full border-border bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <div className="flex flex-col gap-3">
+                  <div className="p-3.5 rounded-xl bg-violet-500/10 text-violet-600 w-fit group-hover:scale-110 transition-all duration-300">
+                    <Settings className="w-7 h-7" />
+                  </div>
+                  <CardTitle className="text-xl font-bold mt-2">Promotorias e usuários</CardTitle>
+                </div>
+                <CardDescription className="text-sm leading-relaxed mt-2">
+                  Configurar atribuições funcionais e vincular Promotores às suas Promotorias.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+        </div>
+      )}
+
       <Card className="border-border/60 bg-muted/20">
         <CardHeader>
           <CardTitle className="text-sm uppercase tracking-widest text-muted-foreground">
@@ -86,13 +123,22 @@ function DiagnosticoBrigidPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            • As respostas fornecidas alimentam a base oficial do Projeto Feminicídio Zero.
+            • Salvar, concluir ou enviar o diagnóstico <strong>não publica dados</strong>. As
+            respostas só passam a integrar a base consolidada e o painel público após análise e{" "}
+            <strong>validação expressa do CAOCRIM</strong>.
           </p>
           <p>
-            • Os blocos do formulário são disponibilizados automaticamente com base na <strong>atribuição da sua Promotoria</strong> (Cível/Cidadania, Criminal ou Única).
+            • Os blocos do formulário são disponibilizados automaticamente com base na{" "}
+            <strong>atribuição da sua Promotoria</strong> (Cível/Cidadania, Criminal, Cumulativa ou
+            Única).
           </p>
           <p>
-            • Dados referentes ao ciclo de 2026 são considerados <strong>preliminares</strong> até a validação oficial do CAOCRIM.
+            • Observações, contatos, descrições livres e anexos são de uso interno e não são
+            publicados.
+          </p>
+          <p>
+            • Dados referentes ao ciclo de 2026 são considerados <strong>preliminares</strong> até a
+            validação oficial do CAOCRIM.
           </p>
         </CardContent>
       </Card>

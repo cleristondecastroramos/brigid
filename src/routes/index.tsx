@@ -37,16 +37,17 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-  const { login } = useApp();
+  const { enterPublic, loginAdmin } = useApp();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleAccessPublic = () => {
-    login("public");
+    enterPublic();
     toast.success("Acesso ao painel público carregado com sucesso.");
     navigate({ to: "/apresentacao-do-sistema" });
   };
@@ -56,7 +57,7 @@ function LandingPage() {
     navigate({ to: "/diagnostico-brigid" });
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
@@ -65,17 +66,21 @@ function LandingPage() {
       return;
     }
 
-    if (email.toLowerCase().trim() === "caocrim@mppi.mp.br") {
-      login("admin");
-      toast.success("Acesso de Administrador autorizado com sucesso!");
-      setOpenDialog(false);
-      setEmail("");
-      setPassword("");
-      navigate({ to: "/apresentacao-do-sistema" });
-    } else {
-      setErrorMsg("Credenciais de administrador inválidas. Verifique os dados informados.");
+    setSubmitting(true);
+    const { error } = await loginAdmin(email, password);
+    setSubmitting(false);
+
+    if (error) {
+      setErrorMsg(error);
       toast.error("Falha na autenticação administrativa.");
+      return;
     }
+
+    toast.success("Acesso de Administrador autorizado com sucesso!");
+    setOpenDialog(false);
+    setEmail("");
+    setPassword("");
+    navigate({ to: "/apresentacao-do-sistema" });
   };
 
   return (
@@ -222,8 +227,8 @@ function LandingPage() {
                       >
                         Cancelar
                       </Button>
-                      <Button type="submit" variant="default">
-                        Confirmar
+                      <Button type="submit" variant="default" disabled={submitting}>
+                        {submitting ? "Verificando..." : "Confirmar"}
                         <ArrowRight className="ml-2 h-3.5 w-3.5" />
                       </Button>
                     </DialogFooter>

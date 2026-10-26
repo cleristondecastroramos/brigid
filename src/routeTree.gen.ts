@@ -31,6 +31,8 @@ import { Route as DiagnosticoBrigidMeusDiagnosticosRouteImport } from './routes/
 import { Route as DiagnosticoBrigidBaseRouteImport } from './routes/diagnostico-brigid/base'
 import { Route as DiagnosticoBrigidAdministracaoRouteImport } from './routes/diagnostico-brigid/administracao'
 import { Route as DiagnosticoBrigidAcompanhamentoRouteImport } from './routes/diagnostico-brigid/acompanhamento'
+import { Route as DiagnosticoBrigidRevisaoIndexRouteImport } from './routes/diagnostico-brigid/revisao.index'
+import { Route as DiagnosticoBrigidRevisaoDiagnosticoIdRouteImport } from './routes/diagnostico-brigid/revisao.$diagnosticoId'
 import { Route as DiagnosticoBrigidFormularioDiagnosticoIdRouteImport } from './routes/diagnostico-brigid/formulario.$diagnosticoId'
 
 const TerritorioRoute = TerritorioRouteImport.update({
@@ -146,6 +148,18 @@ const DiagnosticoBrigidAcompanhamentoRoute =
     path: '/diagnostico-brigid/acompanhamento',
     getParentRoute: () => rootRouteImport,
   } as any)
+const DiagnosticoBrigidRevisaoIndexRoute =
+  DiagnosticoBrigidRevisaoIndexRouteImport.update({
+    id: '/diagnostico-brigid/revisao/',
+    path: '/diagnostico-brigid/revisao/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DiagnosticoBrigidRevisaoDiagnosticoIdRoute =
+  DiagnosticoBrigidRevisaoDiagnosticoIdRouteImport.update({
+    id: '/diagnostico-brigid/revisao/$diagnosticoId',
+    path: '/diagnostico-brigid/revisao/$diagnosticoId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DiagnosticoBrigidFormularioDiagnosticoIdRoute =
   DiagnosticoBrigidFormularioDiagnosticoIdRouteImport.update({
     id: '/diagnostico-brigid/formulario/$diagnosticoId',
@@ -177,6 +191,8 @@ export interface FileRoutesByFullPath {
   '/diagnostico-brigid/': typeof DiagnosticoBrigidIndexRoute
   '/municipios/': typeof MunicipiosIndexRoute
   '/diagnostico-brigid/formulario/$diagnosticoId': typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
+  '/diagnostico-brigid/revisao/$diagnosticoId': typeof DiagnosticoBrigidRevisaoDiagnosticoIdRoute
+  '/diagnostico-brigid/revisao/': typeof DiagnosticoBrigidRevisaoIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -202,6 +218,8 @@ export interface FileRoutesByTo {
   '/diagnostico-brigid': typeof DiagnosticoBrigidIndexRoute
   '/municipios': typeof MunicipiosIndexRoute
   '/diagnostico-brigid/formulario/$diagnosticoId': typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
+  '/diagnostico-brigid/revisao/$diagnosticoId': typeof DiagnosticoBrigidRevisaoDiagnosticoIdRoute
+  '/diagnostico-brigid/revisao': typeof DiagnosticoBrigidRevisaoIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -228,6 +246,8 @@ export interface FileRoutesById {
   '/diagnostico-brigid/': typeof DiagnosticoBrigidIndexRoute
   '/municipios/': typeof MunicipiosIndexRoute
   '/diagnostico-brigid/formulario/$diagnosticoId': typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
+  '/diagnostico-brigid/revisao/$diagnosticoId': typeof DiagnosticoBrigidRevisaoDiagnosticoIdRoute
+  '/diagnostico-brigid/revisao/': typeof DiagnosticoBrigidRevisaoIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -255,6 +275,8 @@ export interface FileRouteTypes {
     | '/diagnostico-brigid/'
     | '/municipios/'
     | '/diagnostico-brigid/formulario/$diagnosticoId'
+    | '/diagnostico-brigid/revisao/$diagnosticoId'
+    | '/diagnostico-brigid/revisao/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -280,6 +302,8 @@ export interface FileRouteTypes {
     | '/diagnostico-brigid'
     | '/municipios'
     | '/diagnostico-brigid/formulario/$diagnosticoId'
+    | '/diagnostico-brigid/revisao/$diagnosticoId'
+    | '/diagnostico-brigid/revisao'
   id:
     | '__root__'
     | '/'
@@ -305,6 +329,8 @@ export interface FileRouteTypes {
     | '/diagnostico-brigid/'
     | '/municipios/'
     | '/diagnostico-brigid/formulario/$diagnosticoId'
+    | '/diagnostico-brigid/revisao/$diagnosticoId'
+    | '/diagnostico-brigid/revisao/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -331,6 +357,8 @@ export interface RootRouteChildren {
   DiagnosticoBrigidIndexRoute: typeof DiagnosticoBrigidIndexRoute
   MunicipiosIndexRoute: typeof MunicipiosIndexRoute
   DiagnosticoBrigidFormularioDiagnosticoIdRoute: typeof DiagnosticoBrigidFormularioDiagnosticoIdRoute
+  DiagnosticoBrigidRevisaoDiagnosticoIdRoute: typeof DiagnosticoBrigidRevisaoDiagnosticoIdRoute
+  DiagnosticoBrigidRevisaoIndexRoute: typeof DiagnosticoBrigidRevisaoIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -489,6 +517,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagnosticoBrigidAcompanhamentoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/diagnostico-brigid/revisao/': {
+      id: '/diagnostico-brigid/revisao/'
+      path: '/diagnostico-brigid/revisao'
+      fullPath: '/diagnostico-brigid/revisao/'
+      preLoaderRoute: typeof DiagnosticoBrigidRevisaoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-brigid/revisao/$diagnosticoId': {
+      id: '/diagnostico-brigid/revisao/$diagnosticoId'
+      path: '/diagnostico-brigid/revisao/$diagnosticoId'
+      fullPath: '/diagnostico-brigid/revisao/$diagnosticoId'
+      preLoaderRoute: typeof DiagnosticoBrigidRevisaoDiagnosticoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/diagnostico-brigid/formulario/$diagnosticoId': {
       id: '/diagnostico-brigid/formulario/$diagnosticoId'
       path: '/diagnostico-brigid/formulario/$diagnosticoId'
@@ -525,6 +567,9 @@ const rootRouteChildren: RootRouteChildren = {
   MunicipiosIndexRoute: MunicipiosIndexRoute,
   DiagnosticoBrigidFormularioDiagnosticoIdRoute:
     DiagnosticoBrigidFormularioDiagnosticoIdRoute,
+  DiagnosticoBrigidRevisaoDiagnosticoIdRoute:
+    DiagnosticoBrigidRevisaoDiagnosticoIdRoute,
+  DiagnosticoBrigidRevisaoIndexRoute: DiagnosticoBrigidRevisaoIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

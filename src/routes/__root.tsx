@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import logo from "@/assets/logo-mppi.png";
 import { AppProvider, useApp } from "@/context/AppContext";
 import AdminAccessDialog from "@/components/ui/admin-access-dialog";
+import { AcessoDiagnostico } from "@/components/diagnostico/AcessoDiagnostico";
 
 function NotFoundComponent() {
   return (
@@ -138,15 +139,17 @@ function RootComponent() {
 
 function RootInner() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { userRole } = useApp();
+  const { userRole, authLoading, isAuthenticated } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Aguarda a restauração da sessão para não expulsar um admin já autenticado ao recarregar
+    if (authLoading) return;
     if ((pathname === "/pesos" || pathname === "/base") && userRole !== "admin") {
       navigate({ to: "/apresentacao-do-sistema" });
       toast.warning("Acesso restrito. Autentique-se como administrador para acessar essa área.");
     }
-  }, [pathname, userRole, navigate]);
+  }, [pathname, userRole, authLoading, navigate]);
 
   const isLandingPage = pathname === "/";
   const isDiagnosticoBrigid = pathname.startsWith("/diagnostico-brigid");
@@ -159,7 +162,15 @@ function RootInner() {
             <div className="flex flex-col min-h-screen bg-background">
               <PageHeader />
               <main className="flex-1 p-4 md:p-6 m-0">
-                <Outlet />
+                {authLoading ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">
+                    Verificando acesso…
+                  </div>
+                ) : isAuthenticated ? (
+                  <Outlet />
+                ) : (
+                  <AcessoDiagnostico />
+                )}
               </main>
             </div>
           ) : (

@@ -1,513 +1,911 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { dicionarioDiagnostico, SecaoId } from "@/lib/dicionario-diagnostico";
-import { diagnosticoService, DiagnosticoFormModel } from "@/services/diagnostico-service";
-import { promotoriasService } from "@/services/promotorias-service";
-import { Promotoria, PromotoriaMunicipio } from "@/data/promotorias-seed";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+  Lock,
+  Paperclip,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  dicionarioDiagnostico,
+  ATRIBUICOES,
+  SECOES,
+  VALOR_NAO_SABE,
+  sufixoJustificativa,
+  rotuloAtribuicao,
+  type CampoDicionario,
+  type SecaoId,
+} from "@/lib/dicionario-diagnostico";
+import {
+  calcularCompletude,
+  campoVisivel,
+  sanitizarRespostas,
+  secoesAplicaveis,
+  MOTIVO_PENDENCIA,
+  type Respostas,
+} from "@/lib/completude-diagnostico";
+import {
+  diagnosticoService,
+  STATUS_DIAGNOSTICO,
+  STATUS_EDITAVEIS,
+  type AnexoDiagnostico,
+  type DiagnosticoResumo,
+  type ObservacaoDiagnostico,
+  type VersaoDiagnostico,
+} from "@/services/diagnostico-service";
+import {
+  promotoriasService,
+  type PromotoriaMunicipio,
+  type Vinculo,
+} from "@/services/promotorias-service";
+import { useApp } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+
+// Ciclos aceitos; anos a partir de 2026 são preliminares (RISK_MODEL_CONFIG.anosParciais)
+const PERIODOS = [
+  { value: "2026", label: "2026 (ciclo aberto — preliminar)" },
+  { value: "2025", label: "2025" },
+  { value: "2024", label: "2024" },
+];
 
 interface FormularioDiagnosticoProps {
-  isNew: boolean;
   diagnosticoId?: string;
 }
 
-export function FormularioDiagnostico({ isNew, diagnosticoId }: FormularioDiagnosticoProps) {
+export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoProps) {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(!isNew);
+  const { userRole } = useApp();
+  const isNew = !diagnosticoId;
+
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [confirmarEnvio, setConfirmarEnvio] = useState(false);
   const [activeTab, setActiveTab] = useState<SecaoId>("identificacao");
 
-  // Novo fluxo
-  const [todasPromotorias, setTodasPromotorias] = useState<Promotoria[]>([]);
-  const [comarcasDisponiveis, setComarcasDisponiveis] = useState<string[]>([]);
-  const [selectedComarca, setSelectedComarca] = useState<string>("");
-  const [promotoriaObj, setPromotoriaObj] = useState<Promotoria | null>(null);
-  const [municipiosVinculados, setMunicipiosVinculados] = useState<PromotoriaMunicipio[]>([]);
-  const [loadingVinculos, setLoadingVinculos] = useState(false);
+  const [vinculos, setVinculos] = useState<Vinculo[]>([]);
+  const [municipios, setMunicipios] = useState<PromotoriaMunicipio[]>([]);
 
-  const [formData, setFormData] = useState<Partial<DiagnosticoFormModel>>({
-    respostas: {},
-    atribuicao: [],
-    status: 'rascunho',
-  });
+  const [diag, setDiag] = useState<DiagnosticoResumo | null>(null);
+  const [versao, setVersao] = useState<VersaoDiagnostico | null>(null);
+  const [observacoes, setObservacoes] = useState<ObservacaoDiagnostico[]>([]);
+  const [anexos, setAnexos] = useState<AnexoDiagnostico[]>([]);
+
+  // Identificação (novo diagnóstico)
+  const [promotoriaId, setPromotoriaId] = useState("");
+  const [codigoIbge, setCodigoIbge] = useState("");
+  const [periodo, setPeriodo] = useState("2026");
+  const [atribuicao, setAtribuicao] = useState<string[]>([]);
+  const [respostas, setRespostas] = useState<Respostas>({});
+
+  const vinculo = vinculos.find((v) => v.promotoria_id === (diag?.promotoria_id ?? promotoriaId));
+  const atribuicaoPendente = vinculo?.tipo_atribuicao === "pendente_configuracao";
+
+  const carregarDiagnostico = useCallback(
+    async (id: string) => {
+      const [d, vs, obs, ax] = await Promise.all([
+        diagnosticoService.obter(id),
+        diagnosticoService.versoes(id),
+        diagnosticoService.observacoes(id),
+        diagnosticoService.anexos(id),
+      ]);
+      if (!d) {
+        toast.error("Diagnóstico não encontrado ou sem permissão de acesso.");
+        navigate({ to: "/diagnostico-brigid/meus-diagnosticos" });
+        return;
+      }
+      const atual = vs.find((v) => v.numero === d.versao_atual) ?? null;
+      setDiag(d);
+      setVersao(atual);
+      setObservacoes(obs);
+      setAnexos(ax);
+      setAtribuicao(d.atribuicao);
+      setRespostas(atual?.respostas ?? {});
+    },
+    [navigate],
+  );
 
   useEffect(() => {
-    promotoriasService.listarPromotorias().then(data => {
-      setTodasPromotorias(data);
-      const comarcas = Array.from(new Set(data.map(p => p.comarca_sede))).sort();
-      setComarcasDisponiveis(comarcas);
-    });
-
-    if (!isNew && diagnosticoId) {
-      diagnosticoService.getById(diagnosticoId).then(async (res) => {
-        if (res) {
-          setFormData(res);
-          // Rehydrate promotoria state
-          if (res.promotoria_id) {
-            const p = await promotoriasService.buscarPromotoriaPorId(res.promotoria_id);
-            if (p) {
-              setPromotoriaObj(p);
-              setSelectedComarca(p.comarca_sede);
-            }
-            const muns = await promotoriasService.listarMunicipiosDaPromotoria(res.promotoria_id);
-            setMunicipiosVinculados(muns);
-          }
-        } else {
-          toast.error("Diagnóstico não encontrado.");
-          navigate({ to: "/diagnostico-brigid" });
+    let ativo = true;
+    (async () => {
+      try {
+        const vs = await promotoriasService.meusVinculos();
+        if (!ativo) return;
+        setVinculos(vs);
+        if (diagnosticoId) {
+          await carregarDiagnostico(diagnosticoId);
+        } else if (vs.length === 1) {
+          await selecionarPromotoria(vs[0].promotoria_id, vs);
         }
-        setLoading(false);
-      });
-    } else {
-      setLoading(false);
-    }
-  }, [isNew, diagnosticoId, navigate]);
-
-  const handleChangeComarca = (comarca: string) => {
-    if (selectedComarca && selectedComarca !== comarca && formData.promotoria_id) {
-      const temRespostas = Object.keys(formData.respostas || {}).length > 0;
-      if (temRespostas) {
-        const confirmar = window.confirm("A alteração da Comarca redefinirá a Promotoria de Justiça e modificará os municípios disponíveis. Deseja continuar?");
-        if (!confirmar) return;
+      } catch (e) {
+        toast.error((e as Error).message);
+      } finally {
+        if (ativo) setCarregando(false);
       }
-    }
-    
-    setSelectedComarca(comarca);
-    setPromotoriaObj(null);
-    setMunicipiosVinculados([]);
-    setFormData(prev => ({
-      ...prev,
-      promotoria_id: "",
-      promotoria_nome: "",
-      codigo_ibge: "",
-      municipio: "",
-      comarca: "",
-      polo_regional: "",
-      atribuicao: [],
-      respostas: {}
-    }));
-  };
+    })();
+    return () => {
+      ativo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diagnosticoId]);
 
-  const handleChangePromotoria = async (pid: string) => {
-    if (formData.promotoria_id && formData.promotoria_id !== pid) {
-      const temRespostas = Object.keys(formData.respostas || {}).length > 0;
-      if (temRespostas) {
-        const confirmar = window.confirm("A alteração da Promotoria de Justiça modificará os municípios disponíveis e poderá alterar os blocos do diagnóstico conforme a atribuição funcional. Os dados territoriais vinculados à seleção atual serão redefinidos. Deseja continuar?");
-        if (!confirmar) return;
-      }
-    }
-
-    setLoadingVinculos(true);
-    const p = await promotoriasService.buscarPromotoriaPorId(pid);
+  const selecionarPromotoria = async (pid: string, lista = vinculos) => {
+    const v = lista.find((x) => x.promotoria_id === pid);
+    setPromotoriaId(pid);
+    setCodigoIbge("");
+    setAtribuicao(v && v.tipo_atribuicao !== "pendente_configuracao" ? [v.tipo_atribuicao] : []);
     const muns = await promotoriasService.listarMunicipiosDaPromotoria(pid);
-    
-    setPromotoriaObj(p || null);
-    setMunicipiosVinculados(muns);
-    setLoadingVinculos(false);
-
-    let nextMun = "";
-    let nextIbge = "";
-    let nextComarca = "";
-    let nextPolo = "";
-
-    if (muns.length === 1) {
-      nextMun = muns[0].municipio;
-      nextIbge = muns[0].codigo_ibge;
-      nextComarca = muns[0].comarca;
-      nextPolo = muns[0].polo_regional;
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      promotoria_id: pid,
-      promotoria_nome: p?.nome,
-      codigo_ibge: nextIbge,
-      municipio: nextMun,
-      comarca: nextComarca,
-      polo_regional: nextPolo,
-      atribuicao: p && p.tipo_atribuicao !== 'pendente_configuracao' ? [p.tipo_atribuicao] : [],
-      respostas: prev.promotoria_id === pid ? prev.respostas : {} // limpa condicionais se trocar
-    }));
+    setMunicipios(muns);
+    if (muns.length === 1) setCodigoIbge(muns[0].codigo_ibge);
   };
 
-  const handleChangeMunicipio = (ibge: string) => {
-    const mun = municipiosVinculados.find(m => m.codigo_ibge === ibge);
-    if (mun) {
-      setFormData(prev => ({
-        ...prev,
-        codigo_ibge: ibge,
-        municipio: mun.municipio,
-        comarca: mun.comarca,
-        polo_regional: mun.polo_regional
-      }));
-    }
+  const status = diag?.status ?? "em_preenchimento";
+  const editavel =
+    !!vinculo &&
+    (isNew || (STATUS_EDITAVEIS.includes(status) && versao?.numero === diag?.versao_atual));
+
+  const identificacao = {
+    promotoria_id: diag?.promotoria_id ?? promotoriaId,
+    codigo_ibge: diag?.codigo_ibge ?? codigoIbge,
+    atribuicao,
+    periodo_referencia: diag?.periodo_referencia ?? periodo,
+  };
+  const completude = useMemo(
+    () => calcularCompletude(respostas, identificacao),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [respostas, atribuicao, promotoriaId, codigoIbge, periodo, diag],
+  );
+  const secoesVisiveis = SECOES.filter((s) => secoesAplicaveis(atribuicao).includes(s.id));
+  const indiceAtual = secoesVisiveis.findIndex((s) => s.id === activeTab);
+
+  // Observações de devolução da versão atual, por campo
+  const devolucoes = observacoes.filter(
+    (o) => o.tipo === "devolucao" && o.versao === diag?.versao_atual,
+  );
+  const motivoGeral = devolucoes.find((o) => !o.campo_codigo && !o.secao);
+  const porCampo = new Map(
+    devolucoes.filter((o) => o.campo_codigo).map((o) => [o.campo_codigo!, o.texto]),
+  );
+  const porSecao = new Map(
+    devolucoes.filter((o) => o.secao && !o.campo_codigo).map((o) => [o.secao!, o.texto]),
+  );
+
+  const alterarResposta = (codigo: string, valor: unknown) => {
+    setRespostas((prev) => ({ ...prev, [codigo]: valor }));
   };
 
-  const handleSave = async (concluir = false) => {
-    if (concluir) {
-      if (!formData.promotoria_id) return toast.error("Selecione a Promotoria respondente.");
-      if (!formData.codigo_ibge) return toast.error("Selecione o Município avaliado.");
-      if (!formData.atribuicao || formData.atribuicao.length === 0) return toast.error("A atribuição funcional é obrigatória.");
-      if (progressPercent < 100) return toast.error("O formulário precisa de 100% de preenchimento para ser enviado.");
-    }
-
+  const salvar = async (): Promise<string | null> => {
+    if (!editavel) return null;
+    setSalvando(true);
     try {
-      const dataToSave = {
-        ...formData,
-        status: concluir ? 'concluido' : 'rascunho',
-        percentual_preenchimento: progressPercent,
-      } as DiagnosticoFormModel;
-      
-      const saved = await diagnosticoService.save(dataToSave);
-      setFormData(saved);
-      toast.success(`Diagnóstico ${concluir ? 'enviado' : 'salvo'} com sucesso!`);
-      if (concluir) {
-        navigate({ to: "/diagnostico-brigid/meus-diagnosticos" });
-      } else if (isNew) {
-        navigate({ to: `/diagnostico-brigid/formulario/${saved.id}` });
+      let id = diag?.id;
+      if (!id) {
+        if (!promotoriaId || !codigoIbge || !periodo || atribuicao.length === 0) {
+          toast.error("Informe Promotoria, município, período e atribuição antes de salvar.");
+          return null;
+        }
+        try {
+          id = await diagnosticoService.criar(
+            promotoriaId,
+            codigoIbge,
+            periodo,
+            atribuicaoPendente ? atribuicao : undefined,
+          );
+        } catch (e) {
+          const existente = (e as Error & { diagnosticoExistente?: string }).diagnosticoExistente;
+          if (existente) {
+            toast.error(
+              "Já existe diagnóstico desta Promotoria para o município e período. Abrindo o existente.",
+            );
+            navigate({
+              to: "/diagnostico-brigid/formulario/$diagnosticoId",
+              params: { diagnosticoId: existente },
+            });
+            return null;
+          }
+          throw e;
+        }
       }
-    } catch (error) {
-      toast.error("Erro ao salvar o diagnóstico.");
-    }
-  };
-
-  const handleChangeResposta = (codigo: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      respostas: {
-        ...(prev.respostas || {}),
-        [codigo]: value
+      const limpas = sanitizarRespostas(respostas, atribuicao);
+      await diagnosticoService.salvarRascunho(
+        id,
+        limpas,
+        atribuicaoPendente && status === "em_preenchimento" ? atribuicao : undefined,
+      );
+      toast.success("Rascunho salvo. Nenhuma informação foi publicada.");
+      if (isNew) {
+        navigate({
+          to: "/diagnostico-brigid/formulario/$diagnosticoId",
+          params: { diagnosticoId: id },
+        });
+      } else {
+        await carregarDiagnostico(id);
       }
-    }));
-  };
-
-  if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando formulário...</div>;
-
-  const atribuicaoDefinida = formData.atribuicao && formData.atribuicao.length > 0;
-  
-  // Apenas libera os blocos baseado na atribuição
-  const isCivel = formData.atribuicao?.includes('civel') || formData.atribuicao?.includes('unica');
-  const isCriminal = formData.atribuicao?.includes('criminal') || formData.atribuicao?.includes('unica');
-
-  const secoes = [
-    { id: "identificacao" as SecaoId, label: "Identificação", visible: true },
-    { id: "cidadania" as SecaoId, label: "Cidadania", visible: isCivel },
-    { id: "fluxos" as SecaoId, label: "Fluxos", visible: isCivel },
-    { id: "socioassistencial" as SecaoId, label: "Socioassistencial", visible: isCivel },
-    { id: "penal_seguranca" as SecaoId, label: "Segurança", visible: isCriminal },
-    { id: "penal_violencia" as SecaoId, label: "Violência", visible: isCriminal },
-    { id: "gargalos" as SecaoId, label: "Gargalos", visible: isCriminal },
-  ].filter(s => s.visible);
-
-  const currentIndex = secoes.findIndex(s => s.id === activeTab);
-  const isLastTab = currentIndex === secoes.length - 1;
-
-  const handleNextTab = () => {
-    if (!isLastTab) {
-      setActiveTab(secoes[currentIndex + 1].id);
+      return id;
+    } catch (e) {
+      toast.error("Erro ao salvar: " + (e as Error).message);
+      return null;
+    } finally {
+      setSalvando(false);
     }
   };
 
-  // Calcula progresso
-  const visibleSecoesIds = secoes.map(s => s.id);
-  const requiredFields = dicionarioDiagnostico.filter(c => {
-    if (!c.obrigatorio) return false;
-    if (!visibleSecoesIds.includes(c.secao)) return false;
-    if (c.regra_exibicao) {
-      return c.regra_exibicao(formData.respostas, formData.atribuicao || []);
+  const enviar = async () => {
+    setConfirmarEnvio(false);
+    const id = await salvar();
+    if (!id) return;
+    try {
+      await diagnosticoService.enviar(id);
+      toast.success("Diagnóstico enviado para análise do CAOCRIM.");
+      navigate({ to: "/diagnostico-brigid/meus-diagnosticos" });
+    } catch (e) {
+      toast.error((e as Error).message);
     }
-    return true;
-  });
-  
-  const hasPromotoria = !!formData.promotoria_id;
-  const hasMunicipio = !!formData.codigo_ibge;
-  const hasAtribuicao = formData.atribuicao && formData.atribuicao.length > 0;
-  
-  const baseRequiredCount = 3;
-  const baseFilledCount = (hasPromotoria ? 1 : 0) + (hasMunicipio ? 1 : 0) + (hasAtribuicao ? 1 : 0);
-  
-  const dictRequiredCount = requiredFields.length;
-  const dictFilledCount = requiredFields.filter(f => {
-    const val = formData.respostas && formData.respostas[f.codigo_tecnico];
-    if (f.tipo_controle === 'checkbox_group') {
-      return Array.isArray(val) && val.length > 0;
+  };
+
+  const novaVersao = async () => {
+    if (!diag) return;
+    try {
+      const n = await diagnosticoService.novaVersao(diag.id);
+      toast.success(
+        `Versão ${n} criada. A versão publicada continua no painel até nova aprovação.`,
+      );
+      await carregarDiagnostico(diag.id);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
-    return val !== undefined && val !== '';
-  }).length;
-  
-  const totalRequired = baseRequiredCount + dictRequiredCount;
-  const totalFilled = baseFilledCount + dictFilledCount;
-  const progressPercent = totalRequired > 0 ? Math.round((totalFilled / totalRequired) * 100) : 0;
+  };
+
+  const enviarAnexo = async (secao: SecaoId, arquivo: File) => {
+    if (!diag) {
+      toast.error("Salve o rascunho antes de anexar documentos.");
+      return;
+    }
+    try {
+      await diagnosticoService.enviarAnexo(diag.id, secao, arquivo);
+      setAnexos(await diagnosticoService.anexos(diag.id));
+      toast.success("Anexo incluído (uso interno, não é publicado).");
+    } catch (e) {
+      toast.error("Erro ao anexar: " + (e as Error).message);
+    }
+  };
+
+  const removerAnexo = async (a: AnexoDiagnostico) => {
+    if (!diag) return;
+    try {
+      await diagnosticoService.removerAnexo(a.id);
+      setAnexos(await diagnosticoService.anexos(diag.id));
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const abrirAnexo = async (a: AnexoDiagnostico) => {
+    try {
+      window.open(await diagnosticoService.urlAnexo(a.storage_path), "_blank", "noopener");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  if (carregando) {
+    return <div className="p-8 text-center text-muted-foreground">Carregando formulário...</div>;
+  }
+
+  if (vinculos.length === 0 && userRole !== "admin") {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          Seu usuário ainda não está vinculado a nenhuma Promotoria de Justiça. Solicite o vínculo
+          ao CAOCRIM.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const municipioLabel =
+    diag?.municipio ?? municipios.find((m) => m.codigo_ibge === codigoIbge)?.municipio;
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle>{isNew ? "Novo Diagnóstico" : `Editando Diagnóstico ${formData.id}`}</CardTitle>
+      <CardHeader className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <CardTitle>
+            {isNew ? "Novo Diagnóstico" : `${diag?.municipio} — ${diag?.promotoria_nome}`}
+          </CardTitle>
+          {diag && (
+            <div className="flex flex-wrap gap-2 text-xs">
+              <Badge variant="outline">Versão {diag.versao_atual}</Badge>
+              <Badge className={STATUS_DIAGNOSTICO[status].className}>
+                {STATUS_DIAGNOSTICO[status].label}
+              </Badge>
+              <Badge variant="outline">
+                {diag.versao_publicada
+                  ? `Publicação: versão ${diag.versao_publicada} no painel`
+                  : "Publicação: não publicado"}
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {status === "devolvido" && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm">
+            <div className="flex items-center gap-2 font-semibold text-destructive">
+              <AlertTriangle className="h-4 w-4" /> Devolvido para correção pelo CAOCRIM
+            </div>
+            {motivoGeral && <p className="mt-2 text-foreground">{motivoGeral.texto}</p>}
+            {(porCampo.size > 0 || porSecao.size > 0) && (
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+                {[...porSecao].map(([s, t]) => (
+                  <li key={s}>
+                    <strong>Bloco {SECOES.find((x) => x.id === s)?.label ?? s}:</strong> {t}
+                  </li>
+                ))}
+                {[...porCampo].map(([c, t]) => (
+                  <li key={c}>
+                    <strong>
+                      {dicionarioDiagnostico.find((x) => x.codigo_tecnico === c)?.rotulo ?? c}:
+                    </strong>{" "}
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Corrija os pontos indicados e reenvie. Os dados já publicados no painel não são
+              alterados por esta devolução.
+            </p>
+          </div>
+        )}
+
+        {diag && !editavel && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-muted/30 p-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              {status === "enviado" &&
+                "Enviado para análise. A edição fica bloqueada até a manifestação do CAOCRIM."}
+              {status === "em_analise" && "Em análise pelo CAOCRIM. A edição fica bloqueada."}
+              {status === "validado" && "Validado pelo CAOCRIM; publicação em processamento."}
+              {status === "publicado" && "Esta versão está publicada no painel público."}
+              {!vinculo && "Somente leitura: seu usuário não está vinculado a esta Promotoria."}
+            </div>
+            {status === "publicado" && vinculo && (
+              <Button size="sm" variant="outline" onClick={novaVersao}>
+                Abrir nova versão para atualização
+              </Button>
+            )}
+          </div>
+        )}
       </CardHeader>
+
       <CardContent>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SecaoId)}>
-          <TabsList className="mb-4 flex flex-wrap h-auto">
-            {secoes.map((s) => (
-              <TabsTrigger key={s.id} value={s.id}>
-                {s.label}
-              </TabsTrigger>
-            ))}
+          <TabsList className="mb-4 flex h-auto flex-wrap">
+            {secoesVisiveis.map((s) => {
+              const pc = completude.porSecao[s.id]?.percentual ?? 100;
+              return (
+                <TabsTrigger key={s.id} value={s.id} className="gap-1.5">
+                  {s.label}
+                  {pc === 100 ? (
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">{pc}%</span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
           <div className="mb-6 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Progresso do preenchimento</span>
-              <span className="font-medium">{progressPercent}%</span>
+              <span className="text-muted-foreground">
+                Completude dos requisitos obrigatórios aplicáveis ({completude.preenchidos}/
+                {completude.total})
+              </span>
+              <span className="font-medium">{completude.percentual}%</span>
             </div>
-            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-300" 
-                style={{ width: `${progressPercent}%` }}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${completude.percentual}%` }}
               />
             </div>
+            {completude.pendencias.length > 0 && editavel && (
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer select-none">
+                  {completude.pendencias.length} pendência(s) obrigatória(s)
+                </summary>
+                <ul className="mt-2 space-y-1">
+                  {completude.pendencias.map((p) => (
+                    <li key={p.codigo}>
+                      <button
+                        type="button"
+                        className="text-left hover:underline"
+                        onClick={() => setActiveTab(p.secao)}
+                      >
+                        [{SECOES.find((s) => s.id === p.secao)?.label}] {p.rotulo} —{" "}
+                        {MOTIVO_PENDENCIA[p.motivo]}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
 
-          {secoes.map((s) => (
+          {secoesVisiveis.map((s) => (
             <TabsContent key={s.id} value={s.id} className="space-y-4">
-              
-              {/* Special logic for the very first step: Identificação */}
-              {s.id === 'identificacao' && (
-                <div className="space-y-6 mb-8 p-6 bg-muted/10 border rounded-lg">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Comarca Sede <span className="text-destructive">*</span></label>
-                    <Select
-                      value={selectedComarca}
-                      onValueChange={handleChangeComarca}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a Comarca..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {comarcasDisponiveis.map(c => (
-                          <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {s.id === "identificacao" && (
+                <div className="mb-8 space-y-6 rounded-lg border bg-muted/10 p-6">
+                  {isNew ? (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Promotoria de Justiça respondente{" "}
+                          <span className="text-destructive">*</span>
+                        </label>
+                        <Select value={promotoriaId} onValueChange={(v) => selecionarPromotoria(v)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma das Promotorias vinculadas ao seu usuário" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {vinculos.map((v) => (
+                              <SelectItem key={v.promotoria_id} value={v.promotoria_id}>
+                                {v.nome} — Comarca de {v.comarca_sede}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Promotoria de Justiça respondente <span className="text-destructive">*</span></label>
-                    <Select
-                      value={formData.promotoria_id || ""}
-                      onValueChange={handleChangePromotoria}
-                      disabled={!selectedComarca}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={!selectedComarca ? "Selecione primeiro a Comarca" : "Selecione a Promotoria de Justiça..."} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {todasPromotorias
-                          .filter(p => p.comarca_sede === selectedComarca)
-                          .map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {formData.promotoria_id && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Município Avaliado <span className="text-destructive">*</span></label>
-                      <Select
-                        value={formData.codigo_ibge}
-                        onValueChange={handleChangeMunicipio}
-                        disabled={loadingVinculos || municipiosVinculados.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={
-                            loadingVinculos ? "Carregando municípios..." :
-                            municipiosVinculados.length === 0 ? "Nenhum município vinculado" :
-                            "Selecione o Município"
-                          } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {municipiosVinculados.map(m => (
-                            <SelectItem key={m.codigo_ibge} value={m.codigo_ibge}>
-                              {m.municipio}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {municipiosVinculados.length === 0 && !loadingVinculos && (
-                        <p className="text-sm text-destructive mt-1">
-                          Não foram identificados municípios vinculados a esta Promotoria de Justiça. Verifique o cadastro de abrangência territorial ou contate o administrador do BRIGID.
-                        </p>
+                      {promotoriaId && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">
+                            Município avaliado <span className="text-destructive">*</span>
+                          </label>
+                          <Select
+                            value={codigoIbge}
+                            onValueChange={setCodigoIbge}
+                            disabled={municipios.length === 0}
+                          >
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  municipios.length === 0
+                                    ? "Nenhum município vinculado"
+                                    : "Selecione o município"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {municipios.map((m) => (
+                                <SelectItem key={m.codigo_ibge} value={m.codigo_ibge}>
+                                  {m.municipio}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {municipios.length === 0 && (
+                            <p className="mt-1 text-sm text-destructive">
+                              Não há municípios vinculados a esta Promotoria. Contate o CAOCRIM.
+                            </p>
+                          )}
+                        </div>
                       )}
-                    </div>
-                  )}
-                  
-                  {formData.promotoria_id && promotoriaObj?.tipo_atribuicao === 'pendente_configuracao' && (
-                    <div className="space-y-2 mt-4 p-4 border border-warning/50 bg-warning/10 rounded-md">
-                      <label className="text-sm font-medium text-warning-foreground">
-                        A atribuição funcional desta Promotoria ainda não está configurada. Selecione a atribuição aplicável para definir os blocos do diagnóstico.
-                      </label>
-                      <Select
-                        value={formData.atribuicao?.[0] || ""}
-                        onValueChange={(val) => setFormData(prev => ({ ...prev, atribuicao: [val] }))}
-                      >
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Selecione a atribuição..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="civel">Cidadania/Cível</SelectItem>
-                          <SelectItem value="criminal">Criminal</SelectItem>
-                          <SelectItem value="cumulativa">Cumulativa</SelectItem>
-                          <SelectItem value="unica">Promotoria Única</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
 
-                  {formData.codigo_ibge && (
-                    <div className="mt-6 bg-background p-4 rounded-md border text-sm space-y-2">
-                      <h4 className="font-semibold text-foreground mb-3">Resumo Territorial Automático</h4>
-                      <div className="grid grid-cols-2 gap-2 text-muted-foreground">
-                        <div><strong className="text-foreground">Promotoria:</strong> {formData.promotoria_nome}</div>
-                        <div><strong className="text-foreground">Município:</strong> {formData.municipio}</div>
-                        <div><strong className="text-foreground">Comarca:</strong> {formData.comarca}</div>
-                        <div><strong className="text-foreground">Código IBGE:</strong> {formData.codigo_ibge}</div>
-                        <div><strong className="text-foreground">Polo Regional:</strong> {formData.polo_regional}</div>
-                        <div><strong className="text-foreground">Atribuição:</strong> {atribuicaoDefinida ? formData.atribuicao.join(', ') : 'Pendente'}</div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Período de referência <span className="text-destructive">*</span>
+                        </label>
+                        <Select value={periodo} onValueChange={setPeriodo}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PERIODOS.map((p) => (
+                              <SelectItem key={p.value} value={p.value}>
+                                {p.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {(isNew ? promotoriaId : diag) &&
+                    atribuicaoPendente &&
+                    editavel &&
+                    status === "em_preenchimento" && (
+                      <div className="space-y-2 rounded-md border border-warning/50 bg-warning/10 p-4">
+                        <label className="text-sm font-medium text-warning-foreground">
+                          A atribuição funcional desta Promotoria ainda não foi configurada pelo
+                          CAOCRIM. Declare a atribuição aplicável; ela será conferida na análise.
+                        </label>
+                        <Select
+                          value={atribuicao[0] ?? ""}
+                          onValueChange={(v) => setAtribuicao([v])}
+                        >
+                          <SelectTrigger className="bg-background">
+                            <SelectValue placeholder="Selecione a atribuição..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ATRIBUICOES.map((a) => (
+                              <SelectItem key={a.value} value={a.value}>
+                                {a.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                  {(diag || codigoIbge) && (
+                    <div className="space-y-2 rounded-md border bg-background p-4 text-sm">
+                      <h4 className="mb-3 font-semibold text-foreground">
+                        Resumo da identificação
+                      </h4>
+                      <div className="grid grid-cols-1 gap-2 text-muted-foreground sm:grid-cols-2">
+                        <div>
+                          <strong className="text-foreground">Promotoria:</strong>{" "}
+                          {diag?.promotoria_nome ?? vinculo?.nome}
+                        </div>
+                        <div>
+                          <strong className="text-foreground">Município:</strong> {municipioLabel}
+                        </div>
+                        <div>
+                          <strong className="text-foreground">Código IBGE:</strong>{" "}
+                          {identificacao.codigo_ibge}
+                        </div>
+                        <div>
+                          <strong className="text-foreground">Período:</strong>{" "}
+                          {identificacao.periodo_referencia}
+                        </div>
+                        <div>
+                          <strong className="text-foreground">Atribuição:</strong>{" "}
+                          {atribuicao.length
+                            ? atribuicao.map(rotuloAtribuicao).join(", ")
+                            : "Pendente"}
+                        </div>
+                        <div>
+                          <strong className="text-foreground">Responsável:</strong>{" "}
+                          {diag?.responsavel_nome ?? vinculo?.nome_responsavel}
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Render dictionary fields for this section */}
-              {(!isNew || atribuicaoDefinida) && (
+              {porSecao.get(s.id) && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                  Observação do CAOCRIM para este bloco: {porSecao.get(s.id)}
+                </div>
+              )}
+
+              {atribuicao.length > 0 && (
                 <div className="grid gap-6">
                   {dicionarioDiagnostico
-                    .filter((campo) => campo.secao === s.id)
-                    .filter((campo) => {
-                      if (campo.regra_exibicao) {
-                        return campo.regra_exibicao(formData.respostas, formData.atribuicao || []);
-                      }
-                      return true;
-                    })
-                    .map((campo) => {
-                      return (
-                        <div key={campo.id} className="space-y-2">
-                          <label className="text-sm font-medium">{campo.rotulo} {campo.obrigatorio && <span className="text-destructive">*</span>}</label>
-                          {campo.descricao && (
-                            <p className="text-xs text-muted-foreground">{campo.descricao}</p>
-                          )}
-                          
-                          {campo.tipo_controle === 'select' && (
-                            <Select
-                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
-                              onValueChange={(v) => handleChangeResposta(campo.codigo_tecnico, v)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {campo.opcoes?.map(op => (
-                                  <SelectItem key={op.value} value={op.value}>{op.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-
-                          {campo.tipo_controle === 'text' && (
-                            <Input
-                              type="text"
-                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
-                              onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
-                            />
-                          )}
-
-                          {campo.tipo_controle === 'date' && (
-                            <Input
-                              type="date"
-                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
-                              onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
-                            />
-                          )}
-
-                          {campo.tipo_controle === 'number' && (
-                            <Input
-                              type="number"
-                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
-                              onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
-                            />
-                          )}
-
-                          {campo.tipo_controle === 'textarea' && (
-                            <textarea
-                              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              value={formData.respostas?.[campo.codigo_tecnico] || ''}
-                              onChange={(e) => handleChangeResposta(campo.codigo_tecnico, e.target.value)}
-                            />
-                          )}
-
-                          {campo.tipo_controle === 'checkbox_group' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                              {campo.opcoes?.map(op => {
-                                const selected = (formData.respostas?.[campo.codigo_tecnico] || []) as string[];
-                                const isChecked = selected.includes(op.value);
-                                return (
-                                  <label key={op.value} className="flex items-center space-x-2 text-sm">
-                                    <input
-                                      type="checkbox"
-                                      className="rounded border-input text-primary focus:ring-primary h-4 w-4"
-                                      checked={isChecked}
-                                      onChange={(e) => {
-                                        const checked = e.target.checked;
-                                        if (checked) {
-                                          handleChangeResposta(campo.codigo_tecnico, [...selected, op.value]);
-                                        } else {
-                                          handleChangeResposta(campo.codigo_tecnico, selected.filter(v => v !== op.value));
-                                        }
-                                      }}
-                                    />
-                                    <span>{op.label}</span>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    .filter((campo) => campo.secao === s.id && campoVisivel(campo, respostas))
+                    .map((campo) => (
+                      <CampoFormulario
+                        key={campo.id}
+                        campo={campo}
+                        respostas={respostas}
+                        onChange={alterarResposta}
+                        disabled={!editavel}
+                        devolucao={porCampo.get(campo.codigo_tecnico)}
+                        pendente={
+                          completude.pendencias.find((p) => p.codigo === campo.codigo_tecnico)
+                            ?.motivo
+                        }
+                      />
+                    ))}
                 </div>
+              )}
+
+              {s.id !== "identificacao" && (
+                <AnexosBloco
+                  anexos={anexos.filter((a) => a.secao === s.id)}
+                  podeEditar={editavel && !!diag}
+                  versaoAtual={diag?.versao_atual}
+                  onEnviar={(f) => enviarAnexo(s.id, f)}
+                  onRemover={removerAnexo}
+                  onAbrir={abrirAnexo}
+                />
               )}
             </TabsContent>
           ))}
         </Tabs>
       </CardContent>
-      <CardFooter className="flex justify-between border-t p-4 mt-4 bg-muted/10">
-        <Button variant="outline" onClick={() => navigate({ to: '/diagnostico-brigid' })}>
-          Cancelar
+
+      <CardFooter className="mt-4 flex flex-wrap justify-between gap-2 border-t bg-muted/10 p-4">
+        <Button variant="outline" onClick={() => navigate({ to: "/diagnostico-brigid" })}>
+          Voltar
         </Button>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => handleSave(false)}>
-            Salvar Rascunho
-          </Button>
-          <Button 
-            onClick={() => {
-              if (isLastTab) {
-                handleSave(true);
-              } else {
-                handleNextTab();
-              }
-            }}
-            disabled={isLastTab && progressPercent < 100}
-            title={isLastTab && progressPercent < 100 ? "O envio requer 100% de preenchimento" : undefined}
-          >
-            {isLastTab ? "Concluir / Enviar" : "Avançar"}
-          </Button>
-        </div>
+        {editavel && (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => salvar()} disabled={salvando}>
+              Salvar rascunho
+            </Button>
+            {indiceAtual < secoesVisiveis.length - 1 ? (
+              <Button onClick={() => setActiveTab(secoesVisiveis[indiceAtual + 1].id)}>
+                Avançar
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setConfirmarEnvio(true)}
+                disabled={salvando || completude.percentual < 100}
+                title={
+                  completude.percentual < 100
+                    ? "O envio requer 100% dos requisitos obrigatórios aplicáveis"
+                    : undefined
+                }
+              >
+                Enviar para análise
+              </Button>
+            )}
+          </div>
+        )}
       </CardFooter>
+
+      <AlertDialog open={confirmarEnvio} onOpenChange={setConfirmarEnvio}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enviar diagnóstico para análise?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Após o envio, a edição fica bloqueada até a análise do CAOCRIM. O envio não publica
+              dados: as informações só passam ao painel público após validação expressa do CAOCRIM.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={enviar}>Confirmar envio</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
+  );
+}
+
+interface CampoFormularioProps {
+  campo: CampoDicionario;
+  respostas: Respostas;
+  onChange: (codigo: string, valor: unknown) => void;
+  disabled: boolean;
+  devolucao?: string;
+  pendente?: string;
+}
+
+function CampoFormulario({
+  campo,
+  respostas,
+  onChange,
+  disabled,
+  devolucao,
+  pendente,
+}: CampoFormularioProps) {
+  const codigo = campo.codigo_tecnico;
+  const valor = respostas[codigo];
+  const naoSabe = valor === VALOR_NAO_SABE;
+  const texto = typeof valor === "string" || typeof valor === "number" ? String(valor) : "";
+
+  return (
+    <div
+      className={cn(
+        "space-y-2",
+        devolucao && "rounded-md border border-destructive/50 bg-destructive/5 p-3",
+      )}
+    >
+      <label className="text-sm font-medium">
+        {campo.rotulo} {campo.obrigatorio && <span className="text-destructive">*</span>}
+      </label>
+      {campo.descricao && <p className="text-xs text-muted-foreground">{campo.descricao}</p>}
+      {devolucao && <p className="text-xs font-medium text-destructive">CAOCRIM: {devolucao}</p>}
+
+      {campo.tipo_controle === "select" && (
+        <Select value={texto} onValueChange={(v) => onChange(codigo, v)} disabled={disabled}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione..." />
+          </SelectTrigger>
+          <SelectContent>
+            {campo.opcoes?.map((op) => (
+              <SelectItem key={op.value} value={op.value}>
+                {op.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {(campo.tipo_controle === "text" || campo.tipo_controle === "date") && (
+        <Input
+          type={campo.tipo_controle}
+          value={texto}
+          disabled={disabled}
+          onChange={(e) => onChange(codigo, e.target.value)}
+        />
+      )}
+
+      {campo.tipo_controle === "number" && (
+        <div className="flex flex-wrap items-center gap-4">
+          <Input
+            type="number"
+            min={0}
+            step={1}
+            className="max-w-[200px]"
+            disabled={disabled || naoSabe}
+            value={naoSabe ? "" : texto}
+            onChange={(e) => onChange(codigo, e.target.value === "" ? "" : Number(e.target.value))}
+          />
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-input"
+              disabled={disabled}
+              checked={naoSabe}
+              onChange={(e) => onChange(codigo, e.target.checked ? VALOR_NAO_SABE : "")}
+            />
+            Não soube informar
+          </label>
+        </div>
+      )}
+
+      {campo.tipo_controle === "textarea" && (
+        <textarea
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-70"
+          value={texto}
+          disabled={disabled}
+          onChange={(e) => onChange(codigo, e.target.value)}
+        />
+      )}
+
+      {campo.tipo_controle === "checkbox_group" && (
+        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+          {campo.opcoes?.map((op) => {
+            const selecionados = (Array.isArray(valor) ? valor : []) as string[];
+            return (
+              <label key={op.value} className="flex items-center space-x-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                  checked={selecionados.includes(op.value)}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    onChange(
+                      codigo,
+                      e.target.checked
+                        ? [...selecionados, op.value]
+                        : selecionados.filter((v) => v !== op.value),
+                    )
+                  }
+                />
+                <span>{op.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+
+      {naoSabe && (
+        <div className="space-y-1 pl-3">
+          <label className="text-xs font-medium">
+            Justificativa para "Não soube informar" <span className="text-destructive">*</span>
+          </label>
+          <textarea
+            className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={String(respostas[codigo + sufixoJustificativa] ?? "")}
+            disabled={disabled}
+            placeholder="Explique por que a informação não pôde ser obtida (ex.: ofício sem resposta)"
+            onChange={(e) => onChange(codigo + sufixoJustificativa, e.target.value)}
+          />
+        </div>
+      )}
+
+      {pendente && !disabled && (
+        <p className="text-[11px] text-muted-foreground">
+          {MOTIVO_PENDENCIA[pendente as keyof typeof MOTIVO_PENDENCIA]}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface AnexosBlocoProps {
+  anexos: AnexoDiagnostico[];
+  podeEditar: boolean;
+  versaoAtual?: number;
+  onEnviar: (f: File) => void;
+  onRemover: (a: AnexoDiagnostico) => void;
+  onAbrir: (a: AnexoDiagnostico) => void;
+}
+
+export function AnexosBloco({
+  anexos,
+  podeEditar,
+  versaoAtual,
+  onEnviar,
+  onRemover,
+  onAbrir,
+}: AnexosBlocoProps) {
+  return (
+    <div className="mt-6 space-y-2 rounded-md border border-dashed p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-sm font-medium">
+          <Paperclip className="h-4 w-4" /> Anexos do bloco
+          <span className="text-xs font-normal text-muted-foreground">
+            (uso interno — não publicados)
+          </span>
+        </span>
+        {podeEditar && (
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs hover:bg-accent">
+            <Upload className="h-3.5 w-3.5" /> Anexar arquivo
+            <input
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onEnviar(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+        )}
+      </div>
+      {anexos.length === 0 ? (
+        <p className="text-xs text-muted-foreground">Nenhum anexo.</p>
+      ) : (
+        <ul className="space-y-1">
+          {anexos.map((a) => (
+            <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
+              <button
+                type="button"
+                className="flex items-center gap-2 text-left hover:underline"
+                onClick={() => onAbrir(a)}
+              >
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                {a.nome_arquivo}
+                <span className="text-xs text-muted-foreground">(v{a.versao})</span>
+              </button>
+              {podeEditar && a.versao === versaoAtual && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onRemover(a)}
+                  title="Remover anexo"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

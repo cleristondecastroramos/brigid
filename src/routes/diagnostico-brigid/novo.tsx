@@ -27,7 +27,7 @@ function NovoDiagnosticoPage() {
         </p>
       </div>
 
-      <FormularioDiagnostico isNew={true} />
+      <FormularioDiagnostico />
     </div>
   );
 }

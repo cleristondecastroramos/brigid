@@ -1,5 +1,13 @@
 export type SecaoId = 'identificacao' | 'cidadania' | 'fluxos' | 'socioassistencial' | 'penal_seguranca' | 'penal_violencia' | 'gargalos';
 
+// Regra de exibição declarativa: o mesmo critério é avaliado no navegador
+// (src/lib/completude-diagnostico.ts) e no banco (tabela diagnostico_campos_regras).
+export interface CondicaoExibicao {
+  campo: string;
+  valores?: string[];
+  maiorQue?: number;
+}
+
 export interface CampoDicionario {
   id: string;
   codigo_tecnico: string;
@@ -9,7 +17,33 @@ export interface CampoDicionario {
   tipo_controle: 'radio' | 'select' | 'text' | 'textarea' | 'number' | 'checkbox_group' | 'date';
   opcoes?: { label: string; value: string }[];
   obrigatorio?: boolean;
-  regra_exibicao?: (respostas: any, atribuicao: string[]) => boolean;
+  condicao?: CondicaoExibicao;
+}
+
+// Valor gravado quando o respondente declara não saber informar (selects e campos numéricos).
+// Nunca é convertido em "Não" ou zero; exige justificativa no campo <codigo>_JUSTIFICATIVA.
+export const VALOR_NAO_SABE = 'nao_sabe';
+export const sufixoJustificativa = '_JUSTIFICATIVA';
+
+export const SECOES: { id: SecaoId; label: string; grupo: 'comum' | 'civel' | 'criminal' }[] = [
+  { id: 'identificacao', label: 'Identificação', grupo: 'comum' },
+  { id: 'cidadania', label: 'Cidadania', grupo: 'civel' },
+  { id: 'fluxos', label: 'Fluxos', grupo: 'civel' },
+  { id: 'socioassistencial', label: 'Socioassistencial', grupo: 'civel' },
+  { id: 'penal_seguranca', label: 'Segurança', grupo: 'criminal' },
+  { id: 'penal_violencia', label: 'Violência', grupo: 'criminal' },
+  { id: 'gargalos', label: 'Gargalos', grupo: 'criminal' },
+];
+
+export const ATRIBUICOES: { value: string; label: string }[] = [
+  { value: 'civel', label: 'Cidadania/Cível' },
+  { value: 'criminal', label: 'Criminal' },
+  { value: 'cumulativa', label: 'Cumulativa' },
+  { value: 'unica', label: 'Promotoria Única' },
+];
+
+export function rotuloAtribuicao(valor?: string) {
+  return ATRIBUICOES.find((a) => a.value === valor)?.label ?? valor ?? 'Pendente';
 }
 
 // Helper para adicionar os campos transversais em todas as seções, se precisássemos mapear dinamicamente, mas vamos adicionar manualmente para controle de ID.
@@ -114,7 +148,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Nome do órgão',
     tipo_controle: 'text',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_TIPO',
@@ -122,7 +156,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Tipo de estrutura',
     tipo_controle: 'text',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_DATA_CRIACAO',
@@ -130,7 +164,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Data de criação e instrumento legal',
     tipo_controle: 'text',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_RESPONSAVEL',
@@ -138,7 +172,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Responsável e contato (telefone/e-mail)',
     tipo_controle: 'text',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_ENDERECO',
@@ -146,7 +180,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Endereço',
     tipo_controle: 'text',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_EQUIPE',
@@ -154,7 +188,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Equipe disponível',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_PLANO',
@@ -162,7 +196,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Existência de plano municipal de políticas e orçamento',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_ACOES',
@@ -170,7 +204,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Público atendido e principais ações realizadas',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   {
     id: 'CID_OPM_CAPACIDADE',
@@ -184,7 +218,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
       { label: 'Não', value: 'nao' },
       { label: 'Não soube informar', value: 'nao_sabe' },
     ],
-    regra_exibicao: (r) => r?.CID_OPM_STATUS === 'funcionamento_regular' || r?.CID_OPM_STATUS === 'criado_inativo',
+    condicao: { campo: 'CID_OPM_STATUS', valores: ['funcionamento_regular', 'criado_inativo'] },
   },
   // 5.2 CREAS
   {
@@ -209,7 +243,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Endereço e abrangência territorial',
     tipo_controle: 'text',
-    regra_exibicao: (r) => ['funcionamento_regular', 'funcionamento_parcial', 'sem_especializado'].includes(r?.CID_CREAS_STATUS),
+    condicao: { campo: 'CID_CREAS_STATUS', valores: ['funcionamento_regular', 'funcionamento_parcial', 'sem_especializado'] },
   },
   {
     id: 'CID_CREAS_EQUIPE',
@@ -217,7 +251,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Equipe disponível, horários e capacidade média de atendimento',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['funcionamento_regular', 'funcionamento_parcial', 'sem_especializado'].includes(r?.CID_CREAS_STATUS),
+    condicao: { campo: 'CID_CREAS_STATUS', valores: ['funcionamento_regular', 'funcionamento_parcial', 'sem_especializado'] },
   },
   {
     id: 'CID_CREAS_ARTICULACAO',
@@ -225,7 +259,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Articulação com Promotoria, saúde, segurança e existência de fluxo',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['funcionamento_regular', 'funcionamento_parcial', 'sem_especializado'].includes(r?.CID_CREAS_STATUS),
+    condicao: { campo: 'CID_CREAS_STATUS', valores: ['funcionamento_regular', 'funcionamento_parcial', 'sem_especializado'] },
   },
   // 5.3 Efetividade
   {
@@ -249,7 +283,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'cidadania',
     rotulo: 'Detalhes sobre plano, orçamento, metas e ações preventivas',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['plenamente', 'parcialmente', 'isoladas'].includes(r?.CID_POL_EXISTE),
+    condicao: { campo: 'CID_POL_EXISTE', valores: ['plenamente', 'parcialmente', 'isoladas'] },
   },
   ...addTransversais('cidadania', 'CID'),
 
@@ -277,7 +311,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'fluxos',
     rotulo: 'Detalhes do fluxo formal (instrumento, órgãos, órgão coordenador, etc)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['formal_ato', 'nao_formal'].includes(r?.FLX_FORMAL),
+    condicao: { campo: 'FLX_FORMAL', valores: ['formal_ato', 'nao_formal'] },
   },
   {
     id: 'FLX_PROTOCOLO',
@@ -300,7 +334,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'fluxos',
     rotulo: 'O protocolo define responsabilidades, prazos, riscos, e abrange tentativa/consumação?',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['vigente', 'desatualizado'].includes(r?.FLX_PROTOCOLO),
+    condicao: { campo: 'FLX_PROTOCOLO', valores: ['vigente', 'desatualizado'] },
   },
   {
     id: 'FLX_SALA',
@@ -349,7 +383,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'fluxos',
     rotulo: 'Detalhes do atendimento psicossocial (órgão, profissionais, acesso, etc)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['regular', 'eventual', 'encaminhamento'].includes(r?.FLX_PSICO),
+    condicao: { campo: 'FLX_PSICO', valores: ['regular', 'eventual', 'encaminhamento'] },
   },
   ...addTransversais('fluxos', 'FLX'),
 
@@ -392,7 +426,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'socioassistencial',
     rotulo: 'Detalhes (órgão de entrada, referência, prazos, etc)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['integrado', 'parcialmente', 'informal'].includes(r?.SOC_FLUXO),
+    condicao: { campo: 'SOC_FLUXO', valores: ['integrado', 'parcialmente', 'informal'] },
   },
   {
     id: 'SOC_ARTIC_CREAS',
@@ -430,7 +464,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'socioassistencial',
     rotulo: 'Detalhes da equipe (número de assistentes sociais, psicólogos, etc)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['sim', 'parcialmente', 'nao'].includes(r?.SOC_EQUIPE),
+    condicao: { campo: 'SOC_EQUIPE', valores: ['sim', 'parcialmente', 'nao'] },
   },
   {
     id: 'SOC_CAPACITA_QTD',
@@ -473,7 +507,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'penal_seguranca',
     rotulo: 'Detalhes do protocolo de investigação',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['sim_aplicado', 'sim_parcial', 'nao_aplicado'].includes(r?.SEG_PROTO_INV),
+    condicao: { campo: 'SEG_PROTO_INV', valores: ['sim_aplicado', 'sim_parcial', 'nao_aplicado'] },
   },
   {
     id: 'SEG_PROTO_PER',
@@ -497,7 +531,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'penal_seguranca',
     rotulo: 'Detalhes da perícia (preservação do local, prazo, exames, etc)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => ['sim_aplicado', 'sim_parcial', 'nao_aplicado'].includes(r?.SEG_PROTO_PER),
+    condicao: { campo: 'SEG_PROTO_PER', valores: ['sim_aplicado', 'sim_parcial', 'nao_aplicado'] },
   },
   {
     id: 'SEG_CAPACITA',
@@ -576,7 +610,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'penal_violencia',
     rotulo: 'Detalhes (vítimas, inquéritos, processos, prisões, autoria, andamento)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => Number(r?.VIO_TENTADOS) > 0,
+    condicao: { campo: 'VIO_TENTADOS', maiorQue: 0 },
   },
   // Consumados
   {
@@ -593,7 +627,7 @@ export const dicionarioDiagnostico: CampoDicionario[] = [
     secao: 'penal_violencia',
     rotulo: 'Detalhes (vítimas, histórico de violência, medidas protetivas, situação do inquérito)',
     tipo_controle: 'textarea',
-    regra_exibicao: (r) => Number(r?.VIO_CONSUMADOS) > 0,
+    condicao: { campo: 'VIO_CONSUMADOS', maiorQue: 0 },
   },
   ...addTransversais('penal_violencia', 'VIO'),
 

@@ -18,15 +18,16 @@ export function useMunicipios() {
 
   const data: Municipio[] = rawMunicipios.map((m) => {
     // 1. Extrair Casos Oficiais pela RISK_MODEL_CONFIG
-    const code = m.codigo_ibge || "2200000";
-    const h = getHash(code);
-
     const eventos = m.eventos_feminicidio || [];
     const oficiais = eventos.filter(
       (e) => e.considera_no_score && RISK_MODEL_CONFIG.anosOficiais.includes(e.ano_fato),
     );
     const historicos = eventos.filter((e) => RISK_MODEL_CONFIG.anosHistoricos.includes(e.ano_fato));
-    const parciais = eventos.filter((e) => e.status_periodo === "parcial_corrente");
+    // Contagens informadas pelas Promotorias via Diagnóstico BRIGID ficam fora do score e das parciais oficiais
+    const parciais = eventos.filter(
+      (e) => e.status_periodo === "parcial_corrente" && e.origem_dado !== "DIAGNOSTICO_MP",
+    );
+    const informados_diagnostico = eventos.filter((e) => e.origem_dado === "DIAGNOSTICO_MP");
 
     const feminicidios_consumados_2023_2025 = oficiais
       .filter((e) => e.tipo_evento === "CONSUMADO")
@@ -39,6 +40,7 @@ export function useMunicipios() {
     (m as any).oficiais = oficiais;
     (m as any).historicos = historicos;
     (m as any).parciais = parciais;
+    (m as any).informados_diagnostico = informados_diagnostico;
     m.feminicidios_consumados_2023_2025 = feminicidios_consumados_2023_2025;
     m.feminicidios_tentados_2023_2025 = feminicidios_tentados_2023_2025;
 
@@ -77,48 +79,32 @@ export function useMunicipios() {
     // 5. Atuação prioritária dinâmica
     const necessita_atuacao_prioritaria = nivel === "ALTO" || nivel === "CRITICO" ? "SIM" : "NAO";
 
-    // 6. Seeding determinístico de novos campos se não estiverem presentes no db.json
-    const tem_fluxo_formal = m.tem_fluxo_formal ?? (h % 3 === 0 ? "SIM" : "NAO");
-    const tem_protocolo_local_regional =
-      m.tem_protocolo_local_regional ?? (h % 4 === 0 ? "SIM" : "NAO");
-    const tem_atendimento_psicossocial =
-      m.tem_atendimento_psicossocial ?? (h % 2 === 0 ? "SIM" : "NAO");
-    const tem_atendimento_juridico = m.tem_atendimento_juridico ?? (h % 3 !== 0 ? "SIM" : "NAO");
-    const tem_equipe_multiprofissional =
-      m.tem_equipe_multiprofissional ?? (h % 3 === 0 ? "SIM" : "NAO");
-    const tem_sala_especializada = m.tem_sala_especializada ?? (h % 4 === 0 ? "SIM" : "NAO");
-    const tem_articulacao_rede = m.tem_articulacao_rede ?? (h % 2 === 0 ? "SIM" : "NAO");
-    const tem_recursos_minimos = m.tem_recursos_minimos ?? (h % 5 !== 0 ? "SIM" : "NAO");
-    const grau_suficiencia_estrutura =
-      m.grau_suficiencia_estrutura ??
-      (h % 3 === 0 ? "ADEQUADO" : h % 3 === 1 ? "PARCIAL" : "INSUFICIENTE");
+    // 6. Campos do diagnóstico da rede: somente valores existentes na base consolidada.
+    // Campo vazio = "Sem informação" (nunca é preenchido artificialmente) e não soma nos índices.
+    const tem_fluxo_formal = m.tem_fluxo_formal ?? undefined;
+    const tem_protocolo_local_regional = m.tem_protocolo_local_regional ?? undefined;
+    const tem_atendimento_psicossocial = m.tem_atendimento_psicossocial ?? undefined;
+    const tem_atendimento_juridico = m.tem_atendimento_juridico ?? undefined;
+    const tem_equipe_multiprofissional = m.tem_equipe_multiprofissional ?? undefined;
+    const tem_sala_especializada = m.tem_sala_especializada ?? undefined;
+    const tem_articulacao_rede = m.tem_articulacao_rede ?? undefined;
+    const tem_recursos_minimos = m.tem_recursos_minimos ?? undefined;
+    const grau_suficiencia_estrutura = m.grau_suficiencia_estrutura || undefined;
 
-    const tem_protocolo_investigacao =
-      m.tem_protocolo_investigacao ?? (h % 3 === 0 ? "SIM" : "NAO");
-    const tem_protocolo_pericial = m.tem_protocolo_pericial ?? (h % 4 === 0 ? "SIM" : "NAO");
-    const capacitado_perspectiva_genero =
-      m.capacitado_perspectiva_genero ?? (h % 2 === 0 ? "SIM" : "NAO");
-    const qtd_capacitacoes_realizadas = m.qtd_capacitacoes_realizadas ?? h % 6;
-    const treinamento_especifico_feminicidio =
-      m.treinamento_especifico_feminicidio ?? (h % 3 === 0 ? "SIM" : "NAO");
-    const grau_aderencia_protocolo =
-      m.grau_aderencia_protocolo ?? (h % 3 === 0 ? "ALTO" : h % 3 === 1 ? "MEDIO" : "BAIXO");
-    const gargalos_identificados =
-      m.gargalos_identificados ??
-      (h % 4 === 0
-        ? "Déficit de peritos criminais na comarca."
-        : h % 4 === 1
-          ? "Ausência de sala para escuta protegida."
-          : "Nenhum gargalo crítico identificado.");
+    const tem_protocolo_investigacao = m.tem_protocolo_investigacao ?? undefined;
+    const tem_protocolo_pericial = m.tem_protocolo_pericial ?? undefined;
+    const capacitado_perspectiva_genero = m.capacitado_perspectiva_genero ?? undefined;
+    const qtd_capacitacoes_realizadas = m.qtd_capacitacoes_realizadas ?? undefined;
+    const treinamento_especifico_feminicidio = m.treinamento_especifico_feminicidio ?? undefined;
+    const grau_aderencia_protocolo = m.grau_aderencia_protocolo || undefined;
+    const gargalos_identificados = m.gargalos_identificados || undefined;
 
-    const tem_protocolo_assistencial =
-      m.tem_protocolo_assistencial ?? (h % 2 === 0 ? "SIM" : "NAO");
-    const tem_fluxo_encaminhamento = m.tem_fluxo_encaminhamento ?? (h % 3 === 0 ? "SIM" : "NAO");
-    const articulacao_creas_rede = m.articulacao_creas_rede ?? (h % 2 === 0 ? "SIM" : "NAO");
-    const tem_equipe_minima_creas = m.tem_equipe_minima_creas ?? (h % 3 !== 0 ? "SIM" : "NAO");
-    const profissionais_capacitados = m.profissionais_capacitados ?? h % 8;
-    const data_ultima_capacitacao =
-      m.data_ultima_capacitacao ?? `2025-11-${((h % 28) + 1).toString().padStart(2, "0")}`;
+    const tem_protocolo_assistencial = m.tem_protocolo_assistencial ?? undefined;
+    const tem_fluxo_encaminhamento = m.tem_fluxo_encaminhamento ?? undefined;
+    const articulacao_creas_rede = m.articulacao_creas_rede ?? undefined;
+    const tem_equipe_minima_creas = m.tem_equipe_minima_creas ?? undefined;
+    const profissionais_capacitados = m.profissionais_capacitados ?? undefined;
+    const data_ultima_capacitacao = m.data_ultima_capacitacao || undefined;
 
     // 5. Cálculo dos Índices Sintéticos (valores de 0 a 10)
     // Índice de Estrutura da Rede (IER): sala especializada (30%), recursos mínimos (30%), suficiência (40%)

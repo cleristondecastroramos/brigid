@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import type { RiscoNivel, SimNao } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
 
 export interface Weights {
   pesoFeminicidios: number;
@@ -24,8 +26,16 @@ export type UserRole = "admin" | "public" | null;
 
 interface AppContextProps {
   userRole: UserRole;
-  login: (role: UserRole) => void;
-  logout: () => void;
+  // true enquanto a sessão do Supabase ainda está sendo verificada
+  authLoading: boolean;
+  enterPublic: () => void;
+  loginAdmin: (email: string, password: string) => Promise<{ error?: string }>;
+  // Login do módulo de coleta (Promotores vinculados e CAOCRIM)
+  loginRespondente: (email: string, password: string) => Promise<{ error?: string }>;
+  // Usuário autenticado no Supabase (qualquer perfil)
+  userEmail: string | null;
+  isAuthenticated: boolean;
+  logout: () => Promise<void>;
   weights: Weights;
   thresholds: Thresholds;
   simulationInfo: SimulationInfo;
@@ -50,13 +60,18 @@ const DEFAULT_THRESHOLDS: Thresholds = {
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [userRole, setUserRole] = useState<UserRole>(() => {
+  // O acesso público é só uma escolha de navegação; o papel admin vem exclusivamente
+  // da sessão do Supabase Auth validada pela função is_admin() no banco.
+  const [isPublic, setIsPublic] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem("brigid_userRole");
-      return (saved as UserRole) || null;
+      return sessionStorage.getItem("brigid_publicAccess") === "1";
     }
-    return null;
+    return false;
   });
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const userRole: UserRole = isAdmin ? "admin" : isPublic ? "public" : null;
   const [weights, setWeights] = useState<Weights>(DEFAULT_WEIGHTS);
   const [thresholds, setThresholds] = useState<Thresholds>(DEFAULT_THRESHOLDS);
   const [simulationInfo, setSimulationInfo] = useState<SimulationInfo>({
@@ -65,18 +80,87 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     versao: 1,
   });
 
-  const login = (role: UserRole) => {
-    setUserRole(role);
-    if (typeof window !== "undefined" && role) {
-      sessionStorage.setItem("brigid_userRole", role);
+  useEffect(() => {
+    let active = true;
+
+    const syncAdmin = async (session: Session | null) => {
+      if (active) setUserEmail(session?.user.email ?? null);
+      if (!session) {
+        if (active) {
+          setIsAdmin(false);
+          setAuthLoading(false);
+        }
+        return;
+      }
+      const { data, error } = await supabase.rpc("is_admin");
+      if (error) console.error("Erro ao verificar perfil de administrador:", error);
+      if (active) {
+        setIsAdmin(data === true);
+        setAuthLoading(false);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => syncAdmin(data.session));
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Adiado para fora do callback, conforme recomendação do supabase-js
+      setTimeout(() => syncAdmin(session), 0);
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const enterPublic = () => {
+    setIsPublic(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("brigid_publicAccess", "1");
     }
   };
 
-  const logout = () => {
-    setUserRole(null);
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("brigid_userRole");
+  const loginAdmin = async (email: string, password: string): Promise<{ error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (error) {
+      return { error: "Credenciais inválidas. Verifique o e-mail e a senha informados." };
     }
+
+    const { data: admin, error: rpcError } = await supabase.rpc("is_admin");
+    if (rpcError || admin !== true) {
+      await supabase.auth.signOut();
+      return { error: "Este usuário não possui perfil de administrador." };
+    }
+
+    setIsAdmin(true);
+    return {};
+  };
+
+  const loginRespondente = async (email: string, password: string): Promise<{ error?: string }> => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (error) {
+      return { error: "Credenciais inválidas. Verifique o e-mail e a senha informados." };
+    }
+    const { data: admin } = await supabase.rpc("is_admin");
+    setIsAdmin(admin === true);
+    setUserEmail(data.user?.email ?? null);
+    return {};
+  };
+
+  const logout = async () => {
+    setIsAdmin(false);
+    setUserEmail(null);
+    setIsPublic(false);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("brigid_publicAccess");
+    }
+    await supabase.auth.signOut();
   };
 
   const updateWeights = (newWeights: Weights) => {
@@ -111,7 +195,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         userRole,
-        login,
+        authLoading,
+        enterPublic,
+        loginAdmin,
+        loginRespondente,
+        userEmail,
+        isAuthenticated: userEmail !== null,
         logout,
         weights,
         thresholds,

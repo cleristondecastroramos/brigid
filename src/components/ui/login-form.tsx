@@ -218,30 +218,26 @@ export function SmokeyBackground({
  */
 export function LoginForm() {
   const [showLogin, setShowLogin] = useState(false);
-  const { login } = useApp();
+  const { enterPublic, loginAdmin } = useApp();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Por favor, preencha todos os campos.");
       return;
     }
 
-    if (email.toLowerCase().trim() === "caocrim@mppi.mp.br") {
-      login("admin");
-      toast.success("Acesso de Administrador autorizado com sucesso!");
-      navigate({ to: "/apresentacao-do-sistema" });
-    } else {
-      // Se não for o admin, loga como público e avisa
-      login("public");
-      toast.error(
-        "Credenciais não reconhecidas como administrador. Acesso limitado ao painel público.",
-      );
-      navigate({ to: "/apresentacao-do-sistema" });
+    const { error } = await loginAdmin(email, password);
+    if (error) {
+      toast.error(error);
+      return;
     }
+
+    toast.success("Acesso de Administrador autorizado com sucesso!");
+    navigate({ to: "/apresentacao-do-sistema" });
   };
 
   if (!showLogin) {
@@ -256,7 +252,7 @@ export function LoginForm() {
           <Link
             to="/apresentacao-do-sistema"
             onClick={() => {
-              login("public");
+              enterPublic();
               toast.success("Acesso ao painel público carregado.");
             }}
             className="group flex-1 flex items-center justify-center py-3.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-500 hover:to-purple-500 rounded-lg font-semibold shadow-lg transition-all duration-300 hover:-translate-y-0.5"

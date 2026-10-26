@@ -15,9 +15,10 @@ export default function AdminAccessDialog() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const { userRole, login, logout } = useApp();
+  const [submitting, setSubmitting] = useState(false);
+  const { userRole, loginAdmin, logout, enterPublic, userEmail } = useApp();
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
@@ -26,21 +27,25 @@ export default function AdminAccessDialog() {
       return;
     }
 
-    // Admin validation logic matching the project's strategy
-    if (email.toLowerCase().trim() === "caocrim@mppi.mp.br") {
-      login("admin");
-      toast.success("Acesso de Administrador autorizado com sucesso!");
-      setOpen(false);
-      setEmail("");
-      setPassword("");
-    } else {
-      setErrorMsg("Credenciais de administrador inválidas. Verifique os dados informados.");
+    setSubmitting(true);
+    const { error } = await loginAdmin(email, password);
+    setSubmitting(false);
+
+    if (error) {
+      setErrorMsg(error);
       toast.error("Falha na autenticação administrativa.");
+      return;
     }
+
+    toast.success("Acesso de Administrador autorizado com sucesso!");
+    setOpen(false);
+    setEmail("");
+    setPassword("");
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
+    enterPublic();
     toast.info("Sessão administrativa encerrada. Retornando ao acesso público.");
   };
 
@@ -59,6 +64,25 @@ export default function AdminAccessDialog() {
         >
           <LogOut className="h-3 w-3" />
           <span>Sair do modo restrito</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Respondente (Promotor) autenticado no módulo de diagnóstico
+  if (userEmail) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-wider text-white/75">
+          {userEmail}
+        </span>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 rounded-none border border-white/20 bg-white/10 px-3 py-1.5 text-white shadow-none hover:bg-white/20 transition-all font-medium uppercase tracking-wide text-[10px] cursor-pointer"
+          title="Encerrar sessão"
+        >
+          <LogOut className="h-3 w-3" />
+          <span>Sair</span>
         </button>
       </div>
     );
@@ -161,9 +185,10 @@ export default function AdminAccessDialog() {
 
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#2e1065] hover:bg-[#1e0a3c] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-md hover:shadow cursor-pointer"
+                disabled={submitting}
+                className="px-4 py-2 bg-[#2e1065] hover:bg-[#1e0a3c] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors shadow-md hover:shadow cursor-pointer disabled:opacity-60 disabled:cursor-wait"
               >
-                <span>Confirmar</span>
+                <span>{submitting ? "Verificando..." : "Confirmar"}</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </DialogFooter>
