@@ -3,17 +3,17 @@
 // Execute na pasta do projeto (brigid). Três modos:
 //
 // 1) Gerar a planilha-modelo com todas as Promotorias (preencha a coluna "email"):
-//      node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
+//      node scripts/diagnostico/convidar-contas-promotorias.mjs --modelo contas.csv
 //    Usa as credenciais públicas do .env do projeto; não precisa de chave de serviço.
 //
 // 2) Lovable Cloud (sem chave de serviço): gerar o SQL que grava os e-mails institucionais
-//      node scripts/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
+//      node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
 //    Execute emails.sql no banco, convide os e-mails em More → Users → Add user e clique em
 //    "Vincular contas pelo e-mail institucional" na tela Administração do BRIGID.
 //
 // 3) Com a chave de serviço (Supabase próprio): convidar e vincular de uma vez
-//      node scripts/convidar-contas-promotorias.mjs contas.csv --simular
-//      node scripts/convidar-contas-promotorias.mjs contas.csv
+//      node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv --simular
+//      node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv
 //    Variáveis: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e BRIGID_URL (endereço do site).
 //    A chave de serviço dá acesso total ao banco: só no ambiente, nunca em arquivos.
 //
@@ -31,7 +31,7 @@ const redirectTo = `${site}/diagnostico-brigid/redefinir-senha`;
 
 // Credenciais públicas do projeto (leitura das Promotorias, liberada a todos pelo RLS)
 function envDoProjeto() {
-  const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
   const arq = path.join(raiz, ".env");
   if (!fs.existsSync(arq)) return {};
   const env = {};
@@ -154,7 +154,7 @@ async function gerarSql(caminho, saida) {
   const validas = linhas.filter((l) => !desconhecidas.includes(l));
   const q = (v) => `'${String(v).replace(/'/g, "''")}'`;
   const sql = [
-    "-- E-mails institucionais das Promotorias (gerado por scripts/convidar-contas-promotorias.mjs)",
+    "-- E-mails institucionais das Promotorias (gerado por scripts/diagnostico/convidar-contas-promotorias.mjs)",
     substituir
       ? "-- Substitui e-mails já cadastrados."
       : "-- Não altera Promotorias que já tenham outro e-mail cadastrado (use --substituir-email).",
@@ -278,7 +278,7 @@ try {
     await processar(args[0]);
   } else {
     console.log(
-      "Uso: node scripts/convidar-contas-promotorias.mjs --modelo contas.csv | contas.csv --sql emails.sql | contas.csv [--simular]",
+      "Uso: node scripts/diagnostico/convidar-contas-promotorias.mjs --modelo contas.csv | contas.csv --sql emails.sql | contas.csv [--simular]",
     );
   }
 } catch (e) {

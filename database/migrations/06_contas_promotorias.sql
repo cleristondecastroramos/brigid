@@ -1,11 +1,11 @@
 -- =====================================================================================
 -- Migration: vínculo em lote das contas institucionais das Promotorias
 -- =====================================================================================
--- Executar depois de migration_fluxo_diagnostico.sql.
+-- Executar depois de 05_fluxo_diagnostico.sql.
 --
 -- Uso no Lovable Cloud (sem chave de serviço):
 --   1. Preencha promotorias_justica.email_institucional (tela Administração ou o SQL gerado
---      por scripts/convidar-contas-promotorias.mjs --sql).
+--      por scripts/diagnostico/convidar-contas-promotorias.mjs --sql).
 --   2. Convide cada e-mail em More → Users → Add user → Send invitation.
 --   3. Na tela Administração, clique em "Vincular contas pelo e-mail institucional".
 --      A função liga cada Promotoria à conta cujo e-mail coincide com o institucional.

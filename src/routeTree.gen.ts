@@ -26,10 +26,8 @@ import { Route as MunicipiosIndexRouteImport } from './routes/municipios.index'
 import { Route as DiagnosticoBrigidIndexRouteImport } from './routes/diagnostico-brigid/index'
 import { Route as MunicipiosSlugRouteImport } from './routes/municipios.$slug'
 import { Route as DiagnosticoBrigidRedefinirSenhaRouteImport } from './routes/diagnostico-brigid/redefinir-senha'
-import { Route as DiagnosticoBrigidPainelRouteImport } from './routes/diagnostico-brigid/painel'
 import { Route as DiagnosticoBrigidNovoRouteImport } from './routes/diagnostico-brigid/novo'
 import { Route as DiagnosticoBrigidMeusDiagnosticosRouteImport } from './routes/diagnostico-brigid/meus-diagnosticos'
-import { Route as DiagnosticoBrigidBaseRouteImport } from './routes/diagnostico-brigid/base'
 import { Route as DiagnosticoBrigidAdministracaoRouteImport } from './routes/diagnostico-brigid/administracao'
 import { Route as DiagnosticoBrigidAcompanhamentoRouteImport } from './routes/diagnostico-brigid/acompanhamento'
 import { Route as DiagnosticoBrigidRevisaoIndexRouteImport } from './routes/diagnostico-brigid/revisao.index'
@@ -122,11 +120,6 @@ const DiagnosticoBrigidRedefinirSenhaRoute =
     path: '/diagnostico-brigid/redefinir-senha',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DiagnosticoBrigidPainelRoute = DiagnosticoBrigidPainelRouteImport.update({
-  id: '/diagnostico-brigid/painel',
-  path: '/diagnostico-brigid/painel',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DiagnosticoBrigidNovoRoute = DiagnosticoBrigidNovoRouteImport.update({
   id: '/diagnostico-brigid/novo',
   path: '/diagnostico-brigid/novo',
@@ -138,11 +131,6 @@ const DiagnosticoBrigidMeusDiagnosticosRoute =
     path: '/diagnostico-brigid/meus-diagnosticos',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DiagnosticoBrigidBaseRoute = DiagnosticoBrigidBaseRouteImport.update({
-  id: '/diagnostico-brigid/base',
-  path: '/diagnostico-brigid/base',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DiagnosticoBrigidAdministracaoRoute =
   DiagnosticoBrigidAdministracaoRouteImport.update({
     id: '/diagnostico-brigid/administracao',
@@ -190,10 +178,8 @@ export interface FileRoutesByFullPath {
   '/territorio': typeof TerritorioRoute
   '/diagnostico-brigid/acompanhamento': typeof DiagnosticoBrigidAcompanhamentoRoute
   '/diagnostico-brigid/administracao': typeof DiagnosticoBrigidAdministracaoRoute
-  '/diagnostico-brigid/base': typeof DiagnosticoBrigidBaseRoute
   '/diagnostico-brigid/meus-diagnosticos': typeof DiagnosticoBrigidMeusDiagnosticosRoute
   '/diagnostico-brigid/novo': typeof DiagnosticoBrigidNovoRoute
-  '/diagnostico-brigid/painel': typeof DiagnosticoBrigidPainelRoute
   '/diagnostico-brigid/redefinir-senha': typeof DiagnosticoBrigidRedefinirSenhaRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
   '/diagnostico-brigid/': typeof DiagnosticoBrigidIndexRoute
@@ -218,10 +204,8 @@ export interface FileRoutesByTo {
   '/territorio': typeof TerritorioRoute
   '/diagnostico-brigid/acompanhamento': typeof DiagnosticoBrigidAcompanhamentoRoute
   '/diagnostico-brigid/administracao': typeof DiagnosticoBrigidAdministracaoRoute
-  '/diagnostico-brigid/base': typeof DiagnosticoBrigidBaseRoute
   '/diagnostico-brigid/meus-diagnosticos': typeof DiagnosticoBrigidMeusDiagnosticosRoute
   '/diagnostico-brigid/novo': typeof DiagnosticoBrigidNovoRoute
-  '/diagnostico-brigid/painel': typeof DiagnosticoBrigidPainelRoute
   '/diagnostico-brigid/redefinir-senha': typeof DiagnosticoBrigidRedefinirSenhaRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
   '/diagnostico-brigid': typeof DiagnosticoBrigidIndexRoute
@@ -247,10 +231,8 @@ export interface FileRoutesById {
   '/territorio': typeof TerritorioRoute
   '/diagnostico-brigid/acompanhamento': typeof DiagnosticoBrigidAcompanhamentoRoute
   '/diagnostico-brigid/administracao': typeof DiagnosticoBrigidAdministracaoRoute
-  '/diagnostico-brigid/base': typeof DiagnosticoBrigidBaseRoute
   '/diagnostico-brigid/meus-diagnosticos': typeof DiagnosticoBrigidMeusDiagnosticosRoute
   '/diagnostico-brigid/novo': typeof DiagnosticoBrigidNovoRoute
-  '/diagnostico-brigid/painel': typeof DiagnosticoBrigidPainelRoute
   '/diagnostico-brigid/redefinir-senha': typeof DiagnosticoBrigidRedefinirSenhaRoute
   '/municipios/$slug': typeof MunicipiosSlugRoute
   '/diagnostico-brigid/': typeof DiagnosticoBrigidIndexRoute
@@ -277,10 +259,8 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/diagnostico-brigid/acompanhamento'
     | '/diagnostico-brigid/administracao'
-    | '/diagnostico-brigid/base'
     | '/diagnostico-brigid/meus-diagnosticos'
     | '/diagnostico-brigid/novo'
-    | '/diagnostico-brigid/painel'
     | '/diagnostico-brigid/redefinir-senha'
     | '/municipios/$slug'
     | '/diagnostico-brigid/'
@@ -305,10 +285,8 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/diagnostico-brigid/acompanhamento'
     | '/diagnostico-brigid/administracao'
-    | '/diagnostico-brigid/base'
     | '/diagnostico-brigid/meus-diagnosticos'
     | '/diagnostico-brigid/novo'
-    | '/diagnostico-brigid/painel'
     | '/diagnostico-brigid/redefinir-senha'
     | '/municipios/$slug'
     | '/diagnostico-brigid'
@@ -333,10 +311,8 @@ export interface FileRouteTypes {
     | '/territorio'
     | '/diagnostico-brigid/acompanhamento'
     | '/diagnostico-brigid/administracao'
-    | '/diagnostico-brigid/base'
     | '/diagnostico-brigid/meus-diagnosticos'
     | '/diagnostico-brigid/novo'
-    | '/diagnostico-brigid/painel'
     | '/diagnostico-brigid/redefinir-senha'
     | '/municipios/$slug'
     | '/diagnostico-brigid/'
@@ -362,10 +338,8 @@ export interface RootRouteChildren {
   TerritorioRoute: typeof TerritorioRoute
   DiagnosticoBrigidAcompanhamentoRoute: typeof DiagnosticoBrigidAcompanhamentoRoute
   DiagnosticoBrigidAdministracaoRoute: typeof DiagnosticoBrigidAdministracaoRoute
-  DiagnosticoBrigidBaseRoute: typeof DiagnosticoBrigidBaseRoute
   DiagnosticoBrigidMeusDiagnosticosRoute: typeof DiagnosticoBrigidMeusDiagnosticosRoute
   DiagnosticoBrigidNovoRoute: typeof DiagnosticoBrigidNovoRoute
-  DiagnosticoBrigidPainelRoute: typeof DiagnosticoBrigidPainelRoute
   DiagnosticoBrigidRedefinirSenhaRoute: typeof DiagnosticoBrigidRedefinirSenhaRoute
   MunicipiosSlugRoute: typeof MunicipiosSlugRoute
   DiagnosticoBrigidIndexRoute: typeof DiagnosticoBrigidIndexRoute
@@ -496,13 +470,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiagnosticoBrigidRedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/diagnostico-brigid/painel': {
-      id: '/diagnostico-brigid/painel'
-      path: '/diagnostico-brigid/painel'
-      fullPath: '/diagnostico-brigid/painel'
-      preLoaderRoute: typeof DiagnosticoBrigidPainelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/diagnostico-brigid/novo': {
       id: '/diagnostico-brigid/novo'
       path: '/diagnostico-brigid/novo'
@@ -515,13 +482,6 @@ declare module '@tanstack/react-router' {
       path: '/diagnostico-brigid/meus-diagnosticos'
       fullPath: '/diagnostico-brigid/meus-diagnosticos'
       preLoaderRoute: typeof DiagnosticoBrigidMeusDiagnosticosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diagnostico-brigid/base': {
-      id: '/diagnostico-brigid/base'
-      path: '/diagnostico-brigid/base'
-      fullPath: '/diagnostico-brigid/base'
-      preLoaderRoute: typeof DiagnosticoBrigidBaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/diagnostico-brigid/administracao': {
@@ -578,11 +538,9 @@ const rootRouteChildren: RootRouteChildren = {
   TerritorioRoute: TerritorioRoute,
   DiagnosticoBrigidAcompanhamentoRoute: DiagnosticoBrigidAcompanhamentoRoute,
   DiagnosticoBrigidAdministracaoRoute: DiagnosticoBrigidAdministracaoRoute,
-  DiagnosticoBrigidBaseRoute: DiagnosticoBrigidBaseRoute,
   DiagnosticoBrigidMeusDiagnosticosRoute:
     DiagnosticoBrigidMeusDiagnosticosRoute,
   DiagnosticoBrigidNovoRoute: DiagnosticoBrigidNovoRoute,
-  DiagnosticoBrigidPainelRoute: DiagnosticoBrigidPainelRoute,
   DiagnosticoBrigidRedefinirSenhaRoute: DiagnosticoBrigidRedefinirSenhaRoute,
   MunicipiosSlugRoute: MunicipiosSlugRoute,
   DiagnosticoBrigidIndexRoute: DiagnosticoBrigidIndexRoute,

@@ -30,3 +30,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Planilhas e SQL de contas das Promotorias (contêm e-mails; não versionar)
+contas*.csv
+emails*.sql
+
+# Ambientes Python
+__pycache__/
+*.pyc

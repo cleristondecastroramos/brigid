@@ -9,8 +9,8 @@ import {
 
 // Regras de completude do Diagnóstico BRIGID.
 // ATENÇÃO: a função SQL public.diagnostico_completude() replica exatamente estas regras
-// (ver migrations/migration_fluxo_diagnostico.sql). Qualquer alteração aqui deve ser
-// refletida lá e validada por scripts/testes/completude.test.mjs.
+// (ver database/migrations/05_fluxo_diagnostico.sql). Qualquer alteração aqui deve ser
+// refletida lá e validada por scripts/testes/fluxo-diagnostico.test.mjs.
 
 export type Respostas = Record<string, unknown>;
 

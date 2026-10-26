@@ -6,11 +6,13 @@ Regra central: **diagnóstico completo + aprovação expressa do CAOCRIM = autor
 
 Execute no SQL Editor do Supabase, nesta ordem:
 
-1. `migrations/migration_promotorias.sql`
-2. `migrations/migration_diagnostico.sql`
-3. `migrations/migration_rls_admin.sql`
-4. `migrations/migration_fluxo_diagnostico.sql`
-5. `migrations/migration_contas_promotorias.sql` (vínculo em lote das contas)
+1. `database/migrations/02_promotorias.sql`
+2. `database/migrations/03_diagnostico.sql`
+3. `database/migrations/04_rls_admin.sql`
+4. `database/migrations/05_fluxo_diagnostico.sql`
+5. `database/migrations/06_contas_promotorias.sql` (vínculo em lote das contas)
+
+A ordem completa, incluindo a carga inicial da base municipal, está em [`database/README.md`](../database/README.md).
 
 Depois, no **Lovable Cloud** (no Supabase próprio, os mesmos itens ficam em Authentication):
 
@@ -30,14 +32,14 @@ Os comandos rodam num terminal aberto na pasta `brigid` do projeto (a que tem o 
 1. **Gerar a planilha** com as 162 Promotorias. Usa as credenciais públicas do `.env`:
 
    ```bash
-   node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
+   node scripts/diagnostico/convidar-contas-promotorias.mjs --modelo contas.csv
    ```
 
    Abra `contas.csv` no Excel (separador `;`), preencha a coluna `email` e salve como CSV. Linhas sem e-mail são ignoradas.
 2. **Gerar o SQL dos e-mails** e executá-lo no banco, do mesmo jeito que as migrations:
 
    ```bash
-   node scripts/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
+   node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
    ```
 
    O script recusa e-mails inválidos ou repetidos. Por padrão não troca um e-mail já cadastrado; use `--substituir-email` para trocar. Também é possível preencher os e-mails um a um na tabela da tela Administração.
@@ -49,8 +51,8 @@ Os comandos rodam num terminal aberto na pasta `brigid` do projeto (a que tem o 
 O mesmo script convida e vincula de uma vez. A chave fica só no ambiente, nunca em arquivos do projeto.
 
 ```bash
-node scripts/convidar-contas-promotorias.mjs contas.csv --simular
-node scripts/convidar-contas-promotorias.mjs contas.csv
+node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv --simular
+node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv
 ```
 
 Variáveis: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `BRIGID_URL` (padrão `https://brigid-mppi.vercel.app`).

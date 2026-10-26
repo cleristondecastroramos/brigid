@@ -1,8 +1,12 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 import csv
 import os
 
-csv_path = "public/data/diagnostico_rede_protecao_piaui.csv"
-sql_path = "atualizar_diagnostico.sql"
+csv_path = "database/fontes/diagnostico_rede_protecao_piaui.csv"
+sql_path = "database/cargas/diagnostico.sql"
 
 def sanitize(val):
     if not val:

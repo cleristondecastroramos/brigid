@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { Respostas } from "@/lib/completude-diagnostico";
 
-// Toda escrita passa pelas funções do banco (migrations/migration_fluxo_diagnostico.sql),
+// Toda escrita passa pelas funções do banco (database/migrations/05_fluxo_diagnostico.sql),
 // que validam perfil, vínculo com a Promotoria e a transição de estado. As tabelas de
 // coleta não aceitam INSERT/UPDATE/DELETE direto pela API.
 

@@ -1,3 +1,7 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 data = """Acauã	Não	Não	Não	Baixo
 Agricolândia	Não	Não	Não	Baixo
 Água Branca	Sim	Sim	Sim	Médio
@@ -223,7 +227,7 @@ Vera Mendes	Não	Não	Não	Baixo
 Vila Nova do Piauí	Não	Não	Não	Baixo
 Wall Ferraz	Não	Não	Não	Baixo"""
 
-sql_path = 'atualizar_protocolos.sql'
+sql_path = 'database/cargas/protocolos.sql'
 
 with open(sql_path, 'w', encoding='utf-8') as sql_out:
     sql_out.write("-- Script para atualizar informações de protocolos e aderência técnica\n\n")

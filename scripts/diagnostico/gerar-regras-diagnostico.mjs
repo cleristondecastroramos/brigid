@@ -1,14 +1,14 @@
 // Gera as regras de completude (tabela diagnostico_campos_regras) a partir de
 // src/lib/dicionario-diagnostico.ts e as grava entre os marcadores da migration.
-// Uso: node scripts/gerar-regras-diagnostico.mjs
+// Uso: npm run gerar:regras
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 
-const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const MIGRATION = path.join(raiz, "migrations", "migration_fluxo_diagnostico.sql");
-const INICIO = "-- >>> REGRAS GERADAS (scripts/gerar-regras-diagnostico.mjs) >>>";
+const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const MIGRATION = path.join(raiz, "database", "migrations", "05_fluxo_diagnostico.sql");
+const INICIO = "-- >>> REGRAS GERADAS (scripts/diagnostico/gerar-regras-diagnostico.mjs) >>>";
 const FIM = "-- <<< REGRAS GERADAS <<<";
 
 export async function carregarDicionario() {

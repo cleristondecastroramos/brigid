@@ -2,9 +2,9 @@
 -- Migration: Fluxo de revisão, validação e publicação do Diagnóstico BRIGID
 -- =====================================================================================
 -- Ordem de execução no SQL Editor do Supabase:
---   1. migrations/migration_promotorias.sql   (Promotorias e abrangência territorial)
---   2. migrations/migration_diagnostico.sql   (estrutura inicial do diagnóstico)
---   3. migrations/migration_rls_admin.sql     (admin_users, is_admin(), RLS base)
+--   02_promotorias.sql   (Promotorias e abrangência territorial)
+--   03_diagnostico.sql   (estrutura inicial do diagnóstico)
+--   04_rls_admin.sql     (admin_users, is_admin(), RLS base)
 --   4. ESTE ARQUIVO
 --
 -- Princípios:
@@ -21,19 +21,19 @@ DO $$
 BEGIN
   IF to_regclass('public.promotorias_justica') IS NULL
      OR to_regclass('public.promotoria_municipios') IS NULL THEN
-    RAISE EXCEPTION 'Execute antes migrations/migration_promotorias.sql.';
+    RAISE EXCEPTION 'Execute antes database/migrations/02_promotorias.sql.';
   END IF;
   IF to_regclass('public.diagnostico_brigid') IS NULL THEN
-    RAISE EXCEPTION 'Execute antes migrations/migration_diagnostico.sql.';
+    RAISE EXCEPTION 'Execute antes database/migrations/03_diagnostico.sql.';
   END IF;
   IF to_regprocedure('public.is_admin()') IS NULL THEN
-    RAISE EXCEPTION 'Execute antes migrations/migration_rls_admin.sql.';
+    RAISE EXCEPTION 'Execute antes database/migrations/04_rls_admin.sql.';
   END IF;
 END;
 $$;
 
 -- -------------------------------------------------------------------------------------
--- 1. Colunas de destino da base consolidada (já criadas pelos scripts atualizar_*.sql;
+-- 1. Colunas de destino da base consolidada (já criadas pelas cargas em database/cargas;
 --    repetidas aqui para que a publicação não dependa da ordem desses scripts)
 -- -------------------------------------------------------------------------------------
 ALTER TABLE public.municipios ADD COLUMN IF NOT EXISTS tem_fluxo_formal TEXT;
@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS public.diagnostico_campos_regras (
     ordem INT NOT NULL
 );
 
--- >>> REGRAS GERADAS (scripts/gerar-regras-diagnostico.mjs) >>>
+-- >>> REGRAS GERADAS (scripts/diagnostico/gerar-regras-diagnostico.mjs) >>>
 DELETE FROM public.diagnostico_campos_regras;
 INSERT INTO public.diagnostico_campos_regras
   (codigo, secao, tipo_controle, obrigatorio, cond_campo, cond_valores, cond_maior_que, rotulo, ordem)

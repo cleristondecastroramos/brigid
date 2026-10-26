@@ -1,3 +1,7 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 import json
 import re
 import unicodedata
@@ -233,9 +237,9 @@ def normalize(text):
     text = unicodedata.normalize('NFD', text).encode('ascii', 'ignore').decode("utf-8")
     return text.lower().replace("'", "").replace("’", "").strip()
 
-# Read actual cities from schema_e_seed.sql
+# Read actual cities from database/carga-inicial/base_municipios.sql
 cities = []
-with open('schema_e_seed.sql', 'r', encoding='utf-8') as f:
+with open('database/carga-inicial/base_municipios.sql', 'r', encoding='utf-8') as f:
     for line in f:
         m = re.search(r"VALUES \('\d+', '([^']+)'", line)
         if m:
@@ -389,8 +393,8 @@ for line in raw_data.strip().split('\n'):
     else:
         print("NOT FOUND:", city_name_raw)
 
-with open('atualizar_creas.sql', 'w', encoding='utf-8') as f:
+with open('database/cargas/creas.sql', 'w', encoding='utf-8') as f:
     f.write('\n'.join(sql_lines))
     f.write('\n')
 
-print("Gerado atualizar_creas.sql com sucesso!")
+print("Gerado database/cargas/creas.sql com sucesso!")

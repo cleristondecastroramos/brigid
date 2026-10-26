@@ -1,5 +1,5 @@
 -- Script para atualizar a população total e feminina dos municípios
--- Gerado automaticamente a partir de public/data/populacao_pi.csv
+-- Gerado automaticamente a partir de database/fontes/populacao_pi.csv
 
 ALTER TABLE municipios ADD COLUMN IF NOT EXISTS populacao_feminina INTEGER;
 

@@ -1,7 +1,11 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 import csv
 
-csv_path = 'public/data/capacitacoes.csv'
-sql_path = 'atualizar_capacitacoes.sql'
+csv_path = 'database/fontes/capacitacoes.csv'
+sql_path = 'database/cargas/capacitacoes.sql'
 
 with open(csv_path, 'r', encoding='utf-8') as f:
     reader = csv.reader(f)

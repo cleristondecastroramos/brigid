@@ -1,3 +1,7 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 data = """Alagoinha do Piauí	1	0	0		0	0	0	
 Alegrete do Piauí	1	0	0		0	0	0	
 Altos	1	0	0		0	5	0	
@@ -125,11 +129,11 @@ for line in lines:
         # Formatando para tratar apóstrofos no nome do município como em Barra D'Alcântara
         municipio_sql = municipio.replace("'", "''")
         
-        sql = f"UPDATE nome_da_tabela SET consumados_2023 = {c23}, consumados_2024 = {c24}, consumados_2025 = {c25}, tentativas_2023 = {t23}, tentativas_2024 = {t24}, tentativas_2025 = {t25} WHERE municipio = '{municipio_sql}';"
+        sql = f"UPDATE municipios SET consumado_2023 = {c23}, consumado_2024 = {c24}, consumado_2025 = {c25}, tentado_2023 = {t23}, tentado_2024 = {t24}, tentado_2025 = {t25} WHERE municipio = '{municipio_sql}';"
         sql_statements.append(sql)
 
-with open('atualizar_casos_feminicidio.sql', 'w', encoding='utf-8') as f:
-    f.write('-- Substitua `nome_da_tabela` pelo nome real da sua tabela no banco de dados\n')
+with open('database/cargas/casos_feminicidio.sql', 'w', encoding='utf-8') as f:
+    f.write('-- Substitua `municipios` pelo nome real da sua tabela no banco de dados\n')
     f.write('-- Atualizações para dados de Feminicídios e Tentativas (2023, 2024, 2025)\n\n')
     f.write('\n'.join(sql_statements))
 

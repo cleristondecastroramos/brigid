@@ -10,9 +10,9 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "server": "json-server --watch db.json --port 3001",
     "test:diagnostico": "node --test scripts/testes/fluxo-diagnostico.test.mjs",
-    "gerar:regras": "node scripts/gerar-regras-diagnostico.mjs"
+    "gerar:regras": "node scripts/diagnostico/gerar-regras-diagnostico.mjs",
+    "contas:modelo": "node scripts/diagnostico/convidar-contas-promotorias.mjs --modelo contas-promotorias.csv"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -90,7 +90,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
-    "json-server": "^1.0.0-beta.15",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",

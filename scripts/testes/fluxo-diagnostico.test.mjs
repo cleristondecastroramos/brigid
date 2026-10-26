@@ -8,7 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { PGlite } from "@electric-sql/pglite";
-import { carregarDicionario } from "../gerar-regras-diagnostico.mjs";
+import { carregarDicionario } from "../diagnostico/gerar-regras-diagnostico.mjs";
 import ts from "typescript";
 import { pathToFileURL } from "node:url";
 
@@ -154,20 +154,20 @@ before(async () => {
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
   `);
-  await db.exec(sql("schema_e_seed.sql"));
+  await db.exec(sql("database/carga-inicial/base_municipios.sql"));
   await db.exec("ALTER TABLE public.municipios ADD CONSTRAINT municipios_id_key UNIQUE (id)");
   for (const f of [
-    "atualizar_diagnostico.sql",
-    "atualizar_protocolos.sql",
-    "atualizar_assistencia.sql",
-    "atualizar_capacitacoes.sql",
-    "atualizar_gargalos.sql",
-    "migration_eventos_risco.sql",
-    "migrations/migration_promotorias.sql",
-    "migrations/migration_diagnostico.sql",
-    "migrations/migration_rls_admin.sql",
-    "migrations/migration_fluxo_diagnostico.sql",
-    "migrations/migration_contas_promotorias.sql",
+    "database/cargas/diagnostico.sql",
+    "database/cargas/protocolos.sql",
+    "database/cargas/assistencia.sql",
+    "database/cargas/capacitacoes.sql",
+    "database/cargas/gargalos.sql",
+    "database/migrations/01_eventos_feminicidio.sql",
+    "database/migrations/02_promotorias.sql",
+    "database/migrations/03_diagnostico.sql",
+    "database/migrations/04_rls_admin.sql",
+    "database/migrations/05_fluxo_diagnostico.sql",
+    "database/migrations/06_contas_promotorias.sql",
   ]) {
     await db.exec(sql(f));
   }

@@ -1,3 +1,7 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 import json
 
 def get_sql_type(val):
@@ -8,7 +12,7 @@ def get_sql_type(val):
     return "TEXT"
 
 def generate_schema():
-    with open('db.json', 'r', encoding='utf-8') as f:
+    with open('database/fontes/municipios_base.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
     
     municipios = data.get('municipios', [])
@@ -100,9 +104,9 @@ def generate_schema():
         
         sql += f"INSERT INTO entregas_estrategicas ({', '.join(cols)}) VALUES ({', '.join(vals)});\n"
         
-    with open('schema_e_seed.sql', 'w', encoding='utf-8') as out:
+    with open('database/carga-inicial/base_municipios.sql', 'w', encoding='utf-8') as out:
         out.write(sql)
         
-    print("schema_e_seed.sql gerado!")
+    print("database/carga-inicial/base_municipios.sql gerado!")
 
 generate_schema()

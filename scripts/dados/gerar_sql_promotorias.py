@@ -13,11 +13,10 @@ def normalize_text(text):
     return text
 
 def main():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    csv_path = os.path.join(base_dir, 'src', 'data', 'promotorias.csv')
-    db_json_path = os.path.join(base_dir, 'db.json')
-    ts_out_path = os.path.join(base_dir, 'src', 'data', 'promotorias-seed.ts')
-    sql_out_path = os.path.join(base_dir, 'migrations', 'migration_promotorias.sql')
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    csv_path = os.path.join(base_dir, 'database', 'fontes', 'promotorias.csv')
+    db_json_path = os.path.join(base_dir, 'database', 'fontes', 'municipios_base.json')
+    sql_out_path = os.path.join(base_dir, 'database', 'migrations', '02_promotorias.sql')
 
     with open(db_json_path, 'r', encoding='utf-8') as f:
         db_data = json.load(f)
@@ -105,31 +104,6 @@ def main():
     for d in divergencias_comarca:
         print(f" - Mun: {d['municipio']} | CSV: {d['comarca_csv']} | Base: {d['comarca_base']}")
     
-    # Export TypeScript
-    ts_content = f"""// AUTO-GENERATED FILE. DO NOT EDIT DIRECTLY.
-export interface Promotoria {{
-  id: string;
-  nome: string;
-  nome_normalizado: string;
-  comarca_sede: string;
-  tipo_atribuicao: string;
-}}
-
-export interface PromotoriaMunicipio {{
-  promotoria_id: string;
-  codigo_ibge: string;
-  municipio: string;
-  comarca: string;
-  polo_regional: string;
-}}
-
-export const promotorias: Promotoria[] = {json.dumps(list(promotorias_dict.values()), ensure_ascii=False, indent=2)};
-
-export const promotoriaMunicipios: PromotoriaMunicipio[] = {json.dumps(vinculos, ensure_ascii=False, indent=2)};
-"""
-    with open(ts_out_path, 'w', encoding='utf-8') as f:
-        f.write(ts_content)
-    
     # Export SQL
     sql_content = """-- Migration script gerado automaticamente
 -- Tabela de Promotorias
@@ -171,7 +145,6 @@ CREATE TABLE IF NOT EXISTS public.promotoria_municipios (
         f.write(sql_content)
     
     print("\nArquivos gerados com sucesso:")
-    print(f"- {ts_out_path}")
     print(f"- {sql_out_path}")
 
 if __name__ == "__main__":

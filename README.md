@@ -156,45 +156,40 @@ O perfil é sempre conferido no banco, pela função `is_admin()` e pelo víncul
 
 ```
 brigid/
+├── database/                        # Tudo o que é banco de dados (ver database/README.md)
+│   ├── carga-inicial/               #   base_municipios.sql: estrutura e carga inicial (destrutivo)
+│   ├── cargas/                      #   atualizações temáticas da base municipal (opm.sql, creas.sql…)
+│   ├── migrations/                  #   evolução do esquema, numerada na ordem de execução (01…07)
+│   └── fontes/                      #   dados de origem (CSV/JSON) usados pelos geradores
 ├── docs/
-│   └── fluxo-diagnostico.md        # Fluxo do diagnóstico, mapeamento e implantação (detalhado)
-├── migrations/                     # Migrations do Supabase (ver ordem abaixo)
-│   ├── migration_promotorias.sql   # Promotorias e abrangência territorial (com dados)
-│   ├── migration_diagnostico.sql   # Estrutura inicial do diagnóstico
-│   ├── migration_rls_admin.sql     # admin_users, is_admin() e RLS das tabelas de dados
-│   ├── migration_fluxo_diagnostico.sql   # Versões, revisão, publicação, regras e permissões
-│   └── migration_contas_promotorias.sql  # Vínculo em lote das contas institucionais
-├── public/
-│   ├── data/                       # CSVs de origem, GeoJSON do Piauí e manual técnico (.docx)
-│   └── logo_brigid.png, brigid.png, favicon.ico
+│   ├── fluxo-diagnostico.md         # Fluxo do diagnóstico, mapeamento e implantação (detalhado)
+│   ├── manual-tecnico.md            # Manual técnico em texto
+│   └── manual-tecnico-sistema-brigid.docx
+├── public/                          # Arquivos estáticos servidos pelo site (logos e favicon)
 ├── scripts/
-│   ├── testes/fluxo-diagnostico.test.mjs  # Testes do fluxo (PGlite)
-│   ├── gerar-regras-diagnostico.mjs       # Gera regras de completude a partir do dicionário
-│   ├── convidar-contas-promotorias.mjs    # Planilha, SQL e convites das contas das Promotorias
-│   ├── gerar_promotorias.py               # Gera seeds de Promotorias e abrangência
-│   └── init-db.js, update-manual.cjs, update-md.cjs
+│   ├── dados/                       # Geradores Python dos SQL de carga (gerar_sql_*.py)
+│   ├── diagnostico/                 # Regras de completude e contas das Promotorias
+│   └── testes/                      # Testes do fluxo de diagnóstico (PGlite)
 ├── src/
-│   ├── routes/                     # Páginas (rotas por arquivo)
-│   │   └── diagnostico-brigid/     # Módulo de coleta, revisão e administração
-│   ├── components/                 # Componentes (mapas, KPIs, formulário, shadcn/ui)
-│   ├── context/AppContext.tsx      # Sessão, perfil (admin/público), pesos da simulação
+│   ├── routes/                      # Páginas (rotas por arquivo)
+│   │   └── diagnostico-brigid/      # Módulo de coleta, revisão e administração
+│   ├── components/                  # Componentes (mapas, KPIs, formulário, shadcn/ui em ui/)
+│   ├── context/AppContext.tsx       # Sessão, perfil (admin/público), pesos da simulação
 │   ├── lib/
-│   │   ├── supabase.ts                   # Cliente Supabase
-│   │   ├── data-fetching.ts              # Consultas do painel
-│   │   ├── useMunicipios.ts              # Score de risco e índices sintéticos
-│   │   ├── config.ts                     # Janela oficial e anos parciais do modelo de risco
-│   │   ├── dicionario-diagnostico.ts     # Dicionário do formulário (perguntas e regras)
-│   │   ├── completude-diagnostico.ts     # Cálculo de completude (espelhado no SQL)
-│   │   ├── inconsistencias-diagnostico.ts# Alertas de coerência para a revisão
-│   │   └── export.ts                     # PDF/CSV/XLSX com identidade institucional
-│   ├── services/                   # Acesso ao banco (diagnóstico, promotorias)
-│   └── data/                       # GeoJSON e seeds estáticos
-├── schema_e_seed.sql               # Criação e carga inicial de municipios e entregas_estrategicas
-├── atualizar_*.sql                 # Atualizações temáticas da base municipal (geradas dos CSVs)
-├── gerar_sql_*.py, script_gerador.py  # Geradores dos atualizar_*.sql
-├── migration_eventos_risco.sql     # Tabela normalizada de eventos de feminicídio
-├── supabase/setup_visitor_counter.sql  # Contador de acessos
-└── vercel.json                     # Reescrita de rotas da SPA
+│   │   ├── supabase.ts                    # Cliente Supabase
+│   │   ├── data-fetching.ts               # Consultas do painel
+│   │   ├── useMunicipios.ts               # Score de risco e índices sintéticos
+│   │   ├── config.ts                      # Janela oficial e anos parciais do modelo de risco
+│   │   ├── dicionario-diagnostico.ts      # Dicionário do formulário (perguntas e regras)
+│   │   ├── completude-diagnostico.ts      # Cálculo de completude (espelhado no SQL)
+│   │   ├── inconsistencias-diagnostico.ts # Alertas de coerência para a revisão
+│   │   └── export.ts                      # PDF/CSV/XLSX com identidade institucional
+│   ├── services/                    # Acesso ao banco (diagnóstico, promotorias)
+│   ├── integrations/supabase/       # Cliente e tipos gerados pelo Lovable (não usados pelo app)
+│   └── data/                        # GeoJSON dos municípios do Piauí
+├── supabase/config.toml             # Identificação do projeto no Lovable Cloud
+├── .lovable/, bun.lock, bunfig.toml # Arquivos do ambiente Lovable (mantidos para a integração)
+└── vercel.json                      # Reescrita de rotas da SPA
 ```
 
 ---
@@ -346,45 +341,49 @@ O app abre em `http://localhost:5173`. Ele consulta o banco configurado no `.env
 
 ## Banco de dados: criação e migrations
 
-> **Atenção:** `schema_e_seed.sql` começa com `DROP TABLE` de `municipios` e `entregas_estrategicas`. Use-o **apenas** para montar um banco do zero, nunca em produção.
+Todos os scripts SQL ficam em [`database/`](database/README.md). Para montar um banco do zero, execute no SQL Editor, nesta ordem:
 
-Para montar um banco do zero, execute no SQL Editor, nesta ordem:
+1. `database/carga-inicial/base_municipios.sql`: estrutura e carga inicial de `municipios` e `entregas_estrategicas`.
+   > **Atenção:** começa com `DROP TABLE`. Use **apenas** num banco novo, nunca em produção.
+2. `database/cargas/*.sql`: população, OPM, CREAS, diagnóstico da rede, protocolos, assistência, capacitações, gargalos e casos.
+3. `database/migrations/01_…` a `07_…`, em ordem numérica:
+   - eventos de feminicídio;
+   - Promotorias;
+   - diagnóstico;
+   - RLS e administração;
+   - fluxo do diagnóstico;
+   - contas das Promotorias;
+   - contador de acessos.
 
-1. `schema_e_seed.sql` (estrutura e carga inicial de `municipios` e `entregas_estrategicas`)
-2. `atualizar_*.sql` (população, OPM, CREAS, diagnóstico da rede, protocolos, assistência, capacitações, gargalos, casos)
-3. `migration_eventos_risco.sql` (eventos de feminicídio normalizados)
-4. `migrations/migration_promotorias.sql`
-5. `migrations/migration_diagnostico.sql`
-6. `migrations/migration_rls_admin.sql`
-7. `migrations/migration_fluxo_diagnostico.sql`
-8. `migrations/migration_contas_promotorias.sql`
-9. `supabase/setup_visitor_counter.sql` (contador de acessos)
-
-Num banco que já está em uso, aplique apenas as migrations que ainda não rodaram. Todas as migrations em `migrations/` são idempotentes e podem ser reexecutadas.
+Num banco que já está em uso, aplique apenas as migrations que ainda não rodaram. As migrations `02` a `07` podem ser reexecutadas. A `01` não pode, porque duplicaria os eventos. A tabela de [`database/README.md`](database/README.md) relaciona os nomes atuais aos nomes antigos dos arquivos.
 
 ---
 
 ## Carga e atualização de dados
 
-As informações temáticas da base municipal vêm de planilhas em `public/data/` ou de dados embutidos nos próprios geradores. Cada tema tem um gerador Python que produz o SQL correspondente:
+As informações temáticas da base municipal vêm de planilhas em `database/fontes/` ou de dados embutidos nos próprios geradores. Cada tema tem um gerador Python em `scripts/dados/` que produz o SQL correspondente:
 
-| CSV de origem | Gerador | SQL gerado |
+| Origem | Gerador (`scripts/dados/`) | SQL gerado |
 | --- | --- | --- |
-| `populacao_pi.csv` | `gerar_sql_populacao.py` | `atualizar_populacao.sql` |
-| `rede_protecao_assistencial.csv` | `gerar_sql_assistencia.py` | `atualizar_assistencia.sql` |
-| `capacitacoes.csv` | `gerar_sql_capacitacoes.py` | `atualizar_capacitacoes.sql` |
-| `diagnostico_rede_protecao_piaui.csv` | `gerar_sql_diagnostico.py` | `atualizar_diagnostico.sql` |
-| `gargalos.csv` | `gerar_sql_gargalos.py` | `atualizar_gargalos.sql` |
-| Protocolos (dados no próprio script) | `gerar_sql_protocolos.py` | `atualizar_protocolos.sql` |
-| OPM (dados no próprio script) | `gerar_sql_opm.py` | `atualizar_opm.sql` |
-| CREAS (dados no script, cruzados com `schema_e_seed.sql`) | `gerar_sql_creas.py` | `atualizar_creas.sql` |
-| Casos de feminicídio (dados no próprio script) | `script_gerador.py` | `atualizar_casos_feminicidio.sql` |
+| `fontes/municipios_base.json` | `gerar_sql_base_municipios.py` | `carga-inicial/base_municipios.sql` |
+| `fontes/populacao_pi.csv` | `gerar_sql_populacao.py` | `cargas/populacao.sql` |
+| `fontes/rede_protecao_assistencial.csv` | `gerar_sql_assistencia.py` | `cargas/assistencia.sql` |
+| `fontes/capacitacoes.csv` | `gerar_sql_capacitacoes.py` | `cargas/capacitacoes.sql` |
+| `fontes/diagnostico_rede_protecao_piaui.csv` | `gerar_sql_diagnostico.py` | `cargas/diagnostico.sql` |
+| `fontes/gargalos.csv` | `gerar_sql_gargalos.py` | `cargas/gargalos.sql` |
+| Protocolos (dados no próprio script) | `gerar_sql_protocolos.py` | `cargas/protocolos.sql` |
+| OPM (dados no próprio script) | `gerar_sql_opm.py` | `cargas/opm.sql` |
+| CREAS (dados no script, cruzados com a carga inicial) | `gerar_sql_creas.py` | `cargas/creas.sql` |
+| Casos de feminicídio (dados no próprio script) | `gerar_sql_casos_feminicidio.py` | `cargas/casos_feminicidio.sql` |
+| `fontes/promotorias.csv` + `fontes/municipios_base.json` | `gerar_sql_promotorias.py` | `migrations/02_promotorias.sql` |
+
+Os caminhos da tabela são relativos a `database/`. Os geradores podem ser executados de qualquer pasta.
 
 Fluxo de atualização:
-1. Atualize o CSV.
+1. Atualize o arquivo de origem.
 2. Rode o gerador:
    ```bash
-   python gerar_sql_populacao.py
+   python scripts/dados/gerar_sql_populacao.py
    ```
 3. Revise o SQL gerado e execute-o no banco.
 
@@ -435,9 +434,9 @@ npm run lint
 | `npm run format` | Prettier em todo o projeto. |
 | `npm run test:diagnostico` | Testes do fluxo de diagnóstico (PGlite). |
 | `npm run gerar:regras` | Regenera as regras de completude na migration a partir do dicionário. |
-| `node scripts/convidar-contas-promotorias.mjs --modelo contas.csv` | Gera a planilha com todas as Promotorias para preencher os e-mails institucionais. |
-| `node scripts/convidar-contas-promotorias.mjs contas.csv --sql emails.sql` | Gera o SQL que grava os e-mails institucionais (Lovable Cloud). |
-| `node scripts/convidar-contas-promotorias.mjs contas.csv [--simular]` | Convida e vincula as contas de uma vez (exige chave de serviço; Supabase próprio). |
+| `npm run contas:modelo` | Gera `contas-promotorias.csv` com todas as Promotorias, para preencher os e-mails institucionais. A planilha não é versionada. |
+| `node scripts/diagnostico/convidar-contas-promotorias.mjs contas-promotorias.csv --sql emails.sql` | Gera o SQL que grava os e-mails institucionais (Lovable Cloud). |
+| `node scripts/diagnostico/convidar-contas-promotorias.mjs contas.csv [--simular]` | Convida e vincula as contas de uma vez (exige chave de serviço; Supabase próprio). |
 
 ---
 
@@ -471,12 +470,12 @@ npm run lint
 
 1. Gere a planilha:
    ```bash
-   node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
+   npm run contas:modelo
    ```
-   Preencha a coluna `email` no Excel (separador `;`).
+   Preencha a coluna `email` de `contas-promotorias.csv` no Excel (separador `;`). Planilhas e SQL com e-mails não são versionados (`.gitignore`).
 2. Gere o SQL dos e-mails e execute-o no banco:
    ```bash
-   node scripts/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
+   node scripts/diagnostico/convidar-contas-promotorias.mjs contas-promotorias.csv --sql emails.sql
    ```
    Também é possível digitar os e-mails na tela **Administração**.
 3. Convide cada e-mail em **More → Users → Add user → Send invitation**. O link do convite leva à tela "Definir senha da Promotoria".
@@ -512,9 +511,8 @@ Recomenda-se trocar a senha sempre que o titular mudar.
 - **Edição direta da base:** a página `/base` permite ao CAOCRIM editar `municipios` diretamente, fora do fluxo de validação. Use-a só para correções da carga histórica.
 - **Campos sem pergunta no formulário:** `tem_atendimento_juridico`, `tem_equipe_multiprofissional`, `tem_articulacao_rede` e `treinamento_especifico_feminicidio` não têm pergunta e aparecem como "Sem informação" enquanto não houver carga. Isso reduz os índices IMF e IQT.
 - **Convites no Lovable Cloud:** são enviados um a um pela tela do Lovable, que não oferece convite em lote sem chave de serviço.
-- **Telas em desenvolvimento:** `/diagnostico-brigid/painel` e `/diagnostico-brigid/base`.
-- **Código legado a remover:** `db.json` e o script `server` (json-server), além de utilitários antigos (`script_schema_seed.py`, `scale_fonts.cjs`, pasta `scratch/`).
-- **Dois clientes Supabase:** `src/lib/supabase.ts`, o usado, e `src/integrations/supabase/`, gerado pelo Lovable.
+- **Dois clientes Supabase:** `src/lib/supabase.ts`, o usado, e `src/integrations/supabase/`, gerado e mantido pelo Lovable.
+- **Dois gerenciadores de pacotes:** o projeto usa npm (`package-lock.json`), mas o ambiente Lovable mantém `bun.lock` e `bunfig.toml`. Ao mudar dependências, convém atualizar os dois ou padronizar num só.
 - **`.env` versionado:** o arquivo está no repositório, hoje só com a chave pública. Recomenda-se incluí-lo no `.gitignore` e configurar as variáveis em cada ambiente.
 - **Erro antigo de tipagem** em `src/components/blocks/cta-section-with-gallery.tsx`, sem efeito no build.
 - **Bundle grande:** o pacote principal passa de 500 kB, e caberia dividir em pedaços (code splitting).
@@ -525,7 +523,8 @@ Recomenda-se trocar a senha sempre que o titular mudar.
 
 - [`docs/fluxo-diagnostico.md`](docs/fluxo-diagnostico.md): fluxo do diagnóstico, completude, mapeamento formulário → painel, publicação, contas e implantação.
 - Página **Metodologia de Cálculos** (`/metodologia`): fórmulas e critérios dos indicadores.
-- **Manual Técnico** (`/manual` e `public/data/manual-tecnico-sistema-brigid.docx`).
+- [`database/README.md`](database/README.md): organização dos scripts SQL, ordem de execução e dados de origem.
+- **Manual Técnico**: página `/manual`, [`docs/manual-tecnico.md`](docs/manual-tecnico.md) e [`docs/manual-tecnico-sistema-brigid.docx`](docs/manual-tecnico-sistema-brigid.docx).
 
 ---
 

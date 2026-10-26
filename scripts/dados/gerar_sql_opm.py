@@ -1,3 +1,7 @@
+# Caminhos relativos à raiz do projeto: o script pode ser executado de qualquer pasta.
+import os as _os
+_os.chdir(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))))
+
 data = """Acauã	Não	-
 Agricolândia	Não	-
 Água Branca	Sim	Secretaria
@@ -243,7 +247,7 @@ for line in data.strip().split('\n'):
         
         sql += f"UPDATE municipios SET opm_possui = '{opm_possui}', opm_orgaotipo = '{opm_orgaotipo}' WHERE municipio = '{municipio_escaped}';\n"
 
-with open('atualizar_opm.sql', 'w', encoding='utf-8') as f:
+with open('database/cargas/opm.sql', 'w', encoding='utf-8') as f:
     f.write(sql)
 
-print("Arquivo atualizar_opm.sql gerado com sucesso!")
+print("Arquivo database/cargas/opm.sql gerado com sucesso!")
