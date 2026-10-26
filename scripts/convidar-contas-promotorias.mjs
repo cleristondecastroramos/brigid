@@ -1,35 +1,65 @@
-// Cria (por convite) as contas institucionais das Promotorias e as vincula no BRIGID.
+// Contas institucionais das Promotorias: planilha-modelo, SQL dos e-mails e convites.
 //
-// A chave de serviço dá acesso total ao banco: use-a apenas localmente, por variável de
-// ambiente, e nunca a grave em arquivos do projeto.
+// Execute na pasta do projeto (brigid). Três modos:
 //
-// 1) Gerar a planilha-modelo com todas as Promotorias (preencha a coluna email):
+// 1) Gerar a planilha-modelo com todas as Promotorias (preencha a coluna "email"):
 //      node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
-// 2) Conferir sem alterar nada:
-//      node scripts/convidar-contas-promotorias.mjs contas.csv --simular
-// 3) Enviar os convites e gravar os vínculos:
-//      node scripts/convidar-contas-promotorias.mjs contas.csv
+//    Usa as credenciais públicas do .env do projeto; não precisa de chave de serviço.
 //
-// Variáveis: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e, opcionalmente, BRIGID_URL
-// (endereço do site, para o link do convite; padrão http://localhost:5173).
-// Opções: --substituir-email (troca o e-mail institucional já cadastrado de uma Promotoria)
+// 2) Lovable Cloud (sem chave de serviço): gerar o SQL que grava os e-mails institucionais
+//      node scripts/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
+//    Execute emails.sql no banco, convide os e-mails em More → Users → Add user e clique em
+//    "Vincular contas pelo e-mail institucional" na tela Administração do BRIGID.
+//
+// 3) Com a chave de serviço (Supabase próprio): convidar e vincular de uma vez
+//      node scripts/convidar-contas-promotorias.mjs contas.csv --simular
+//      node scripts/convidar-contas-promotorias.mjs contas.csv
+//    Variáveis: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e BRIGID_URL (endereço do site).
+//    A chave de serviço dá acesso total ao banco: só no ambiente, nunca em arquivos.
+//
+// Opção: --substituir-email (troca o e-mail institucional já cadastrado de uma Promotoria)
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
 const args = process.argv.slice(2);
 const flag = (f) => args.includes(f);
-const url = process.env.SUPABASE_URL;
-const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const site = (process.env.BRIGID_URL || "http://localhost:5173").replace(/\/$/, "");
+const valor = (f) => (args.includes(f) ? args[args.indexOf(f) + 1] : undefined);
+const site = (process.env.BRIGID_URL || "https://brigid-mppi.vercel.app").replace(/\/$/, "");
 const redirectTo = `${site}/diagnostico-brigid/redefinir-senha`;
 
-if (!url || !chave) {
-  console.error("Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no ambiente.");
-  process.exit(1);
+// Credenciais públicas do projeto (leitura das Promotorias, liberada a todos pelo RLS)
+function envDoProjeto() {
+  const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+  const arq = path.join(raiz, ".env");
+  if (!fs.existsSync(arq)) return {};
+  const env = {};
+  for (const linha of fs.readFileSync(arq, "utf8").split(/\r?\n/)) {
+    const m = linha.match(/^\s*([A-Z0-9_]+)\s*=\s*"?([^"]*)"?\s*$/);
+    if (m) env[m[1]] = m[2];
+  }
+  return env;
 }
-const supabase = createClient(url, chave, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+
+let supabase;
+function cliente({ servico }) {
+  if (supabase) return supabase;
+  const env = envDoProjeto();
+  const url = process.env.SUPABASE_URL || env.VITE_SUPABASE_URL;
+  const chave = servico
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : process.env.SUPABASE_SERVICE_ROLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !chave) {
+    throw new Error(
+      servico
+        ? "Este modo exige SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no ambiente. No Lovable Cloud, use --sql."
+        : "Não encontrei VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env do projeto.",
+    );
+  }
+  supabase = createClient(url, chave, { auth: { persistSession: false, autoRefreshToken: false } });
+  return supabase;
+}
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const csvLinha = (v) =>
@@ -66,7 +96,7 @@ function lerCsv(caminho) {
 }
 
 async function todasPromotorias() {
-  const { data, error } = await supabase
+  const { data, error } = await cliente({ servico: false })
     .from("promotorias_justica")
     .select("id, nome, comarca_sede, email_institucional")
     .order("nome");
@@ -97,7 +127,58 @@ async function gerarModelo(caminho) {
   );
 }
 
+// Lovable Cloud: gera o SQL que grava os e-mails institucionais (sem chave de serviço)
+async function gerarSql(caminho, saida) {
+  const substituir = flag("--substituir-email");
+  const linhas = lerCsv(caminho);
+  const invalidos = linhas.filter((l) => !EMAIL.test(l.email));
+  const repetidos = [
+    ...new Set(linhas.map((l) => l.email).filter((e, i, a) => a.indexOf(e) !== i)),
+  ];
+  if (invalidos.length || repetidos.length) {
+    for (const l of invalidos) console.error(`E-mail inválido: ${l.promotoria_id} <${l.email}>`);
+    for (const e of repetidos) console.error(`E-mail repetido em mais de uma Promotoria: ${e}`);
+    throw new Error("Corrija a planilha e gere o SQL novamente.");
+  }
+  let ids = null;
+  try {
+    ids = new Set((await todasPromotorias()).map((p) => p.id));
+  } catch {
+    console.warn(
+      "Não foi possível conferir os códigos das Promotorias no banco; SQL gerado assim mesmo.",
+    );
+  }
+  const desconhecidas = ids ? linhas.filter((l) => !ids.has(l.promotoria_id)) : [];
+  for (const l of desconhecidas)
+    console.warn(`IGNORADA ${l.promotoria_id}: Promotoria inexistente.`);
+  const validas = linhas.filter((l) => !desconhecidas.includes(l));
+  const q = (v) => `'${String(v).replace(/'/g, "''")}'`;
+  const sql = [
+    "-- E-mails institucionais das Promotorias (gerado por scripts/convidar-contas-promotorias.mjs)",
+    substituir
+      ? "-- Substitui e-mails já cadastrados."
+      : "-- Não altera Promotorias que já tenham outro e-mail cadastrado (use --substituir-email).",
+    "BEGIN;",
+    ...validas.map(
+      (l) =>
+        `UPDATE public.promotorias_justica SET email_institucional = ${q(l.email)}, updated_at = now() ` +
+        `WHERE id = ${q(l.promotoria_id)}` +
+        (substituir
+          ? ""
+          : ` AND (email_institucional IS NULL OR lower(email_institucional) = ${q(l.email)})`) +
+        ";",
+    ),
+    "COMMIT;",
+    "",
+  ].join("\n");
+  fs.writeFileSync(saida, sql);
+  console.log(`${validas.length} e-mail(s) gravado(s) em ${saida}. Execute esse SQL no banco.`);
+  console.log("Depois convide cada e-mail (More → Users → Add user → Send invitation) e clique em");
+  console.log('"Vincular contas pelo e-mail institucional" na tela Administração do BRIGID.');
+}
+
 async function processar(caminho) {
+  cliente({ servico: true });
   const simular = flag("--simular");
   const substituir = flag("--substituir-email");
   const linhas = lerCsv(caminho);
@@ -153,17 +234,15 @@ async function processar(caminho) {
       resumo.existentes++;
     }
 
-    const { error: e1 } = await supabase
-      .from("usuarios_promotoria")
-      .upsert(
-        {
-          user_id: usuario.id,
-          promotoria_id,
-          nome_responsavel: "Conta institucional da Promotoria",
-          ativo: true,
-        },
-        { onConflict: "user_id,promotoria_id" },
-      );
+    const { error: e1 } = await supabase.from("usuarios_promotoria").upsert(
+      {
+        user_id: usuario.id,
+        promotoria_id,
+        nome_responsavel: "Conta institucional da Promotoria",
+        ativo: true,
+      },
+      { onConflict: "user_id,promotoria_id" },
+    );
     const { error: e2 } = await supabase
       .from("promotorias_justica")
       .update({ email_institucional: email, updated_at: new Date().toISOString() })
@@ -185,7 +264,7 @@ async function processar(caminho) {
   );
   if (!simular && resumo.convidadas) {
     console.log(
-      `Os convites levam a ${redirectTo}; inclua esse endereço em Authentication > URL Configuration.`,
+      `Os convites levam a ${redirectTo}; inclua esse endereço nas Redirect URLs da autenticação.`,
     );
   }
 }
@@ -193,11 +272,13 @@ async function processar(caminho) {
 try {
   if (flag("--modelo")) {
     await gerarModelo(args[args.indexOf("--modelo") + 1] || "contas-promotorias.csv");
+  } else if (args[0] && !args[0].startsWith("--") && flag("--sql")) {
+    await gerarSql(args[0], valor("--sql") || "emails-promotorias.sql");
   } else if (args[0] && !args[0].startsWith("--")) {
     await processar(args[0]);
   } else {
     console.log(
-      "Uso: node scripts/convidar-contas-promotorias.mjs --modelo contas.csv | contas.csv [--simular]",
+      "Uso: node scripts/convidar-contas-promotorias.mjs --modelo contas.csv | contas.csv --sql emails.sql | contas.csv [--simular]",
     );
   }
 } catch (e) {

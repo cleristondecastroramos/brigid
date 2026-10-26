@@ -10,27 +10,50 @@ Execute no SQL Editor do Supabase, nesta ordem:
 2. `migrations/migration_diagnostico.sql`
 3. `migrations/migration_rls_admin.sql`
 4. `migrations/migration_fluxo_diagnostico.sql`
+5. `migrations/migration_contas_promotorias.sql` (vínculo em lote das contas)
 
-Depois:
+Depois, no **Lovable Cloud** (no Supabase próprio, os mesmos itens ficam em Authentication):
 
-- Desative o cadastro aberto ("Allow new users to sign up") e inclua `<endereço do site>/diagnostico-brigid/redefinir-senha` em **Authentication → URL Configuration → Redirect URLs**.
-- Crie a conta do CAOCRIM em **Authentication → Users** e marque-a como administradora: `INSERT INTO public.admin_users (user_id) SELECT id FROM auth.users WHERE email = 'caocrim@mppi.mp.br';`
-- Crie as contas das Promotorias, que usam o **e-mail institucional da Promotoria**, não o pessoal do titular. Use o script de convites (seção abaixo) ou crie uma a uma e vincule em **Diagnóstico BRIGID → Promotorias e usuários**.
+- **More → Users → Settings:** ative "Disable sign-up". Em **Advanced**, defina a **Site URL** como `https://brigid-mppi.vercel.app` e inclua `https://brigid-mppi.vercel.app/diagnostico-brigid/redefinir-senha` em **Redirect URLs**. Se o Lovable não aceitar alterar esses campos, peça no chat do Lovable para configurá-los. O app leva quem chega por convite ou recuperação para "definir senha" mesmo que o link caia na página inicial, mas a Site URL precisa apontar para o site da Vercel (se apontar para `localhost` ou para o domínio do Lovable, o link não chega ao BRIGID).
+- **More → Users → Add user → Create new user:** crie a conta do CAOCRIM e marque-a como administradora com o SQL `INSERT INTO public.admin_users (user_id) SELECT id FROM auth.users WHERE email = 'caocrim@mppi.mp.br';`
+- Contas das Promotorias: veja a seção abaixo.
 
 ## Contas das Promotorias
 
 - Cada Promotoria acessa com a conta do seu e-mail institucional (`promotorias_justica.email_institucional`). Os diagnósticos pertencem à Promotoria, não à pessoa.
 - Quem preenche informa nome e condição (titular, substituto(a), em respondência) ao criar o diagnóstico e declara esses dados a cada envio. A declaração fica gravada na versão enviada (`enviado_por_nome`, `enviado_por_condicao`) e nunca é publicada.
 - **Troca de titular:** nada muda no sistema. O novo titular usa "Esqueci minha senha" na tela de acesso; o link chega ao e-mail institucional e leva a `/diagnostico-brigid/redefinir-senha`. Recomenda-se trocar a senha a cada mudança de titular.
-- **Convites em lote** (rodam na sua máquina, com a chave de serviço só no ambiente — nunca em arquivos do projeto):
+### Cadastro das contas no Lovable Cloud (sem chave de serviço)
+
+Os comandos rodam num terminal aberto na pasta `brigid` do projeto (a que tem o `package.json`), depois de `npm install`.
+
+1. **Gerar a planilha** com as 162 Promotorias. Usa as credenciais públicas do `.env`:
+
+   ```bash
+   node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
+   ```
+
+   Abra `contas.csv` no Excel (separador `;`), preencha a coluna `email` e salve como CSV. Linhas sem e-mail são ignoradas.
+2. **Gerar o SQL dos e-mails** e executá-lo no banco, do mesmo jeito que as migrations:
+
+   ```bash
+   node scripts/convidar-contas-promotorias.mjs contas.csv --sql emails.sql
+   ```
+
+   O script recusa e-mails inválidos ou repetidos. Por padrão não troca um e-mail já cadastrado; use `--substituir-email` para trocar. Também é possível preencher os e-mails um a um na tabela da tela Administração.
+3. **Convidar cada e-mail** em More → Users → Add user → Send invitation. O convite chega à caixa da Promotoria; o link abre o BRIGID na tela "Definir senha da Promotoria".
+4. **Vincular:** na tela Administração do BRIGID, clique em "Vincular contas pelo e-mail institucional". As Promotorias cujo e-mail já tem conta passam a acessar o formulário; as demais aparecem na lista de pendentes. Repita depois de novos convites.
+
+### Com Supabase próprio (com chave de serviço)
+
+O mesmo script convida e vincula de uma vez. A chave fica só no ambiente, nunca em arquivos do projeto.
 
 ```bash
-node scripts/convidar-contas-promotorias.mjs --modelo contas.csv
 node scripts/convidar-contas-promotorias.mjs contas.csv --simular
 node scripts/convidar-contas-promotorias.mjs contas.csv
 ```
 
-  O primeiro comando gera a planilha com todas as Promotorias; preencha a coluna `email`. Variáveis: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `BRIGID_URL` (endereço do site, usado no link do convite).
+Variáveis: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `BRIGID_URL` (padrão `https://brigid-mppi.vercel.app`).
 
 Se o dicionário (`src/lib/dicionario-diagnostico.ts`) mudar, rode `npm run gerar:regras` e reaplique a migration. Os testes conferem que a completude calculada no navegador e no banco é a mesma: `npm run test:diagnostico`.
 

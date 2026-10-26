@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Database, Search, UserPlus } from "lucide-react";
+import { ArrowLeft, Database, Link2, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/diagnostico-brigid/administracao")({
@@ -298,19 +298,73 @@ function VinculosUsuarios({ promotorias }: { promotorias: Promotoria[] }) {
     }
   };
 
+  const [pendentes, setPendentes] = useState<{ nome: string; email: string }[] | null>(null);
+  const vincularEmLote = async () => {
+    setSalvando(true);
+    try {
+      const r = await promotoriasService.vincularContasPorEmail();
+      const novas = r.filter((x) => x.situacao === "vinculada").length;
+      const ja = r.filter((x) => x.situacao === "ja_vinculada").length;
+      const sem = r.filter((x) => x.situacao === "conta_inexistente");
+      setPendentes(sem.map((x) => ({ nome: x.promotoria_nome, email: x.email })));
+      toast.success(
+        `${novas} conta(s) vinculada(s), ${ja} já vinculada(s), ${sem.length} sem conta criada.`,
+      );
+      await carregar();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const semEmail = promotorias.filter((p) => !p.email_institucional).length;
+
   return (
     <Card>
       <CardHeader className="border-b pb-3">
         <CardTitle className="text-base">Contas das Promotorias</CardTitle>
         <p className="text-sm text-muted-foreground">
           O acesso ao formulário é feito pela conta do e-mail institucional da Promotoria, não pelo
-          e-mail pessoal do titular. Crie as contas em lote com{" "}
-          <code className="text-xs">scripts/convidar-contas-promotorias.mjs</code> ou, uma a uma, em
-          Authentication &gt; Users no Supabase, e vincule-as aqui. Na troca de titular não é
-          preciso alterar nada: o novo titular redefine a senha pelo próprio e-mail institucional.
+          e-mail pessoal do titular. Na troca de titular não é preciso alterar nada: o novo titular
+          redefine a senha pelo próprio e-mail institucional.
         </p>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+          <li>
+            Preencha o e-mail institucional de cada Promotoria na tabela acima ({semEmail} sem
+            e-mail).
+          </li>
+          <li>
+            Convide cada e-mail no painel do Lovable Cloud: More → Users → Add user → Send
+            invitation.
+          </li>
+          <li>
+            Clique em "Vincular contas pelo e-mail institucional". Pode repetir quantas vezes
+            quiser.
+          </li>
+        </ol>
+        <div className="pt-2">
+          <Button variant="outline" onClick={vincularEmLote} disabled={salvando}>
+            <Link2 className="mr-2 h-4 w-4" /> Vincular contas pelo e-mail institucional
+          </Button>
+        </div>
+        {pendentes && pendentes.length > 0 && (
+          <details className="pt-2 text-sm">
+            <summary className="cursor-pointer text-warning-foreground">
+              {pendentes.length} Promotoria(s) com e-mail cadastrado, mas sem conta criada
+            </summary>
+            <ul className="mt-2 max-h-48 space-y-0.5 overflow-y-auto text-xs text-muted-foreground">
+              {pendentes.map((p) => (
+                <li key={p.email}>
+                  {p.nome} — {p.email}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </CardHeader>
       <CardContent className="space-y-4 pt-4">
+        <p className="text-xs text-muted-foreground">Vínculo individual (opcional):</p>
         <div className="grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_auto]">
           <Select
             value={novo.promotoria}

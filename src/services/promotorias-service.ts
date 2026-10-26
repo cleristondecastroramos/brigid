@@ -103,6 +103,15 @@ class PromotoriasService {
     erro(error);
   }
 
+  // Liga cada Promotoria à conta cujo e-mail coincide com o institucional (repetível)
+  async vincularContasPorEmail(): Promise<
+    { promotoria_id: string; promotoria_nome: string; email: string; situacao: string }[]
+  > {
+    const { data, error } = await supabase.rpc("admin_vincular_contas_por_email");
+    erro(error);
+    return data;
+  }
+
   async atualizarEmailInstitucional(id: string, email: string) {
     const valor = email.trim().toLowerCase() || null;
     const { data, error } = await supabase

@@ -167,6 +167,7 @@ before(async () => {
     "migrations/migration_diagnostico.sql",
     "migrations/migration_rls_admin.sql",
     "migrations/migration_fluxo_diagnostico.sql",
+    "migrations/migration_contas_promotorias.sql",
   ]) {
     await db.exec(sql(f));
   }
@@ -993,6 +994,46 @@ test("perguntas novas: recursos incompletos viram NAO e capacitação antiga pub
   );
   assert.equal(respostas.SEG_CAPACITA_QTD, undefined, "quantidade oculta não deve ser guardada");
   await q("super", "DELETE FROM public.diagnostico_brigid WHERE id = $1", [id]);
+});
+
+test("vínculo em lote liga cada Promotoria à conta do seu e-mail institucional", async () => {
+  const CONTA_C = "00000000-0000-0000-0000-0000000000c1";
+  const [pC, pD] = (
+    await q(
+      "super",
+      "SELECT id FROM public.promotorias_justica WHERE id NOT IN ($1, $2) ORDER BY id LIMIT 2",
+      [ctx.pA, ctx.pB],
+    )
+  ).map((r) => r.id);
+  await q("super", "INSERT INTO auth.users (id, email) VALUES ($1, 'pj.c@mppi.mp.br')", [CONTA_C]);
+  await q(
+    "super",
+    "UPDATE public.promotorias_justica SET email_institucional = 'PJ.C@mppi.mp.br' WHERE id = $1",
+    [pC],
+  );
+  await q(
+    "super",
+    "UPDATE public.promotorias_justica SET email_institucional = 'pj.d@mppi.mp.br' WHERE id = $1",
+    [pD],
+  );
+
+  await falha(
+    PROMOTOR_A,
+    "SELECT * FROM public.admin_vincular_contas_por_email()",
+    [],
+    /restrita ao CAOCRIM/,
+  );
+  const r1 = await q(ADMIN, "SELECT * FROM public.admin_vincular_contas_por_email()");
+  const sit = (rows, id) => rows.find((x) => x.promotoria_id === id)?.situacao;
+  assert.equal(sit(r1, pC), "vinculada");
+  assert.equal(sit(r1, pD), "conta_inexistente", "sem conta criada, nada é vinculado");
+  const r2 = await q(ADMIN, "SELECT * FROM public.admin_vincular_contas_por_email()");
+  assert.equal(sit(r2, pC), "ja_vinculada", "repetir não duplica");
+  const vinc = await q(CONTA_C, "SELECT * FROM public.meus_vinculos()");
+  assert.deepEqual(
+    vinc.map((v) => v.promotoria_id),
+    [pC],
+  );
 });
 
 test("conta da Promotoria: cada envio registra quem assinou, mesmo após troca de titular", async () => {
