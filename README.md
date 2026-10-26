@@ -52,7 +52,7 @@ O BRIGID tem duas entradas, com finalidades distintas:
 
 | Rota | Página | Conteúdo |
 | --- | --- | --- |
-| `/` | Página inicial | Apresentação do projeto e as duas entradas (painel e diagnóstico). |
+| `/` | Página inicial | Apresentação do projeto com imagens ilustrativas, as duas entradas (painel e diagnóstico) e o panorama estadual. |
 | `/apresentacao-do-sistema` | Apresentação do Sistema | Visão geral dos módulos e do propósito da plataforma. |
 | `/diagnostico` | Diagnóstico da Rede e Fluxos | Infraestrutura, fluxos, protocolos, investigação/perícia, assistência social e gargalos. Inclui índices IER, IMF e IQT, mapa temático, ranking de polos regionais e matrizes por município. |
 | `/opm` | Cobertura de OPMs | Presença e efetividade de Organismos de Políticas para Mulheres. |
@@ -103,13 +103,13 @@ A revisão completa (`/revisao/:id`) reúne:
 | Perfil | Como entra | Pode |
 | --- | --- | --- |
 | **Visitante** | "Acessar painel", sem login | Consultar o painel público, que só mostra dados consolidados. |
-| **Conta da Promotoria** | E-mail institucional da Promotoria e senha | Preencher, salvar e enviar diagnósticos **apenas** das Promotorias às quais a conta está vinculada. |
+| **Conta da Promotoria** | E-mail institucional da Promotoria e senha (provisória no primeiro acesso, com troca obrigatória) | Preencher, salvar e enviar diagnósticos **apenas** das Promotorias às quais a conta está vinculada. |
 | **CAOCRIM (administrador)** | Conta registrada em `admin_users` | Revisar, devolver, validar e publicar diagnósticos; administrar Promotorias e contas; editar a base municipal; simular pesos. |
 
 **Contas institucionais.** O acesso ao formulário é feito pela conta do e-mail **da Promotoria**, não pelo e-mail pessoal do titular. Os diagnósticos pertencem à Promotoria.
 - Quem preenche informa nome e condição (titular, substituto(a), em respondência).
 - A cada envio, declara quem está assinando, e essa declaração fica gravada na versão enviada.
-- Na troca de titular nada precisa ser migrado: o novo titular redefine a senha pelo próprio e-mail institucional.
+- Na troca de titular nada precisa ser migrado: o CAOCRIM redefine a senha para a provisória e o novo titular cria a sua no primeiro acesso.
 
 O perfil é sempre conferido no banco, pela função `is_admin()` e pelo vínculo em `usuarios_promotoria`. Esconder botões na interface é só conveniência e não protege nada.
 
@@ -169,8 +169,8 @@ brigid/
 ├── public/                          # Arquivos estáticos servidos pelo site (logos e favicon)
 ├── scripts/
 │   ├── dados/                       # Geradores Python dos SQL de carga (gerar_sql_*.py)
-│   ├── diagnostico/                 # Regras de completude e contas das Promotorias
-│   └── testes/                      # Testes do fluxo de diagnóstico (PGlite)
+│   ├── diagnostico/                 # Gerador das regras de completude
+│   └── testes/                      # Testes do fluxo de diagnóstico (PGlite) e das contas
 ├── src/
 │   ├── routes/                      # Páginas (rotas por arquivo)
 │   │   └── diagnostico-brigid/      # Módulo de coleta, revisão e administração
@@ -190,7 +190,7 @@ brigid/
 │   └── data/                        # GeoJSON dos municípios do Piauí
 ├── supabase/
 │   ├── config.toml                  # Identificação do projeto no Lovable Cloud
-│   └── functions/contas-promotorias/ # Função de borda: cria contas e altera senhas (chave de serviço)
+│   └── functions/contas-promotorias/ # Função de borda: cria contas e altera senhas (index.ts) e suas regras (acoes.ts)
 ├── .lovable/, bun.lock, bunfig.toml # Arquivos do ambiente Lovable (mantidos para a integração)
 └── vercel.json                      # Reescrita de rotas da SPA
 ```
@@ -304,7 +304,10 @@ em preenchimento → enviado → em análise ─┬─▶ devolvido → (correç
   - Nenhuma escrita direta pela API, nem do CAOCRIM. Toda escrita da coleta passa por funções `SECURITY DEFINER` com `search_path` fixo, que conferem perfil, vínculo e estado e registram auditoria.
 - **Administração no banco:** o perfil administrativo vem de `admin_users` e é conferido por `is_admin()`.
 - **Anexos:** ficam em bucket privado, acessíveis só pelo CAOCRIM e pela Promotoria dona do diagnóstico, por URL assinada de 5 minutos.
-- **Cadastro aberto desativado:** as contas das Promotorias são criadas só pelo CAOCRIM, com senha provisória de troca obrigatória no primeiro acesso.
+- **Contas das Promotorias:** criadas só pelo CAOCRIM (cadastro aberto desativado), com senha provisória de troca obrigatória no primeiro acesso.
+  - Enquanto a senha provisória estiver em uso, o banco bloqueia todo acesso aos diagnósticos, e a marca só sai pela função de borda.
+  - A senha provisória vale por 72 horas e não está no código do navegador.
+  - A troca de senha pela função só é aceita para a própria conta com senha provisória; aprovar de novo uma conta com senha definitiva não a apaga.
 - **Chaves:** a chave pública (`VITE_SUPABASE_PUBLISHABLE_KEY`) vai no código do navegador, por definição. A **chave de serviço nunca deve ir para o repositório** nem para variáveis com prefixo `VITE_`.
 
 ---
@@ -401,7 +404,7 @@ Com o fluxo de diagnóstico em funcionamento, a forma preferencial de atualizar 
 npm run test:diagnostico
 ```
 
-Executa os **scripts SQL reais do projeto** num PostgreSQL embutido (PGlite), simulando os papéis do Supabase (`anon`, `authenticated`) e `auth.uid()`, com RLS ativo. Não precisa de rede nem de banco externo. Os cenários cobertos incluem:
+Executa os **scripts SQL reais do projeto** num PostgreSQL embutido (PGlite), simulando os papéis do Supabase (`anon`, `authenticated`) e `auth.uid()`, com RLS ativo, e as regras da função de borda `contas-promotorias` com dublês do banco e da autenticação. Não precisa de rede nem de banco externo. Os cenários cobertos incluem:
 
 - **O que não publica:** rascunho, diagnóstico 100% sem aprovação, diagnóstico enviado e devolução não alteram a base pública.
 - **Validação:** diagnóstico incompleto ou com conteúdo diferente do revisado não pode ser validado.
@@ -414,7 +417,7 @@ Executa os **scripts SQL reais do projeto** num PostgreSQL embutido (PGlite), si
   - conflitos entre Promotorias exigem confirmação.
 - **Privacidade e caráter:** dados privados não vazam, e dados preliminares continuam preliminares.
 - **Regras de conversão:** recursos mínimos, suficiência e capacitações.
-- **Contas:** cada envio registra quem assinou, e o vínculo em lote funciona e pode ser repetido.
+- **Contas:** só o CAOCRIM aprova e redefine; a senha provisória bloqueia diagnósticos e anexos até a troca; a troca recusa senha curta, igual à provisória, expirada ou de conta sem a marca; reaprovar uma conta com senha definitiva a mantém; cada envio registra quem assinou.
 - **Completude:** o cálculo do navegador e o do banco coincidem em 400 casos aleatórios.
 
 Também é recomendável rodar antes de publicar alterações:
@@ -436,7 +439,7 @@ npm run lint
 | `npm run preview` | Serve o build localmente. |
 | `npm run lint` | ESLint. |
 | `npm run format` | Prettier em todo o projeto. |
-| `npm run test:diagnostico` | Testes do fluxo de diagnóstico (PGlite). |
+| `npm run test:diagnostico` | Testes do fluxo de diagnóstico (PGlite) e da função de contas. |
 | `npm run gerar:regras` | Regenera as regras de completude na migration a partir do dicionário. |
 
 ---

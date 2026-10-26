@@ -62,6 +62,10 @@ Sessão ativa e encerramento
 
 Enquanto a sessão administrativa estiver aberta, o sistema mantém um selo de sessão ativa em destaque e preserva o estado administrativo até que o usuário decida encerrar o modo restrito. O encerramento da sessão deve ser feito por meio do botão específico de saída, para evitar permanência indevida do perfil de administrador em ambientes compartilhados.
 
+Acesso das Promotorias de Justiça
+
+As Promotorias de Justiça não usam a área restrita do painel. Elas acessam o módulo Diagnóstico BRIGID, pela página inicial, com a conta do e-mail institucional da Promotoria cadastrada pelo CAOCRIM. O cadastro, o primeiro acesso, a troca de senha e a redefinição estão descritos na seção Contas das Promotorias no Diagnóstico BRIGID.
+
 Navegação principal do sistema
 
 A navegação principal é organizada por menu lateral e páginas temáticas. Embora a nomenclatura possa variar ao longo da evolução do produto, o sistema está estruturado em torno dos seguintes grupos funcionais:
@@ -556,7 +560,71 @@ tabela administrativa com busca, ordenação e edição;
 
 modal por abas para manutenção detalhada;
 
-mecanismos de confirmação, dirty state e salvamento controlado.
+mecanismos de confirmação, dirty state e salvamento controlado;
+
+aprovação das contas das Promotorias e redefinição de senhas (seção Contas das Promotorias no Diagnóstico BRIGID).
+
+Promotoria de Justiça
+
+A Promotoria de Justiça utiliza o módulo Diagnóstico BRIGID com a conta do seu e-mail institucional para:
+
+no primeiro acesso, trocar a senha provisória por uma senha definitiva;
+
+preencher, salvar e enviar os diagnósticos dos municípios de sua atribuição;
+
+corrigir e reenviar diagnósticos devolvidos pelo CAOCRIM.
+
+Contas das Promotorias no Diagnóstico BRIGID
+
+O módulo Diagnóstico BRIGID recebe das Promotorias de Justiça as informações sobre a rede de proteção dos municípios de sua atribuição. O acesso é feito pela conta do e-mail institucional da Promotoria, e não pelo e-mail pessoal do titular, de modo que os diagnósticos pertencem à Promotoria. Todo o cadastro e a gestão de senhas são feitos pelo CAOCRIM no próprio sistema, sem envio de e-mails.
+
+Cadastro e aprovação pelo CAOCRIM
+
+Acessar Diagnóstico BRIGID → Administração → Contas das Promotorias.
+
+Escolher a Promotoria e informar o e-mail institucional.
+
+Clicar em "Aprovar e ativar cadastro".
+
+O sistema confirma que o cadastro está ativo e exibe o e-mail e a senha provisória padrão, a mesma para todas as Promotorias, que o CAOCRIM informa à Promotoria.
+
+Se o e-mail já pertencer a uma conta de Promotoria com senha definitiva, a conta é apenas vinculada e a senha é mantida. Contas do CAOCRIM não podem ser usadas como contas de Promotoria.
+
+Primeiro acesso e troca obrigatória de senha
+
+A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a senha provisória.
+
+O sistema exibe apenas a tela "Troca de senha obrigatória" e só libera o formulário após a definição da senha definitiva.
+
+A nova senha deve ter pelo menos 10 caracteres e não pode ser igual à senha provisória.
+
+A troca deve ser feita em até 72 horas após a aprovação ou a redefinição. Depois desse prazo, a senha provisória não permite mais definir a senha definitiva, e o CAOCRIM precisa redefini-la. Enquanto a senha provisória estiver em uso, o banco de dados também recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
+
+Esquecimento de senha e troca de titular
+
+A Promotoria solicita ao CAOCRIM a redefinição. O CAOCRIM clica em "Redefinir senha" na linha da conta e confirma: a senha volta a ser a provisória, a senha anterior deixa de valer e a troca é exigida novamente no próximo acesso. Na troca de titular, nada precisa ser migrado; recomenda-se redefinir a senha para que o novo titular crie a sua.
+
+Situação das contas no painel do CAOCRIM
+
+Aguardando troca de senha: conta aprovada ou redefinida, ainda com a senha provisória;
+
+Senha provisória expirada: passaram-se 72 horas sem a troca; é preciso redefinir a senha;
+
+Ativa: a Promotoria já definiu a senha definitiva;
+
+Inativa: vínculo desativado pelo CAOCRIM; "Reativar" restabelece o vínculo mantendo a senha definitiva.
+
+A coluna "Senha definida em" mostra quando a senha atual foi criada, e "Último acesso" ajuda a identificar contas nunca utilizadas.
+
+Cuidados de segurança
+
+Aprovar ou redefinir uma conta somente quando a Promotoria estiver pronta para acessar, pois a senha provisória é a mesma para todas as contas.
+
+Informar a senha provisória apenas à Promotoria titular da conta.
+
+Pedir à Promotoria que confira a data em "Senha definida em" logo após o primeiro acesso; se não reconhecer a data, solicitar nova redefinição.
+
+Desativar o vínculo de contas que não devem mais acessar o módulo.
 
 Glossário funcional
 
@@ -580,9 +648,12 @@ Atuação prioritária
 
 Marcador administrativo de urgência estratégica que pode elevar a prioridade institucional de determinado município independentemente de parte dos critérios automatizados.
 
+Senha provisória
+
+Senha padrão, a mesma para todas as contas das Promotorias, atribuída na aprovação ou na redefinição pelo CAOCRIM. Vale por 72 horas e serve apenas para o primeiro acesso, quando deve ser trocada por uma senha definitiva e individual.
+
 Considerações finais
 
 O BRÍGID não é apenas uma base de consulta, mas um sistema de inteligência territorial e gestão institucional orientado à prevenção e ao monitoramento qualificado da violência de gênero. Seu valor depende da qualidade da base, da consistência metodológica e do uso responsável dos recursos analíticos e administrativos disponíveis.
 
 O uso correto dos filtros, da ficha técnica, da gestão da base e do modal de edição fortalece a capacidade de leitura territorial do MPPI e melhora a confiabilidade das respostas institucionais construídas a partir da plataforma.
-

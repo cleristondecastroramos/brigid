@@ -284,6 +284,16 @@ function Manual() {
               de saída, para evitar permanência indevida do perfil de administrador em ambientes
               compartilhados.
             </p>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              5.4. Acesso das Promotorias de Justiça
+            </h3>
+            <p className="leading-relaxed text-justify">
+              As Promotorias de Justiça não usam a área restrita do painel. Elas acessam o módulo
+              Diagnóstico BRIGID, pela página inicial, com a conta do e-mail institucional da
+              Promotoria cadastrada pelo CAOCRIM. O cadastro, o primeiro acesso, a troca de senha e
+              a redefinição estão descritos na seção 17.
+            </p>
           </section>
 
           {/* 6. Navegação principal do sistema */}
@@ -1118,15 +1128,153 @@ function Manual() {
               <li className="text-justify">tabela administrativa com busca, ordenação e edição;</li>
               <li className="text-justify">modal por abas para manutenção detalhada;</li>
               <li className="text-justify">
-                mecanismos de confirmação, dirty state e salvamento controlado.
+                mecanismos de confirmação, dirty state e salvamento controlado;
+              </li>
+              <li className="text-justify">
+                aprovação das contas das Promotorias e redefinição de senhas (seção 17).
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              16.3. Promotoria de Justiça
+            </h3>
+            <p className="leading-relaxed text-justify">
+              A Promotoria de Justiça utiliza o módulo Diagnóstico BRIGID com a conta do seu e-mail
+              institucional para:
+            </p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li className="text-justify">
+                no primeiro acesso, trocar a senha provisória por uma senha definitiva;
+              </li>
+              <li className="text-justify">
+                preencher, salvar e enviar os diagnósticos dos municípios de sua atribuição;
+              </li>
+              <li className="text-justify">
+                corrigir e reenviar diagnósticos devolvidos pelo CAOCRIM.
               </li>
             </ul>
           </section>
 
-          {/* 16. Glossário funcional */}
+          {/* 17. Contas das Promotorias no Diagnóstico BRIGID */}
           <section className="space-y-4 break-before-page">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-b pb-2 print:text-black">
-              16. Glossário funcional
+              17. Contas das Promotorias no Diagnóstico BRIGID
+            </h2>
+            <p className="leading-relaxed text-justify">
+              O módulo Diagnóstico BRIGID recebe das Promotorias de Justiça as informações sobre a
+              rede de proteção dos municípios de sua atribuição. O acesso é feito pela conta do
+              e-mail institucional da Promotoria, e não pelo e-mail pessoal do titular, de modo que
+              os diagnósticos pertencem à Promotoria. Todo o cadastro e a gestão de senhas são
+              feitos pelo CAOCRIM no próprio sistema, sem envio de e-mails.
+            </p>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              17.1. Cadastro e aprovação pelo CAOCRIM
+            </h3>
+            <ul className="list-decimal pl-6 space-y-2">
+              <li className="text-justify">
+                Acessar Diagnóstico BRIGID → Administração → Contas das Promotorias.
+              </li>
+              <li className="text-justify">
+                Escolher a Promotoria e informar o e-mail institucional.
+              </li>
+              <li className="text-justify">Clicar em "Aprovar e ativar cadastro".</li>
+              <li className="text-justify">
+                O sistema confirma que o cadastro está ativo e exibe o e-mail e a senha provisória
+                padrão, a mesma para todas as Promotorias, que o CAOCRIM informa à Promotoria.
+              </li>
+            </ul>
+            <p className="leading-relaxed text-justify">
+              Se o e-mail já pertencer a uma conta de Promotoria com senha definitiva, a conta é
+              apenas vinculada e a senha é mantida. Contas do CAOCRIM não podem ser usadas como
+              contas de Promotoria.
+            </p>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              17.2. Primeiro acesso e troca obrigatória de senha
+            </h3>
+            <ul className="list-decimal pl-6 space-y-2">
+              <li className="text-justify">
+                A Promotoria acessa o Diagnóstico BRIGID com o e-mail cadastrado e a senha
+                provisória.
+              </li>
+              <li className="text-justify">
+                O sistema exibe apenas a tela "Troca de senha obrigatória" e só libera o formulário
+                após a definição da senha definitiva.
+              </li>
+              <li className="text-justify">
+                A nova senha deve ter pelo menos 10 caracteres e não pode ser igual à senha
+                provisória.
+              </li>
+            </ul>
+            <p className="leading-relaxed text-justify">
+              A troca deve ser feita em até 72 horas após a aprovação ou a redefinição. Depois desse
+              prazo, a senha provisória não permite mais definir a senha definitiva, e o CAOCRIM
+              precisa redefini-la. Enquanto a senha provisória estiver em uso, o banco de dados
+              também recusa qualquer leitura, criação ou envio de diagnóstico pela conta.
+            </p>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              17.3. Esquecimento de senha e troca de titular
+            </h3>
+            <p className="leading-relaxed text-justify">
+              A Promotoria solicita ao CAOCRIM a redefinição. O CAOCRIM clica em "Redefinir senha"
+              na linha da conta e confirma: a senha volta a ser a provisória, a senha anterior deixa
+              de valer e a troca é exigida novamente no próximo acesso. Na troca de titular, nada
+              precisa ser migrado; recomenda-se redefinir a senha para que o novo titular crie a
+              sua.
+            </p>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              17.4. Situação das contas no painel do CAOCRIM
+            </h3>
+            <ul className="list-disc pl-6 space-y-2">
+              <li className="text-justify">
+                <strong>Aguardando troca de senha:</strong> conta aprovada ou redefinida, ainda com
+                a senha provisória;
+              </li>
+              <li className="text-justify">
+                <strong>Senha provisória expirada:</strong> passaram-se 72 horas sem a troca; é
+                preciso redefinir a senha;
+              </li>
+              <li className="text-justify">
+                <strong>Ativa:</strong> a Promotoria já definiu a senha definitiva;
+              </li>
+              <li className="text-justify">
+                <strong>Inativa:</strong> vínculo desativado pelo CAOCRIM; "Reativar" restabelece o
+                vínculo mantendo a senha definitiva.
+              </li>
+            </ul>
+            <p className="leading-relaxed text-justify">
+              A coluna "Senha definida em" mostra quando a senha atual foi criada, e "Último acesso"
+              ajuda a identificar contas nunca utilizadas.
+            </p>
+
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mt-4 print:text-black">
+              17.5. Cuidados de segurança
+            </h3>
+            <ul className="list-disc pl-6 space-y-2">
+              <li className="text-justify">
+                Aprovar ou redefinir uma conta somente quando a Promotoria estiver pronta para
+                acessar, pois a senha provisória é a mesma para todas as contas.
+              </li>
+              <li className="text-justify">
+                Informar a senha provisória apenas à Promotoria titular da conta.
+              </li>
+              <li className="text-justify">
+                Pedir à Promotoria que confira a data em "Senha definida em" logo após o primeiro
+                acesso; se não reconhecer a data, solicitar nova redefinição.
+              </li>
+              <li className="text-justify">
+                Desativar o vínculo de contas que não devem mais acessar o módulo.
+              </li>
+            </ul>
+          </section>
+
+          {/* 18. Glossário funcional */}
+          <section className="space-y-4 break-before-page">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-b pb-2 print:text-black">
+              18. Glossário funcional
             </h2>
 
             <div className="space-y-4">
@@ -1182,13 +1330,24 @@ function Manual() {
                   automatizados.
                 </p>
               </div>
+
+              <div>
+                <h3 className="font-bold text-slate-800 dark:text-slate-100 print:text-black">
+                  Senha provisória
+                </h3>
+                <p className="leading-relaxed text-justify">
+                  Senha padrão, a mesma para todas as contas das Promotorias, atribuída na aprovação
+                  ou na redefinição pelo CAOCRIM. Vale por 72 horas e serve apenas para o primeiro
+                  acesso, quando deve ser trocada por uma senha definitiva e individual.
+                </p>
+              </div>
             </div>
           </section>
 
-          {/* 17. Considerações finais */}
+          {/* 19. Considerações finais */}
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-b pb-2 print:text-black">
-              17. Considerações finais
+              19. Considerações finais
             </h2>
             <p className="leading-relaxed text-justify">
               O BRÍGID não é apenas uma base de consulta, mas um sistema de inteligência territorial
