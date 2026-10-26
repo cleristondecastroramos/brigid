@@ -442,7 +442,7 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
                 <TabsTrigger key={s.id} value={s.id} className="gap-1.5">
                   {s.label}
                   {pc === 100 ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[color:var(--color-success)]" />
                   ) : (
                     <span className="text-[10px] text-muted-foreground">{pc}%</span>
                   )}

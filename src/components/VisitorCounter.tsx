@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Users, UserCheck, CalendarDays, BarChart2 } from "lucide-react";
 
 interface VisitorStats {
   total: number;
@@ -50,39 +49,23 @@ export function VisitorCounter() {
 
   if (!stats) return null;
 
+  const itens: [string, number][] = [
+    ["Acessos totais", stats.total],
+    ["Visitantes únicos", stats.unique],
+    ["No mês", stats.monthly],
+    ["Hoje", stats.daily],
+  ];
+
   return (
-    <div className="flex flex-wrap items-center justify-start gap-4 mt-8 pt-4 border-t border-purple-500/10 text-purple-200/60 font-medium">
-      <div className="flex items-center gap-1.5" title="Acessos Totais">
-        <BarChart2 className="w-3.5 h-3.5 text-purple-300/50" />
-        <span className="text-[10px] uppercase tracking-wider">Totais:</span>
-        <span className="text-[11px] text-purple-200/90">
-          {stats.total.toLocaleString("pt-BR")}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-1.5" title="Visitantes Únicos">
-        <UserCheck className="w-3.5 h-3.5 text-purple-300/50" />
-        <span className="text-[10px] uppercase tracking-wider">Únicos:</span>
-        <span className="text-[11px] text-purple-200/90">
-          {stats.unique.toLocaleString("pt-BR")}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-1.5" title="Acessos neste Mês">
-        <CalendarDays className="w-3.5 h-3.5 text-purple-300/50" />
-        <span className="text-[10px] uppercase tracking-wider">Mês:</span>
-        <span className="text-[11px] text-purple-200/90">
-          {stats.monthly.toLocaleString("pt-BR")}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-1.5" title="Acessos Hoje">
-        <Users className="w-3.5 h-3.5 text-purple-300/50" />
-        <span className="text-[10px] uppercase tracking-wider">Hoje:</span>
-        <span className="text-[11px] text-purple-200/90">
-          {stats.daily.toLocaleString("pt-BR")}
-        </span>
-      </div>
-    </div>
+    <dl className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] text-muted-foreground">
+      {itens.map(([rotulo, valor]) => (
+        <div key={rotulo} className="flex items-baseline gap-1.5">
+          <dt>{rotulo}:</dt>
+          <dd className="font-medium tabular-nums text-foreground/80">
+            {valor.toLocaleString("pt-BR")}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

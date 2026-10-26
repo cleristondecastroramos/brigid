@@ -17,25 +17,33 @@ export type StatusDiagnostico =
 export const STATUS_DIAGNOSTICO: Record<StatusDiagnostico, { label: string; className: string }> = {
   em_preenchimento: {
     label: "Em preenchimento",
-    className: "bg-secondary text-secondary-foreground",
+    className: "border-border bg-transparent text-foreground/80",
   },
   enviado: {
     label: "Enviado para análise",
-    className: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
+    className: "border-border bg-transparent text-foreground",
   },
   em_analise: {
     label: "Em análise pelo CAOCRIM",
-    className: "bg-warning/20 text-warning-foreground",
+    className:
+      "border-[color:var(--color-warning)]/50 bg-transparent text-[color:var(--color-warning)]",
   },
-  devolvido: { label: "Devolvido para correção", className: "bg-destructive/15 text-destructive" },
+  devolvido: {
+    label: "Devolvido para correção",
+    className: "border-destructive/40 bg-transparent text-destructive",
+  },
   validado: {
     label: "Validado (publicação pendente)",
-    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+    className:
+      "border-[color:var(--color-success)]/40 bg-transparent text-[color:var(--color-success)]",
   },
-  publicado: { label: "Publicado", className: "bg-emerald-600 text-white" },
+  publicado: {
+    label: "Publicado",
+    className: "border-transparent bg-[color:var(--color-success)] text-white",
+  },
   substituido: {
     label: "Substituído por nova versão",
-    className: "bg-muted text-muted-foreground",
+    className: "border-border bg-transparent text-muted-foreground",
   },
 };
 

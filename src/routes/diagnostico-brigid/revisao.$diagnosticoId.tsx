@@ -289,7 +289,7 @@ function RevisaoDiagnosticoPage() {
             Fila de revisão
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
           {diag.municipio} — {diag.promotoria_nome}
         </h1>
       </div>
@@ -503,7 +503,7 @@ function RevisaoDiagnosticoPage() {
                             </div>
                           )}
                           {comentarios[c.codigo_tecnico] && (
-                            <div className="text-[11px] text-blue-700 dark:text-blue-300">
+                            <div className="text-[11px] text-foreground">
                               Comentário para devolução: {comentarios[c.codigo_tecnico].texto}
                             </div>
                           )}
@@ -549,7 +549,7 @@ function RevisaoDiagnosticoPage() {
           <Card>
             <CardContent className="space-y-4 pt-6 text-sm">
               {completude.pendencias.length === 0 ? (
-                <p className="flex items-center gap-2 text-emerald-700">
+                <p className="flex items-center gap-2 text-[color:var(--color-success)]">
                   <CheckCircle2 className="h-4 w-4" /> Todos os requisitos obrigatórios aplicáveis
                   estão atendidos.
                 </p>
@@ -1088,7 +1088,7 @@ function TabelaPrevia({ previa }: { previa: PreviaPublicacao }) {
                     Conflito com {i.conflito.promotoria} ("{i.conflito.valor}")
                   </span>
                 ) : i.altera ? (
-                  <span className="text-blue-700 dark:text-blue-300">Altera</span>
+                  <span className="text-foreground">Altera</span>
                 ) : (
                   <span className="text-muted-foreground">Sem alteração</span>
                 )}

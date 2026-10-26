@@ -76,17 +76,19 @@ import {
   Cell,
   LabelList,
 } from "recharts";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/diagnostico")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
   component: DiagnosticoPanel,
 });
 
-const COLOR_OK = "oklch(0.55 0.13 175)";
-const COLOR_WARN = "oklch(0.8 0.15 85)";
-const COLOR_CRIT = "var(--color-primary)";
-const COLOR_GRAY = "oklch(0.92 0.01 230)";
-const COLOR_DARK_PURPLE = "oklch(0.35 0.15 300)";
+const COLOR_OK = "var(--mapa-positivo)";
+const COLOR_WARN = "var(--mapa-atencao)";
+const COLOR_CRIT = "var(--mapa-critico)";
+const COLOR_GRAY = "var(--mapa-neutro)";
+const COLOR_DARK_PURPLE = "var(--mapa-critico)";
 
 const LacunaTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -101,7 +103,7 @@ const LacunaTooltip = ({ active, payload, label }: any) => {
     const fillColor = isCritical ? COLOR_CRIT : isWarning ? COLOR_WARN : COLOR_OK;
 
     return (
-      <div className="bg-card/95 backdrop-blur-xl border border-border/60 p-3 rounded-xl shadow-2xl min-w-[280px] z-50 relative overflow-hidden">
+      <div className="bg-card/95 backdrop-blur-xl border border-border/60 p-3 rounded-xl shadow-sm min-w-[280px] z-50 relative overflow-hidden">
         <div
           className="absolute top-0 left-0 w-1.5 h-full"
           style={{ backgroundColor: fillColor }}
@@ -114,7 +116,9 @@ const LacunaTooltip = ({ active, payload, label }: any) => {
             <span className="font-bold text-muted-foreground uppercase tracking-wider text-[11px]">
               Lacuna Institucional:
             </span>
-            <span className={cn("font-black text-2xl", colorClass)}>{data.lacuna_percentual}%</span>
+            <span className={cn("font-semibold text-2xl", colorClass)}>
+              {data.lacuna_percentual}%
+            </span>
           </div>
           <div className="flex justify-between items-center gap-4">
             <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
@@ -328,7 +332,9 @@ function DiagnosticoPanel() {
     // Percentual de municípios com SIM; quando nenhum município do recorte tem o campo
     // consolidado, exibe "Sem informação" em vez de 0%.
     const pctSim = (campo: keyof Municipio, sim: number) =>
-      filteredMunicipios.some((m) => m[campo] === "SIM" || m[campo] === "NAO") ? pct(sim, count) : "Sem informação";
+      filteredMunicipios.some((m) => m[campo] === "SIM" || m[campo] === "NAO")
+        ? pct(sim, count)
+        : "Sem informação";
 
     const sumIER = filteredMunicipios.reduce((acc, m) => acc + (m.ier_score ?? 0), 0);
     const sumIMF = filteredMunicipios.reduce((acc, m) => acc + (m.imf_score ?? 0), 0);
@@ -530,116 +536,47 @@ function DiagnosticoPanel() {
 
   return (
     <div className="space-y-4">
+      <PageTitle
+        secao="Monitoramento"
+        titulo="Diagnóstico da Rede e Fluxos"
+        descricao="Infraestrutura, fluxos de atendimento, protocolos, investigação e perícia, assistência social e gargalos da rede de proteção, sintetizados nos índices IER, IMF e IQT."
+      />
       {/* ── PAINEL DE CONTROLE UNIFICADO ─────────────────────────────────────── */}
-      <Card className="border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden">
+      <Card className="overflow-hidden">
         {/* Linha 1 — KPIs + Filtros */}
-        <div className="flex items-center gap-0 border-b border-border/50">
-          {/* Bloco: KPI cards premium */}
-          <div className="flex" style={{ width: "calc(50% - 10px)" }}>
-            {/* IER — Estrutura da Rede */}
-            <div
+        <div className="flex flex-col border-b border-border xl:flex-row xl:items-center">
+          {/* Índices sintéticos: clicar alterna a camada do mapa */}
+          <div className="grid w-full grid-cols-3 gap-2 p-2 xl:w-[52%] xl:shrink-0">
+            <IndiceTile
+              sigla="IER"
+              rotulo="Estrutura da rede"
+              valor={stats.ierMedio}
+              icon={Building2}
+              ativo={mapMode === "IER"}
               onClick={() => setMapMode("IER")}
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-2 flex-1 border border-black/20 dark:border-white/20 rounded-lg m-1.5 shadow-sm overflow-hidden group hover:bg-primary/[0.05] transition-colors cursor-pointer",
-                mapMode === "IER" && "bg-primary/[0.08] border-black/40 dark:border-white/40",
-              )}
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary rounded-r-full" />
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                <Building2 className="h-4 w-4 text-primary" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">
-                  Estrutura da Rede
-                </span>
-                <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-2xl font-black text-primary leading-none tabular-nums">
-                    {stats.ierMedio.toFixed(1)}
-                  </span>
-                  <span className="text-base text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-base font-bold text-primary/60 bg-primary/8 px-1.5 py-0.5 rounded-md">
-                    IER
-                  </span>
-                </div>
-                <div className="mt-1.5">
-                  <Progress value={stats.ierMedio * 10} className="h-[3px]" />
-                </div>
-              </div>
-            </div>
-
-            {/* IMF — Maturidade dos Fluxos */}
-            <div
+            />
+            <IndiceTile
+              sigla="IMF"
+              rotulo="Maturidade dos fluxos"
+              valor={stats.imfMedio}
+              icon={HeartHandshake}
+              ativo={mapMode === "IMF"}
               onClick={() => setMapMode("IMF")}
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-2 flex-1 border border-black/20 dark:border-white/20 rounded-lg m-1.5 shadow-sm overflow-hidden group hover:bg-[color:var(--color-success)]/[0.05] transition-colors cursor-pointer",
-                mapMode === "IMF" &&
-                  "bg-[color:var(--color-success)]/[0.08] border-black/40 dark:border-white/40",
-              )}
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[color:var(--color-success)] rounded-r-full" />
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-success)]/10 shrink-0">
-                <HeartHandshake className="h-4 w-4 text-[color:var(--color-success)]" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">
-                  Maturidade dos Fluxos
-                </span>
-                <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-2xl font-black text-[color:var(--color-success)] leading-none tabular-nums">
-                    {stats.imfMedio.toFixed(1)}
-                  </span>
-                  <span className="text-base text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-base font-bold text-[color:var(--color-success)]/60 bg-[color:var(--color-success)]/8 px-1.5 py-0.5 rounded-md">
-                    IMF
-                  </span>
-                </div>
-                <div className="mt-1.5">
-                  <Progress
-                    value={stats.imfMedio * 10}
-                    className="h-[3px] [&>div]:bg-[color:var(--color-success)]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* IQT — Qualificação Técnica */}
-            <div
+            />
+            <IndiceTile
+              sigla="IQT"
+              rotulo="Qualificação técnica"
+              valor={stats.iqtMedio}
+              icon={GraduationCap}
+              ativo={mapMode === "IQT"}
               onClick={() => setMapMode("IQT")}
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-2 flex-1 border border-black/20 dark:border-white/20 rounded-lg m-1.5 shadow-sm overflow-hidden group hover:bg-warning/[0.05] transition-colors cursor-pointer",
-                mapMode === "IQT" && "bg-warning/[0.08] border-black/40 dark:border-white/40",
-              )}
-            >
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-warning rounded-r-full" />
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 shrink-0">
-                <GraduationCap className="h-4 w-4 text-warning-foreground" />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-base uppercase tracking-widest font-bold text-muted-foreground leading-none">
-                  Qualificação Técnica
-                </span>
-                <div className="flex items-baseline gap-1.5 mt-1">
-                  <span className="text-2xl font-black text-warning-foreground leading-none tabular-nums">
-                    {stats.iqtMedio.toFixed(1)}
-                  </span>
-                  <span className="text-base text-muted-foreground font-medium">/10</span>
-                  <span className="ml-auto text-base font-bold text-warning-foreground/60 bg-warning/8 px-1.5 py-0.5 rounded-md">
-                    IQT
-                  </span>
-                </div>
-                <div className="mt-1.5">
-                  <Progress value={stats.iqtMedio * 10} className="h-[3px] [&>div]:bg-warning" />
-                </div>
-              </div>
-            </div>
+            />
           </div>
 
-          <div style={{ width: "calc(4% + 10px)" }} />
-
           {/* Bloco: Filtros alinhados à direita */}
-          <div className="flex items-center gap-3 px-4 py-2 border-l border-border/50 shrink-0 flex-1">
+          <div className="flex min-w-0 flex-1 flex-wrap items-end gap-3 border-border px-4 py-2 xl:border-l">
             <div className="flex flex-col gap-0.5">
-              <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">
+              <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 Polo Regional
               </label>
               <Select
@@ -650,7 +587,7 @@ function DiagnosticoPanel() {
                   setSelectedMunicipio("__all");
                 }}
               >
-                <SelectTrigger className="text-base w-[280px]">
+                <SelectTrigger className="w-[210px] text-sm">
                   <SelectValue placeholder="Todos os Polos Regionais" />
                 </SelectTrigger>
                 <SelectContent>
@@ -665,7 +602,7 @@ function DiagnosticoPanel() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">
+              <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 Comarca
               </label>
               <Select
@@ -675,7 +612,7 @@ function DiagnosticoPanel() {
                   setSelectedMunicipio("__all");
                 }}
               >
-                <SelectTrigger className="text-base w-[280px]">
+                <SelectTrigger className="w-[210px] text-sm">
                   <SelectValue placeholder="Todas as Comarcas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -690,11 +627,11 @@ function DiagnosticoPanel() {
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <label className="text-sm uppercase tracking-widest font-semibold text-muted-foreground/70 pl-0.5">
+              <label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 Município
               </label>
               <Select value={selectedMunicipio} onValueChange={handleSelectMunicipio}>
-                <SelectTrigger className="text-base w-[280px]">
+                <SelectTrigger className="w-[210px] text-sm">
                   <SelectValue placeholder="Todos os Municípios" />
                 </SelectTrigger>
                 <SelectContent>
@@ -933,7 +870,7 @@ function DiagnosticoPanel() {
               <CardContent className="relative">
                 <PiauiMap colorFn={mapColorFn} legend={mapLegend} height={850} />
 
-                <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+                <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-sm backdrop-blur-sm pointer-events-auto flex flex-col">
                   <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                     Distribuição das classificações
                   </p>
@@ -1203,7 +1140,7 @@ function DiagnosticoPanel() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
-                          className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                          className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-sm hover:bg-muted/50"
                           title="Exportar Tabela"
                         >
                           <Download className="h-5 w-5" />
@@ -1364,7 +1301,7 @@ function DiagnosticoPanel() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                      className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-sm hover:bg-muted/50"
                       title="Exportar Tabela"
                     >
                       <Download className="h-5 w-5" />
@@ -2128,7 +2065,7 @@ function DiagnosticoPanel() {
                         <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground mb-1">
                           Média Geral
                         </span>
-                        <span className="text-xl font-black text-primary">
+                        <span className="text-xl font-semibold text-primary">
                           {assistenciaAvg.toFixed(1)}%
                         </span>
                       </div>
@@ -2145,7 +2082,7 @@ function DiagnosticoPanel() {
                         >
                           {bestMetric.label}
                         </span>
-                        <span className="text-sm font-black text-primary mt-1">
+                        <span className="text-sm font-semibold text-primary mt-1">
                           {bestMetric.valStr}
                         </span>
                       </div>
@@ -2162,7 +2099,7 @@ function DiagnosticoPanel() {
                         >
                           {worstMetric.label}
                         </span>
-                        <span className="text-sm font-black text-destructive mt-1">
+                        <span className="text-sm font-semibold text-destructive mt-1">
                           {worstMetric.valStr}
                         </span>
                       </div>
@@ -2180,7 +2117,7 @@ function DiagnosticoPanel() {
                                 {m.desc}
                               </span>
                             </div>
-                            <span className="font-black text-primary text-xl mt-0.5 tabular-nums">
+                            <span className="font-semibold text-primary text-xl mt-0.5 tabular-nums">
                               {m.valStr}
                             </span>
                           </div>
@@ -2533,6 +2470,60 @@ function DiagnosticoPanel() {
           </CardContent>
         </Card>
       )}
+      <NotasRodape
+        fontes={[
+          "carga do diagnóstico da rede de proteção do Piauí (CAOCRIM)",
+          "diagnósticos das Promotorias de Justiça validados pelo CAOCRIM (Diagnóstico BRIGID)",
+        ]}
+        notas={[
+          "IER (estrutura), IMF (fluxos) e IQT (qualificação técnica) variam de 0 a 10; a composição de cada índice está na Metodologia de Cálculos.",
+          "Campos sem informação consolidada aparecem como “Sem informação” e não somam pontos nos índices.",
+        ]}
+      />
     </div>
+  );
+}
+
+function IndiceTile({
+  sigla,
+  rotulo,
+  valor,
+  icon: Icon,
+  ativo,
+  onClick,
+}: {
+  sigla: string;
+  rotulo: string;
+  valor: number;
+  icon: React.ElementType;
+  ativo: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      title={`Exibir ${sigla} no mapa`}
+      className={cn(
+        "flex min-w-0 flex-col rounded-md border px-3 py-2 text-left transition-colors",
+        ativo ? "border-primary ring-1 ring-primary" : "border-border hover:border-foreground/30",
+      )}
+    >
+      <span className="flex items-center justify-between gap-2">
+        <span className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {rotulo}
+        </span>
+        <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+      </span>
+      <span className="mt-1 flex items-baseline gap-1">
+        <span className="text-2xl font-semibold tabular-nums text-foreground">
+          {valor.toFixed(1)}
+        </span>
+        <span className="text-xs text-muted-foreground">/10</span>
+        <span className="ml-auto text-[11px] font-medium text-muted-foreground">{sigla}</span>
+      </span>
+      <Progress value={valor * 10} className="mt-1.5 h-[3px]" />
+    </button>
   );
 }

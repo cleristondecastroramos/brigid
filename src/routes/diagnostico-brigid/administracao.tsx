@@ -108,7 +108,7 @@ function AdministracaoPage() {
                 Voltar
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
               Administração de Promotorias
             </h1>
           </div>

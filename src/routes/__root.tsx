@@ -17,6 +17,7 @@ import logo from "@/assets/logo-mppi.png";
 import { AppProvider, useApp } from "@/context/AppContext";
 import AdminAccessDialog from "@/components/ui/admin-access-dialog";
 import { AcessoDiagnostico } from "@/components/diagnostico/AcessoDiagnostico";
+import { RodapeInstitucional } from "@/components/rodape-institucional";
 import { tipoLinkAutenticacao } from "@/lib/supabase";
 
 function NotFoundComponent() {
@@ -73,6 +74,9 @@ const PAGE_TITLES: Record<string, string> = {
   "/gestao": "Gestão do Projeto",
   "/relatorios": "Relatórios e Exportações",
   "/pesos": "Ponderação e Simulação de Pesos",
+  "/base": "Gestão da Base Municipal",
+  "/metodologia": "Metodologia de Cálculos",
+  "/manual": "Manual Técnico",
   "/diagnostico-brigid": "Diagnóstico BRIGID",
 };
 
@@ -81,23 +85,37 @@ function PageHeader() {
   let title = PAGE_TITLES[pathname];
   if (!title) {
     if (pathname.startsWith("/municipios/")) title = "Ficha Territorial";
+    else if (pathname.startsWith("/diagnostico-brigid")) title = "Diagnóstico BRIGID";
     else title = "BRIGID";
   }
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
+  // Preferência de tema guardada no navegador (conveniência; falhas de armazenamento são ignoradas)
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
+    let salvo: string | null = null;
+    try {
+      salvo = localStorage.getItem("brigid_tema");
+    } catch {
+      salvo = null;
+    }
+    const escuro = salvo ? salvo === "dark" : document.documentElement.classList.contains("dark");
+    document.documentElement.classList.toggle("dark", escuro);
+    setTheme(escuro ? "dark" : "light");
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     document.documentElement.classList.toggle("dark", newTheme === "dark");
+    try {
+      localStorage.setItem("brigid_tema", newTheme);
+    } catch {
+      // armazenamento indisponível: o tema vale só para a página atual
+    }
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-white/10 bg-[var(--color-sidebar)] px-4 transition-colors m-0 p-0 border-t-0 w-full">
+    <header className="no-print sticky top-0 z-40 flex h-14 w-full items-center gap-3 border-b border-white/10 bg-[var(--color-sidebar)] px-4">
       {!pathname.startsWith("/diagnostico-brigid") && (
         <SidebarTrigger className="-ml-1 text-white/80 hover:text-white" />
       )}
@@ -108,7 +126,7 @@ function PageHeader() {
         </div>
         <span className="font-bold text-xs tracking-wider text-white hidden sm:inline">BRIGID</span>
         <div className="h-4 w-[1px] bg-white/20 hidden sm:block" />
-        <span className="text-[11px] font-semibold text-white/75 tracking-wide">{title}</span>
+        <span className="text-[12px] font-medium text-white/80">{title}</span>
       </div>
 
       <div className="ml-auto flex items-center gap-3 text-xs">
@@ -116,7 +134,7 @@ function PageHeader() {
 
         <button
           onClick={toggleTheme}
-          className="inline-flex h-8 w-8 items-center justify-center border border-white/20 bg-white/10 text-white shadow-none transition-all hover:bg-white/20"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-sm border border-white/15 bg-white/5 text-white/80 shadow-none transition-colors hover:bg-white/10 hover:text-white"
           title={theme === "light" ? "Mudar para modo escuro" : "Mudar para modo claro"}
         >
           {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
@@ -172,7 +190,7 @@ function RootInner() {
   if (isLandingPage || isDiagnosticoBrigid) {
     return (
       <>
-        <Suspense fallback={<div className="min-h-dvh bg-[#F8FAFC]" />}>
+        <Suspense fallback={<div className="min-h-dvh bg-background" />}>
           {isDiagnosticoBrigid ? (
             <div className="flex flex-col min-h-screen bg-background">
               <PageHeader />
@@ -187,6 +205,7 @@ function RootInner() {
                   <AcessoDiagnostico />
                 )}
               </main>
+              <RodapeInstitucional mostrarDataBase={false} />
             </div>
           ) : (
             <Outlet />
@@ -215,18 +234,8 @@ function RootInner() {
           >
             <Outlet />
           </Suspense>
-          <footer className="mt-10 border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
-            <p>
-              <span className="font-semibold tracking-[0.18em] text-foreground">BRIGID</span>
-              {" — "}Base de Referência Integrada para Gestão, Inteligência e Dados do Projeto
-              Feminicídio Zero.
-            </p>
-            <p className="mt-1 text-muted-foreground/80">
-              Ministério Público do Estado do Piauí · CAOCRIM · Plataforma institucional de
-              monitoramento, análise territorial e gestão estratégica baseada em evidências.
-            </p>
-          </footer>
         </main>
+        <RodapeInstitucional />
       </SidebarInset>
       <Toaster />
     </SidebarProvider>

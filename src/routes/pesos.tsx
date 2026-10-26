@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/pesos")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -125,11 +127,16 @@ function PesosConfigPanel() {
 
   return (
     <div className="space-y-6">
+      <PageTitle
+        secao="Gestão · Acesso restrito"
+        titulo="Ponderação e Simulação de Pesos"
+        descricao="Simulação de pesos e limiares do score de risco. Os valores ajustados valem apenas para esta sessão e não alteram a metodologia oficial."
+      />
       {/* Simulation Metadata Card */}
-      <Card className="border-l-4 border-l-primary bg-primary/5">
+      <Card>
         <CardContent className="flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border text-muted-foreground">
               <Scale className="h-5 w-5" />
             </div>
             <div>
@@ -143,13 +150,13 @@ function PesosConfigPanel() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1 rounded-full bg-background px-2.5 py-1 border border-border">
+            <span className="flex items-center gap-1 rounded-sm bg-background px-2.5 py-1 border border-border">
               <UserCheck className="h-3 w-3 text-primary" /> {simulationInfo.usuario}
             </span>
-            <span className="flex items-center gap-1 rounded-full bg-background px-2.5 py-1 border border-border">
+            <span className="flex items-center gap-1 rounded-sm bg-background px-2.5 py-1 border border-border">
               <Calendar className="h-3 w-3 text-primary" /> {simulationInfo.data}
             </span>
-            <span className="flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 font-semibold">
+            <span className="flex items-center gap-1 rounded-sm bg-primary/10 text-primary px-2.5 py-1 font-semibold">
               Versão {simulationInfo.versao}
             </span>
           </div>
@@ -269,7 +276,7 @@ function PesosConfigPanel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Risco Médio a partir de:</span>
-                  <span className="rounded bg-amber-500/10 px-2 py-0.5 font-bold text-amber-600">
+                  <span className="rounded-sm border border-[color:var(--color-warning)]/50 px-2 py-0.5 font-semibold text-[color:var(--color-warning)]">
                     Score {thresholds.medio}
                   </span>
                 </div>
@@ -288,7 +295,7 @@ function PesosConfigPanel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Risco Alto a partir de:</span>
-                  <span className="rounded bg-orange-500/10 px-2 py-0.5 font-bold text-orange-600">
+                  <span className="rounded-sm border border-[color:var(--mapa-alto)]/50 px-2 py-0.5 font-semibold text-[color:var(--mapa-alto)]">
                     Score {thresholds.alto}
                   </span>
                 </div>
@@ -307,7 +314,7 @@ function PesosConfigPanel() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Risco Crítico a partir de:</span>
-                  <span className="rounded bg-red-500/10 px-2 py-0.5 font-bold text-red-600">
+                  <span className="rounded-sm border border-destructive/40 px-2 py-0.5 font-semibold text-destructive">
                     Score {thresholds.critico}
                   </span>
                 </div>
@@ -424,7 +431,7 @@ function PesosConfigPanel() {
                             <div className="flex items-center gap-1.5">
                               <RiskBadge level={m.risco_feminicidio_nivel} />
                               {levelChanged && (
-                                <span className="inline-block rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary uppercase">
+                                <span className="inline-block rounded-sm bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary uppercase">
                                   Alterado
                                 </span>
                               )}
@@ -437,8 +444,8 @@ function PesosConfigPanel() {
                 </Table>
               </div>
 
-              <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-xs text-yellow-800 dark:text-yellow-400">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-600 dark:text-yellow-500" />
+              <div className="mt-4 flex items-start gap-2.5 rounded-md border border-[color:var(--color-warning)]/40 bg-transparent p-3 text-xs text-foreground/80">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-[color:var(--color-warning)]" />
                 <div>
                   <p className="font-semibold">Nota de Simulação</p>
                   <p className="mt-0.5">
@@ -451,6 +458,15 @@ function PesosConfigPanel() {
           </Card>
         </div>
       </div>
+      <NotasRodape
+        fontes={[
+          "Base de feminicídios 2023–2026, consolidada pelo CAOCRIM",
+          "população total e feminina da base municipal do BRIGID",
+        ]}
+        notas={[
+          "Valores padrão: pesos 3 (consumados), 1 (tentativas), 2 (sem OPM) e 2 (sem CREAS); limiares 140, 270 e 390.",
+        ]}
+      />
     </div>
   );
 }

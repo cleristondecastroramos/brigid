@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { exportCsv, exportXlsx, exportPdf, BRIGID_BRAND } from "@/lib/export";
 import { cn } from "@/lib/utils";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/relatorios")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -32,7 +34,7 @@ function Relatorios() {
       utilidade: "Ação de Intervenção Imediata / Cobrança",
       badge: {
         label: "Prioridade Máxima",
-        class: "bg-destructive/10 text-destructive border-destructive/20",
+        class: "border-destructive/30 bg-transparent text-destructive",
       },
       filtros: "Risco Alto/Crítico + Sem OPM/CREAS + Sem Protocolo",
       rows: m
@@ -73,7 +75,7 @@ function Relatorios() {
       utilidade: "Ofícios de Responsabilização e Estruturação",
       badge: {
         label: "Alerta Crítico",
-        class: "bg-destructive/10 text-destructive border-destructive/20",
+        class: "border-destructive/30 bg-transparent text-destructive",
       },
       filtros: "Feminicídios > 0 + Sem OPM/CREAS",
       rows: m
@@ -118,7 +120,7 @@ function Relatorios() {
       descricao:
         "Visão panorâmica da rede de proteção do Estado. Agrega KPIs de infraestrutura e gestão para rápida leitura.",
       utilidade: "Reuniões do CAOCRIM e Apresentações",
-      badge: { label: "Executivo", class: "bg-primary/10 text-primary border-primary/20" },
+      badge: { label: "Executivo", class: "border-border bg-muted/40 text-foreground/80" },
       filtros: "Todos os 224 Municípios (Base Oficial)",
       rows: m.map((x) => ({
         municipio: x.municipio,
@@ -149,7 +151,7 @@ function Relatorios() {
       descricao:
         "Levantamento da presença institucional (OPM/CREAS). Usado para verificar a estagnação ou avanço da cobertura.",
       utilidade: "Planejamento Estratégico e Cobrança Governamental",
-      badge: { label: "Monitoramento", class: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+      badge: { label: "Monitoramento", class: "border-border bg-muted/40 text-foreground/80" },
       filtros: "Situação OPM e CREAS (Estado Completo)",
       rows: m.map((x) => ({
         municipio: x.municipio,
@@ -192,7 +194,7 @@ function Relatorios() {
       utilidade: "Apoio Técnico a Promotorias Locais",
       badge: {
         label: "Subsídio Operacional",
-        class: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+        class: "border-border bg-muted/40 text-foreground/80",
       },
       filtros: "Vazios de Cobertura (Sem OPM + Sem CREAS)",
       rows: m
@@ -228,7 +230,7 @@ function Relatorios() {
       utilidade: "Fiscalização e Indução de Políticas",
       badge: {
         label: "Fiscalização",
-        class: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+        class: "border-border bg-muted/40 text-foreground/80",
       },
       filtros: "Itens de Atendimento, Fluxo e Recursos",
       rows: m.map((x) => ({
@@ -267,57 +269,44 @@ function Relatorios() {
       titulo: "Relatórios Prioritários",
       icon: ShieldAlert,
       color: "text-destructive",
-      bg: "bg-destructive/10",
+      bg: "",
       list: relatoriosPrioritarios,
     },
     {
       titulo: "Visões Executivas e Territoriais",
       icon: BarChart3,
-      color: "text-primary",
-      bg: "bg-primary/10",
+      color: "text-muted-foreground",
+      bg: "",
       list: relatoriosExecutivos,
     },
     {
       titulo: "Rede, Cobertura e Atuação Institucional",
       icon: CheckCircle2,
-      color: "text-emerald-600",
-      bg: "bg-emerald-500/10",
+      color: "text-muted-foreground",
+      bg: "",
       list: relatoriosOperacionais,
     },
   ];
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="bg-card/60 backdrop-blur-sm border border-border/60 rounded-xl p-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">Central de Inteligência Estratégica</h1>
-          <p className="text-muted-foreground text-sm max-w-3xl">
-            Bem-vindo à área de relatórios do{" "}
-            <strong className="text-foreground">{BRIGID_BRAND.project}</strong>. Aqui você pode
-            gerar documentos com alto valor acionável para embasar decisões ministeriais, instruir
-            inquéritos e fiscalizar a rede de proteção à mulher no Piauí.
-          </p>
-          <div className="bg-primary/5 p-3 rounded-md border border-primary/10 mt-3 flex items-start gap-3">
-            <div className="bg-primary/20 p-1.5 rounded-full mt-0.5">
-              <FileText className="h-4 w-4 text-primary" />
-            </div>
-            <p className="text-sm text-primary-700 dark:text-primary-300">
-              Todos os PDFs gerados contam com{" "}
-              <strong className="font-semibold">formatação institucional oficial</strong> (com
-              cabeçalhos sóbrios, blocos de metadados analíticos e critérios transparentes), prontos
-              para serem juntados em despachos e recomendações.
-            </p>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-8">
+      <PageTitle
+        secao="Gestão"
+        titulo="Relatórios e Exportações"
+        descricao={
+          <>
+            Documentos para embasar decisões ministeriais, instruir procedimentos e acompanhar a
+            rede de proteção à mulher no Piauí. Os PDFs saem com cabeçalho institucional, metadados
+            da emissão e critérios explícitos, prontos para juntada em despachos e recomendações.
+          </>
+        }
+      />
 
       {sessoes.map((sessao) => (
         <section key={sessao.titulo} className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-            <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", sessao.bg)}>
-              <sessao.icon className={cn("h-4 w-4", sessao.color)} />
-            </div>
-            <h2 className="text-xl font-bold tracking-tight">{sessao.titulo}</h2>
+          <div className="flex items-center gap-2 border-b border-border pb-2">
+            <sessao.icon className={cn("h-4 w-4", sessao.color)} aria-hidden />
+            <h2 className="text-base font-semibold">{sessao.titulo}</h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
@@ -330,13 +319,13 @@ function Relatorios() {
                   className={cn(
                     "overflow-hidden transition-all duration-200",
                     isPrioritySection
-                      ? "border-destructive/30 shadow-sm hover:border-destructive/50"
-                      : "hover:border-primary/40",
+                      ? "border-l-2 border-l-destructive/60 hover:border-foreground/30"
+                      : "hover:border-foreground/30",
                   )}
                 >
-                  <CardHeader className="pb-3 bg-muted/20">
+                  <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base font-bold leading-tight">
+                      <CardTitle className="text-sm font-semibold leading-tight">
                         {r.titulo}
                       </CardTitle>
                       <Badge variant="outline" className={r.badge.class}>
@@ -411,6 +400,12 @@ function Relatorios() {
           </div>
         </section>
       ))}
+      <NotasRodape
+        fontes={["base consolidada do BRIGID"]}
+        notas={[
+          "Os relatórios reproduzem os dados e a metodologia exibidos no painel na data de emissão, com identificação institucional.",
+        ]}
+      />
     </div>
   );
 }

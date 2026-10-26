@@ -10,6 +10,7 @@ import {
   QuickStartGuide,
   MacroIndicatorCard,
 } from "@/components/home-components";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/apresentacao-do-sistema")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -32,30 +33,30 @@ function Dashboard() {
 
       <InstitutionalSummaryCard />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MacroIndicatorCard
-          label="Total de Municípios"
+          label="Municípios monitorados"
           value={total}
-          hint="Universo monitorado"
+          hint="Estado do Piauí"
           icon={MapPin}
           tone="default"
         />
         <MacroIndicatorCard
-          label="Cobertura Geral OPM"
+          label="Municípios com OPM"
           value={comOPM}
           hint={`Presente em ${pct(comOPM, total)}`}
           icon={Building2}
-          tone="primary"
+          tone="default"
         />
         <MacroIndicatorCard
-          label="Cobertura Geral CREAS"
+          label="Municípios com CREAS"
           value={comCREAS}
           hint={`Presente em ${pct(comCREAS, total)}`}
           icon={HeartHandshake}
-          tone="success"
+          tone="default"
         />
         <MacroIndicatorCard
-          label="Vazios Institucionais"
+          label="Vazios institucionais"
           value={semAmbos}
           hint={`${pct(semAmbos, total)} sem estrutura mínima`}
           icon={AlertTriangle}
@@ -63,59 +64,50 @@ function Dashboard() {
         />
       </div>
 
-      <div className="space-y-4 mb-8">
-        <h3 className="text-xl font-bold text-foreground mb-4 px-1">O que você encontra aqui?</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+      <div className="space-y-3">
+        <h2 className="text-base font-semibold text-foreground">Módulos do painel</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <ModuleNavigationCard
             title="Diagnóstico da Rede"
             description="Consolida fluxos, protocolos, infraestrutura e qualificação técnica para entender a capacidade de resposta da rede."
             icon={Activity}
             href="/diagnostico"
-            colorClass="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
           />
           <ModuleNavigationCard
             title="Cobertura OPM"
             description="Identifica municípios com ou sem estrutura institucional de políticas para mulheres, visualizando a distribuição territorial."
             icon={Building2}
             href="/opm"
-            colorClass="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
           />
           <ModuleNavigationCard
             title="Cobertura CREAS"
             description="Mostra a cobertura da assistência social especializada, com foco na presença ou ausência de CREAS."
             icon={HeartHandshake}
             href="/creas"
-            colorClass="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
           />
           <ModuleNavigationCard
             title="Risco de Feminicídio"
             description="Apresenta leitura territorial do risco e criticidade, identificando áreas que exigem atenção prioritária."
             icon={Map}
             href="/risco"
-            colorClass="bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300"
           />
           <ModuleNavigationCard
             title="Inteligência Territorial"
             description="Apoia o cruzamento de indicadores e a identificação de prioridades estratégicas sobre monitoramento."
             icon={MapPin}
             href="/territorio"
-            colorClass="bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
           />
         </div>
       </div>
 
-      <div className="mt-8">
-        <QuickStartGuide />
-      </div>
+      <QuickStartGuide />
 
-      <div className="mt-8 bg-muted/20 border border-border/40 rounded-xl p-6 text-sm text-muted-foreground text-center">
-        <p className="max-w-3xl mx-auto leading-relaxed">
-          Esta plataforma foi estruturada para apoiar uma atuação pública mais integrada, responsiva
-          e orientada por evidências no enfrentamento à violência de gênero e ao feminicídio. Mais
-          do que reunir dados, o BRIGID busca transformar informação em capacidade institucional de
-          análise, coordenação e resposta.
-        </p>
-      </div>
+      <NotasRodape
+        fontes={["Base consolidada do BRIGID: SEMPI/OPM 2026 (OPM)", "SASC/SUAS 2025 (CREAS)"]}
+        notas={[
+          "“Vazios institucionais” são os municípios que não possuem OPM nem CREAS em funcionamento.",
+        ]}
+      />
     </div>
   );
 }

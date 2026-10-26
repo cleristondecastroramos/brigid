@@ -69,25 +69,25 @@ const SITUACAO: Record<
 > = {
   completo: {
     label: "Cível e criminal publicados",
-    cor: "#10b981",
-    badge: "bg-emerald-500 text-white",
+    cor: "var(--mapa-positivo)",
+    badge: "border-[color:var(--color-success)]/40 text-[color:var(--color-success)]",
     rank: 3,
   },
   parcial: {
     label: "Cobertura parcial publicada",
-    cor: "#6ee7b7",
-    badge: "bg-emerald-100 text-emerald-800",
+    cor: "var(--mapa-atencao)",
+    badge: "border-[color:var(--color-warning)]/50 text-[color:var(--color-warning)]",
     rank: 2,
   },
   andamento: {
     label: "Em andamento (não publicado)",
-    cor: "#fde68a",
-    badge: "bg-amber-100 text-amber-800",
+    cor: "var(--chart-5)",
+    badge: "border-border text-foreground/80",
     rank: 1,
   },
   nao_iniciado: {
     label: "Não iniciado",
-    cor: "#f3f4f6",
+    cor: "var(--mapa-neutro)",
     badge: "text-gray-400 font-normal",
     rank: 0,
   },
@@ -203,7 +203,7 @@ function AcompanhamentoPage() {
     const chartData = (Object.keys(SITUACAO) as SituacaoMunicipal[]).map((k) => ({
       name: SITUACAO[k].label,
       value: contagem[k],
-      color: SITUACAO[k].cor === "#f3f4f6" ? "#e5e7eb" : SITUACAO[k].cor,
+      color: SITUACAO[k].cor,
     }));
     return { total, contagem, chartData, byIbge };
   }, [diagnosticos, geoData, periodo]);
@@ -314,7 +314,7 @@ function AcompanhamentoPage() {
               Voltar
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             Painel de Acompanhamento
           </h1>
         </div>
@@ -426,7 +426,7 @@ function AcompanhamentoPage() {
                         key={ibge}
                         d={p.d}
                         fill={fillColor}
-                        stroke="#9ca3af"
+                        stroke="var(--card)"
                         strokeWidth={0.5}
                         className="transition-colors duration-200 hover:opacity-80 hover:stroke-black hover:stroke-[1.5px] cursor-pointer"
                         onMouseEnter={(e) => {
@@ -449,7 +449,7 @@ function AcompanhamentoPage() {
             {/* Custom Map Tooltip */}
             {hoveredMuni && (
               <div
-                className="fixed bg-popover text-popover-foreground border shadow-md px-3 py-2 rounded text-sm pointer-events-none z-50 transition-opacity flex flex-col gap-1"
+                className="fixed bg-popover text-popover-foreground border shadow-sm px-3 py-2 rounded text-sm pointer-events-none z-50 transition-opacity flex flex-col gap-1"
                 style={{
                   left: hoveredMuni.x + 15,
                   top: hoveredMuni.y + 15,
@@ -483,10 +483,10 @@ function AcompanhamentoPage() {
         <CardContent>
           <div className="rounded-md border max-h-[500px] overflow-y-auto relative">
             <Table>
-              <TableHeader className="sticky top-0 bg-primary [&_th]:text-primary-foreground hover:bg-primary z-10 shadow-sm border-b">
+              <TableHeader className="sticky top-0 z-10">
                 <TableRow>
                   <TableHead
-                    className="w-[100px] text-primary-foreground cursor-pointer select-none"
+                    className="w-[100px] cursor-pointer select-none"
                     onClick={() => handleSort("ibge")}
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -494,7 +494,7 @@ function AcompanhamentoPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="min-w-[200px] text-primary-foreground cursor-pointer select-none"
+                    className="min-w-[200px] cursor-pointer select-none"
                     onClick={() => handleSort("municipio")}
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -502,7 +502,7 @@ function AcompanhamentoPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="min-w-[150px] text-primary-foreground cursor-pointer select-none"
+                    className="min-w-[150px] cursor-pointer select-none"
                     onClick={() => handleSort("comarca")}
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -510,7 +510,7 @@ function AcompanhamentoPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="text-primary-foreground cursor-pointer select-none text-center"
+                    className="cursor-pointer select-none text-center"
                     onClick={() => handleSort("status")}
                   >
                     <div className="flex items-center justify-center gap-1">
@@ -518,18 +518,16 @@ function AcompanhamentoPage() {
                     </div>
                   </TableHead>
                   <TableHead
-                    className="text-center min-w-[170px] text-primary-foreground cursor-pointer select-none"
+                    className="text-center min-w-[170px] cursor-pointer select-none"
                     onClick={() => handleSort("preenchimento")}
                   >
                     <div className="flex items-center justify-center gap-1">
                       Bloco cível <ArrowUpDown className="h-3 w-3 opacity-50" />
                     </div>
                   </TableHead>
-                  <TableHead className="text-center min-w-[170px] text-primary-foreground">
-                    Bloco criminal
-                  </TableHead>
+                  <TableHead className="text-center min-w-[170px]">Bloco criminal</TableHead>
                   <TableHead
-                    className="min-w-[250px] text-primary-foreground cursor-pointer select-none"
+                    className="min-w-[250px] cursor-pointer select-none"
                     onClick={() => handleSort("promotoria")}
                   >
                     <div className="flex items-center justify-center gap-1">

@@ -5,10 +5,22 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --radius-sm: var(--radius);
+  /* Cantos discretos e uniformes: 2px (chips), 4px (padrão), 6px (painéis) */
+  --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 2px);
+  --radius-3xl: calc(var(--radius) + 2px);
+  /* Elevação sóbria: sombras curtas e de baixa opacidade */
+  --shadow-sm: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  --shadow-md: 0 1px 3px 0 rgb(16 24 40 / 0.08), 0 1px 2px -1px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.05);
+  --shadow-xl: 0 8px 16px -4px rgb(16 24 40 / 0.1), 0 2px 6px -2px rgb(16 24 40 / 0.05);
+  --shadow-2xl: 0 12px 24px -6px rgb(16 24 40 / 0.14);
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -45,8 +57,8 @@
   /* Risk semantic colors */
   --color-risk-low: var(--success);
   --color-risk-medium: var(--warning);
-  --color-risk-high: var(--destructive);
-  --color-risk-critical: var(--primary);
+  --color-risk-high: var(--mapa-alto);
+  --color-risk-critical: var(--destructive);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --animate-shine: shine var(--duration) infinite linear;
@@ -65,7 +77,7 @@
 }
 
 :root {
-  --radius: 0px;
+  --radius: 4px;
 
   --background: rgb(246 247 249);
   --foreground: rgb(29 36 48);
@@ -92,92 +104,108 @@
   --input: rgb(215 220 226);
   --ring: rgb(76 29 114);
 
-  --sidebar-background: rgb(46 15 75);
-  --sidebar-foreground: rgb(255 255 255);
-  --sidebar-primary: rgb(107 44 145);
+  /* Moldura institucional em grafite; o roxo fica restrito aos destaques */
+  --sidebar-background: rgb(24 28 37);
+  --sidebar-foreground: rgb(226 230 236);
+  --sidebar-primary: rgb(76 29 114);
   --sidebar-primary-foreground: rgb(255 255 255);
-  --sidebar-accent: rgb(70 24 105);
+  --sidebar-accent: rgb(40 46 58);
   --sidebar-accent-foreground: rgb(255 255 255);
-  --sidebar-border: rgb(94 50 122);
+  --sidebar-border: rgb(48 55 68);
 
   --success: rgb(20 122 99);
   --warning: rgb(183 121 31);
   --destructive: rgb(180 35 24);
   --info: rgb(36 87 165);
-  
+
   --chart-1: rgb(76 29 114);
-  --chart-2: rgb(107 44 145);
-  --chart-3: rgb(138 59 176);
-  --chart-4: rgb(169 74 207);
-  --chart-5: rgb(200 89 238);
-  
+  --chart-2: rgb(71 85 105);
+  --chart-3: rgb(14 116 144);
+  --chart-4: rgb(180 120 30);
+  --chart-5: rgb(148 163 184);
+
   --table-grid: 29 36 48;
   --table-grid-opacity: 0.28;
+
+  /* Paleta ordinal dos mapas temáticos (adequado → crítico) e ausência de dado */
+  --mapa-positivo: rgb(84 135 118);
+  --mapa-atencao: rgb(222 184 96);
+  --mapa-alto: rgb(199 117 66);
+  --mapa-critico: rgb(140 36 36);
+  --mapa-neutro: rgb(226 230 235);
 }
 
 .dark {
   --background: rgb(15 20 28);
   --foreground: rgb(246 247 249);
-  
+
   --card: rgb(22 28 38);
   --card-foreground: rgb(246 247 249);
-  
+
   --popover: rgb(22 28 38);
   --popover-foreground: rgb(246 247 249);
-  
+
   --primary: rgb(138 59 176);
   --primary-foreground: rgb(255 255 255);
-  
+
   --secondary: rgb(29 36 48);
   --secondary-foreground: rgb(246 247 249);
-  
+
   --muted: rgb(29 36 48);
   --muted-foreground: rgb(150 160 175);
-  
+
   --accent: rgb(29 36 48);
   --accent-foreground: rgb(246 247 249);
-  
+
   --border: rgb(45 55 70);
   --input: rgb(45 55 70);
   --ring: rgb(138 59 176);
-  
-  --sidebar-background: rgb(30 10 50);
-  --sidebar-foreground: rgb(246 247 249);
+
+  --sidebar-background: rgb(12 15 21);
+  --sidebar-foreground: rgb(226 230 236);
   --sidebar-primary: rgb(138 59 176);
   --sidebar-primary-foreground: rgb(255 255 255);
-  --sidebar-accent: rgb(46 15 75);
+  --sidebar-accent: rgb(30 36 47);
   --sidebar-accent-foreground: rgb(246 247 249);
-  --sidebar-border: rgb(76 29 114);
-  
+  --sidebar-border: rgb(38 45 57);
+
   --success: rgb(20 122 99);
   --warning: rgb(183 121 31);
   --destructive: rgb(180 35 24);
   --info: rgb(36 87 165);
 
-  --chart-1: rgb(169 74 207);
-  --chart-2: rgb(138 59 176);
-  --chart-3: rgb(107 44 145);
-  --chart-4: rgb(76 29 114);
-  --chart-5: rgb(46 15 75);
+  --chart-1: rgb(167 139 250);
+  --chart-2: rgb(148 163 184);
+  --chart-3: rgb(56 189 248);
+  --chart-4: rgb(251 191 36);
+  --chart-5: rgb(100 116 139);
 
   --table-grid: 246 247 249;
   --table-grid-opacity: 0.15;
+
+  --mapa-positivo: rgb(96 152 133);
+  --mapa-atencao: rgb(214 176 88);
+  --mapa-alto: rgb(206 128 78);
+  --mapa-critico: rgb(176 58 58);
+  --mapa-neutro: rgb(51 60 74);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
+  * {
+    border-color: var(--color-border);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "cv11", "ss01";
+    font-feature-settings: "cv11", "ss01", "tnum";
     -webkit-font-smoothing: antialiased;
     margin: 0 !important;
     padding: 0 !important;
     min-height: 100vh !important;
     overflow-x: hidden;
   }
-  html { 
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  html {
+    font-family: var(--font-sans);
     margin: 0 !important;
     padding: 0 !important;
     min-height: 100vh !important;
@@ -187,25 +215,27 @@
     padding: 0 !important;
     min-height: 100vh !important;
   }
-  
-  button,
-  input,
-  select,
-  textarea,
-  [role="button"],
-  .card,
-  .modal,
-  .dropdown-menu,
-  .popover,
-  .tooltip,
-  .badge,
+
+  /* Tabelas sem cantos arredondados nas células */
   table,
   thead,
   tbody,
   tr,
   td,
   th {
-    border-radius: 0 !important;
+    border-radius: 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
   }
 }
 

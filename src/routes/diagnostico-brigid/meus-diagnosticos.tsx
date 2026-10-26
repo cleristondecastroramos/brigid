@@ -72,7 +72,9 @@ function MeusDiagnosticosPage() {
               Voltar
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Meus Diagnósticos</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
+            Meus Diagnósticos
+          </h1>
         </div>
         <p className="text-muted-foreground mt-1">
           Acompanhe os formulários das Promotorias vinculadas ao seu usuário, retome rascunhos ou
@@ -125,7 +127,7 @@ function MeusDiagnosticosPage() {
             <div className="py-8 text-center text-muted-foreground">Carregando...</div>
           ) : filteredDiagnosticos.length === 0 ? (
             <div className="py-16 flex flex-col items-center justify-center text-center">
-              <div className="bg-muted/50 p-4 rounded-full mb-4">
+              <div className="bg-muted/50 p-4 rounded-sm mb-4">
                 <SearchX className="w-8 h-8 text-muted-foreground/60" />
               </div>
               <h3 className="text-lg font-medium text-foreground mb-1">
@@ -146,7 +148,7 @@ function MeusDiagnosticosPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="[&_th]:bg-primary [&_th]:text-primary-foreground [&_th]:font-semibold border-none">
+                  <TableRow className="">
                     <TableHead className="min-w-[200px]">Promotoria</TableHead>
                     <TableHead className="min-w-[150px]">Município</TableHead>
                     <TableHead>Atribuição</TableHead>

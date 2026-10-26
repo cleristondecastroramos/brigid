@@ -47,6 +47,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChartHelper } from "@/components/chart-helper";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/territorio")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -56,31 +58,31 @@ export const Route = createFileRoute("/territorio")({
 type Layer = "consolidada" | "opm" | "creas" | "risco" | "prioridade" | "alerta";
 
 const COLORS = {
-  withSvc: "oklch(0.55 0.13 175)", // green
-  withoutSvc: "oklch(0.35 0.15 300)", // purple
-  na: "oklch(0.92 0.01 230)", // grey
+  withSvc: "var(--mapa-positivo)", // green
+  withoutSvc: "var(--mapa-critico)", // purple
+  na: "var(--mapa-neutro)", // grey
   risk: {
-    BAIXO: "oklch(0.55 0.13 175)",
-    MEDIO: "oklch(0.7 0.12 300)",
-    ALTO: "oklch(0.5 0.18 300)",
-    CRITICO: "oklch(0.35 0.15 300)",
-    NA: "oklch(0.92 0.01 230)",
+    BAIXO: "var(--mapa-positivo)",
+    MEDIO: "var(--mapa-atencao)",
+    ALTO: "var(--mapa-alto)",
+    CRITICO: "var(--mapa-critico)",
+    NA: "var(--mapa-neutro)",
   } as Record<string, string>,
   alert: {
-    ADEQUADO: "oklch(0.55 0.13 175)",
-    ATENCAO: "oklch(0.7 0.12 300)",
-    CRITICO: "oklch(0.35 0.15 300)",
+    ADEQUADO: "var(--mapa-positivo)",
+    ATENCAO: "var(--mapa-atencao)",
+    CRITICO: "var(--mapa-critico)",
   } as Record<string, string>,
   priority: {
-    ALTA: "oklch(0.35 0.15 300)",
-    MEDIA: "oklch(0.7 0.12 300)",
-    BAIXA: "oklch(0.55 0.13 175)",
+    ALTA: "var(--mapa-critico)",
+    MEDIA: "var(--mapa-atencao)",
+    BAIXA: "var(--mapa-positivo)",
   } as Record<string, string>,
   consolidada: {
-    criticoSemRede: "oklch(0.35 0.15 300)",
-    semRede: "oklch(0.5 0.15 300)",
-    parcial: "oklch(0.7 0.12 300)",
-    completo: "oklch(0.55 0.13 175)",
+    criticoSemRede: "var(--mapa-critico)",
+    semRede: "var(--mapa-alto)",
+    parcial: "var(--mapa-atencao)",
+    completo: "var(--mapa-positivo)",
   },
 };
 
@@ -266,12 +268,17 @@ function TerritorialIntelligence() {
 
   return (
     <div className="space-y-5">
+      <PageTitle
+        secao="Territorial"
+        titulo="Inteligência Territorial"
+        descricao="Cruzamento das camadas de estrutura, risco, alerta da rede e prioridade por município, comarca e polo regional."
+      />
       {/* Header tabs (layers) */}
       <Card>
         <CardContent className="flex flex-col gap-4 p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-muted-foreground">
                 <Layers className="h-5 w-5" />
               </div>
               <div>
@@ -430,7 +437,7 @@ function TerritorialIntelligence() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-sm hover:bg-muted/50"
                     title="Exportar Tabela"
                   >
                     <Download className="h-5 w-5" />
@@ -514,7 +521,7 @@ function TerritorialIntelligence() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-sm hover:bg-muted/50"
                     title="Exportar Ranking"
                   >
                     <Download className="h-5 w-5" />
@@ -626,7 +633,7 @@ function TerritorialIntelligence() {
                   <RiskBadge level={selected.risco_feminicidio_nivel} />
                   <AlertBadge level={selected.painel_alerta_rede} />
                   {selected.necessita_atuacao_prioritaria === "SIM" && (
-                    <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                    <span className="inline-flex items-center rounded-sm border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                       Atuação prioritária
                     </span>
                   )}
@@ -683,6 +690,16 @@ function TerritorialIntelligence() {
           )}
         </SheetContent>
       </Sheet>
+      <NotasRodape
+        fontes={[
+          "Base de feminicídios 2023–2026, consolidada pelo CAOCRIM",
+          "SEMPI/OPM 2026",
+          "SASC/SUAS 2025",
+        ]}
+        notas={[
+          "Classificações de risco e prioridade calculadas conforme a metodologia oficial vigente.",
+        ]}
+      />
     </div>
   );
 }

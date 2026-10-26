@@ -40,6 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/municipios/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -137,19 +138,22 @@ function MunicipiosList() {
 
   return (
     <div className="space-y-6 pb-12">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 border-b border-border pb-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Painel Analítico de Municípios
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Territorial
+          </p>
+          <h1 className="mt-0.5 text-xl font-semibold tracking-tight text-foreground md:text-2xl">
+            Municípios
           </h1>
-          <p className="text-muted-foreground mt-1 text-lg">
-            Base de monitoramento territorial e focalização estratégica.
+          <p className="mt-1 text-sm text-muted-foreground">
+            Base de monitoramento territorial dos 224 municípios, com acesso à ficha de cada um.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="default" className="shadow-sm">
+              <Button variant="default">
                 <Download className="mr-2 h-4 w-4" /> Exportar Dados
               </Button>
             </DropdownMenuTrigger>
@@ -249,7 +253,7 @@ function MunicipiosList() {
         </Card>
       </div>
 
-      <Card className="shadow-md border-border/60">
+      <Card className="shadow-sm border-border/60">
         <CardHeader className="pb-4 bg-muted/20 border-b border-border/40">
           <CardTitle className="text-lg flex items-center gap-2">Filtros de Focalização</CardTitle>
           <CardDescription>
@@ -435,6 +439,15 @@ function MunicipiosList() {
           </div>
         </CardContent>
       </Card>
+      <NotasRodape
+        fontes={[
+          "Base de feminicídios 2023–2026, consolidada pelo CAOCRIM",
+          "população total e feminina da base municipal do BRIGID",
+          "SEMPI/OPM 2026",
+          "SASC/SUAS 2025",
+        ]}
+        notas={["Ficha territorial de cada município disponível ao selecionar o nome na tabela."]}
+      />
     </div>
   );
 }

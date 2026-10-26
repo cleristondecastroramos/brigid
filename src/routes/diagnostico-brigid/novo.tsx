@@ -18,12 +18,13 @@ function NovoDiagnosticoPage() {
               Voltar
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             Novo Diagnóstico BRIGID
           </h1>
         </div>
         <p className="text-muted-foreground mt-1">
-          Inicie um novo preenchimento. Selecione a unidade e sua atribuição para carregar os blocos adequados.
+          Inicie um novo preenchimento. Selecione a unidade e sua atribuição para carregar os blocos
+          adequados.
         </p>
       </div>
 

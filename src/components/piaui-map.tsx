@@ -197,7 +197,7 @@ export function PiauiMap({ colorFn, height = 520, legend, title }: PiauiMapProps
 
         {hover && (
           <div
-            className="pointer-events-none absolute z-10 rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-md"
+            className="pointer-events-none absolute z-10 rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-sm"
             style={{ left: Math.min(hover.x + 12, 600), top: hover.y + 12 }}
           >
             <p className="font-semibold text-foreground">{hover.name}</p>

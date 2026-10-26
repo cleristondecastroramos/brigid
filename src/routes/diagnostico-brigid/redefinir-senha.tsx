@@ -46,7 +46,7 @@ function RedefinirSenhaPage() {
     <div className="mx-auto max-w-md py-8">
       <Card>
         <CardHeader>
-          <div className="mb-2 w-fit rounded-xl bg-primary/10 p-3 text-primary">
+          <div className="mb-1 w-fit text-muted-foreground">
             <KeyRound className="h-6 w-6" />
           </div>
           <CardTitle>Definir senha da Promotoria</CardTitle>

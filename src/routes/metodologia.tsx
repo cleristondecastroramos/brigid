@@ -28,7 +28,7 @@ function MetodologiaPage() {
     <div className="space-y-12 max-w-[1000px] mx-auto pb-16 pt-8">
       {/* 1. APRESENTAÇÃO INSTITUCIONAL */}
       <section className="flex flex-col gap-4">
-        <h1 className="text-4xl font-black tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Nota Técnica Metodológica
         </h1>
         <p className="text-muted-foreground text-xl leading-relaxed font-medium">
@@ -134,7 +134,7 @@ function MetodologiaPage() {
       <div className="space-y-12">
         {/* === ÍNDICE DE ESTRUTURA DA REDE (IER) === */}
         <section>
-          <Card className="border-border/60 shadow-md">
+          <Card className="border-border/60 shadow-sm">
             <CardHeader className="bg-primary/5 border-b border-border/40 pb-6 rounded-t-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-primary/20 rounded-lg">
@@ -213,7 +213,7 @@ function MetodologiaPage() {
                 <h3 className="text-lg font-bold">Fórmula de Composição</h3>
                 <div className="bg-muted/30 border border-border p-6 rounded-xl flex flex-col gap-4">
                   <div className="flex items-center gap-3 flex-wrap justify-center font-medium text-base">
-                    <strong className="text-primary text-2xl font-black mr-2">IER</strong>
+                    <strong className="text-primary text-2xl font-semibold mr-2">IER</strong>
                     <span className="text-muted-foreground text-xl">=</span>
                     <span className="bg-background border border-border/60 px-4 py-2 rounded-lg shadow-sm">
                       Sala <span className="text-muted-foreground font-normal ml-1">(0 ou 3)</span>
@@ -284,7 +284,7 @@ function MetodologiaPage() {
 
         {/* === ÍNDICE DE MATURIDADE DOS FLUXOS (IMF) === */}
         <section>
-          <Card className="border-border/60 shadow-md">
+          <Card className="border-border/60 shadow-sm">
             <CardHeader className="bg-[color:var(--color-success)]/5 border-b border-border/40 pb-6 rounded-t-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-[color:var(--color-success)]/20 rounded-lg">
@@ -375,7 +375,7 @@ function MetodologiaPage() {
                 <h3 className="text-lg font-bold">Fórmula de Composição</h3>
                 <div className="bg-muted/30 border border-border p-6 rounded-xl flex flex-col gap-4">
                   <div className="flex items-center gap-3 flex-wrap justify-center font-medium text-base">
-                    <strong className="text-[color:var(--color-success)] text-2xl font-black mr-2">
+                    <strong className="text-[color:var(--color-success)] text-2xl font-semibold mr-2">
                       IMF
                     </strong>
                     <span className="text-muted-foreground text-xl">=</span>
@@ -425,7 +425,7 @@ function MetodologiaPage() {
 
         {/* === ÍNDICE DE QUALIFICAÇÃO TÉCNICA (IQT) === */}
         <section>
-          <Card className="border-border/60 shadow-md">
+          <Card className="border-border/60 shadow-sm">
             <CardHeader className="bg-warning/10 border-b border-border/40 pb-6 rounded-t-xl">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-warning/20 rounded-lg">
@@ -514,7 +514,7 @@ function MetodologiaPage() {
                 <h3 className="text-lg font-bold">Fórmula de Composição</h3>
                 <div className="bg-muted/30 border border-border p-6 rounded-xl flex flex-col gap-4">
                   <div className="flex items-center gap-3 flex-wrap justify-center font-medium text-base">
-                    <strong className="text-warning-foreground text-2xl font-black mr-2">
+                    <strong className="text-warning-foreground text-2xl font-semibold mr-2">
                       IQT
                     </strong>
                     <span className="text-muted-foreground text-xl">=</span>
@@ -545,7 +545,7 @@ function MetodologiaPage() {
 
         {/* === MATRIZ DE RISCO TERRITORIAL === */}
         <section>
-          <Card className="border-border/60 shadow-lg border-destructive/20 overflow-hidden relative">
+          <Card className="border-border/60 shadow-sm border-destructive/20 overflow-hidden relative">
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] dark:opacity-[0.12] pointer-events-none z-0 overflow-hidden">
               <img
                 src="/logo_brigid.png"
@@ -648,7 +648,7 @@ function MetodologiaPage() {
                 <h3 className="text-lg font-bold">Classificação Normativa do Alerta</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-4 p-3 border rounded-lg bg-background">
-                    <div className="w-4 h-4 rounded-full mt-0.5 shrink-0 bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.5)]"></div>
+                    <div className="w-4 h-4 rounded-sm mt-0.5 shrink-0 bg-[color:var(--mapa-critico)]"></div>
                     <div>
                       <h4 className="font-bold text-foreground">Risco Crítico Iminente</h4>
                       <p className="text-sm text-muted-foreground">
@@ -659,7 +659,7 @@ function MetodologiaPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-4 p-3 border rounded-lg bg-background">
-                    <div className="w-4 h-4 rounded-full mt-0.5 shrink-0 bg-orange-500"></div>
+                    <div className="w-4 h-4 rounded-sm mt-0.5 shrink-0 bg-[color:var(--mapa-alto)]"></div>
                     <div>
                       <h4 className="font-bold text-foreground">Risco Alto</h4>
                       <p className="text-sm text-muted-foreground">
@@ -669,7 +669,7 @@ function MetodologiaPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-4 p-3 border rounded-lg bg-background">
-                    <div className="w-4 h-4 rounded-full mt-0.5 shrink-0 bg-yellow-500"></div>
+                    <div className="w-4 h-4 rounded-sm mt-0.5 shrink-0 bg-[color:var(--mapa-atencao)]"></div>
                     <div>
                       <h4 className="font-bold text-foreground">Risco Moderado</h4>
                       <p className="text-sm text-muted-foreground">
@@ -679,7 +679,7 @@ function MetodologiaPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-4 p-3 border rounded-lg bg-background">
-                    <div className="w-4 h-4 rounded-full mt-0.5 shrink-0 bg-green-500"></div>
+                    <div className="w-4 h-4 rounded-sm mt-0.5 shrink-0 bg-[color:var(--mapa-positivo)]"></div>
                     <div>
                       <h4 className="font-bold text-foreground">Risco Baixo</h4>
                       <p className="text-sm text-muted-foreground">
@@ -715,7 +715,7 @@ function MetodologiaPage() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* 4. FONTES DE DADOS E ATUALIZAÇÃO */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-black text-foreground flex items-center gap-2">
+            <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <Database className="h-6 w-6 text-primary" />
               Fontes de Dados
             </h2>
@@ -747,7 +747,7 @@ function MetodologiaPage() {
 
           {/* 5. LIMITAÇÕES GERAIS */}
           <section className="space-y-6">
-            <h2 className="text-2xl font-black text-foreground flex items-center gap-2">
+            <h2 className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <Eye className="h-6 w-6 text-primary" />
               Limitações e Viés Analítico
             </h2>
@@ -780,7 +780,7 @@ function MetodologiaPage() {
 
         {/* 6. LEITURA OPERACIONAL */}
         <section className="mt-8">
-          <Card className="bg-primary text-primary-foreground border-transparent shadow-xl">
+          <Card className="bg-primary text-primary-foreground border-transparent shadow-sm">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2 text-primary-foreground">
                 <MonitorPlay className="h-5 w-5" />

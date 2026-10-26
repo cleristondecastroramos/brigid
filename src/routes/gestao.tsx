@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/gestao")({
   component: Gestao,
@@ -78,7 +80,12 @@ function Gestao() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
+      <PageTitle
+        secao="Gestão"
+        titulo="Gestão do Projeto"
+        descricao="Entregas estratégicas do Projeto Feminicídio Zero e seu estágio de execução."
+      />
       <Card className="border border-border/60 shadow-sm">
         <CardContent className="grid grid-cols-2 gap-4 p-6 md:grid-cols-4">
           <Stat label="Entregas totais" value={total} />
@@ -170,6 +177,10 @@ function Gestao() {
           </div>
         </CardContent>
       </Card>
+      <NotasRodape
+        fontes={["Coordenação do Projeto Feminicídio Zero (CAOCRIM)"]}
+        notas={["O progresso de cada entrega é informado pela coordenação do projeto."]}
+      />
     </div>
   );
 }

@@ -12,7 +12,7 @@ function Manual() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-20 animate-in fade-in duration-500 print:max-w-none print:pb-0">
+    <div className="max-w-4xl mx-auto pb-20 print:max-w-none print:pb-0">
       <style>{`
         @media print {
           @page {
@@ -67,10 +67,10 @@ function Manual() {
       {/* O fundo branco e z-index ocultam o rodapé fixo apenas na capa */}
       <div className="hidden print:flex min-h-screen flex-col items-center justify-center text-center px-12 break-after-page relative bg-white z-50">
         <div className="mb-12 flex flex-col items-center">
-          <div className="h-40 w-40 mb-8 rounded-full border-4 border-slate-900 flex items-center justify-center overflow-hidden bg-white shadow-xl">
+          <div className="h-40 w-40 mb-8 rounded-full border-4 border-slate-900 flex items-center justify-center overflow-hidden bg-white shadow-sm">
             <img src="/logo_brigid.png" alt="BRIGID Logo" className="h-32 w-32 object-contain" />
           </div>
-          <h1 className="text-5xl font-extrabold uppercase tracking-widest text-slate-900 mb-6 border-b-4 border-slate-900 pb-4 inline-block">
+          <h1 className="text-3xl font-semibold uppercase tracking-widest text-slate-900 mb-6 border-b-4 border-slate-900 pb-4 inline-block">
             BRÍGID
           </h1>
           <h2 className="text-3xl font-semibold text-slate-800 leading-snug">
@@ -95,7 +95,7 @@ function Manual() {
 
       <div className="flex items-center justify-between mb-8 print:hidden">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-3">
             <FileText className="w-8 h-8 text-primary" />
             Manual Técnico e Tutorial de Uso do Sistema BRÍGID
           </h1>

@@ -14,12 +14,13 @@ interface KpiCardProps {
   isActive?: boolean;
 }
 
+// O tom só colore o ícone; o número fica sempre na cor do texto, sem fundos tingidos
 const toneStyles: Record<string, string> = {
-  default: "bg-muted text-muted-foreground",
-  primary: "bg-primary/10 text-primary",
-  success: "bg-[color:var(--color-success)]/15 text-[color:var(--color-success)]",
-  warning: "bg-[color:var(--color-warning)]/20 text-[color:var(--color-warning)]",
-  critical: "bg-destructive/15 text-destructive",
+  default: "text-muted-foreground",
+  primary: "text-muted-foreground",
+  success: "text-[color:var(--color-success)]",
+  warning: "text-[color:var(--color-warning)]",
+  critical: "text-destructive",
 };
 
 export function KpiCard({
@@ -38,33 +39,26 @@ export function KpiCard({
       onClick={onClick}
       title={tooltip}
       className={cn(
-        "border-border/70 transition-colors",
-        onClick && "cursor-pointer hover:bg-accent/40",
-        isActive && "ring-2 ring-primary border-primary",
+        "border-border transition-colors",
+        onClick && "cursor-pointer hover:border-foreground/30",
+        isActive && "border-primary ring-1 ring-primary",
         className,
       )}
     >
-      <CardContent className="p-3 pb-3.5">
+      <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-muted-foreground leading-none">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground leading-snug">
               {label}
             </p>
-            <p className="mt-1.5 text-xl sm:text-2xl font-semibold tabular-nums text-foreground leading-none">
+            <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground leading-none">
               {value}
             </p>
-            {hint && <p className="mt-1 text-[10px] text-muted-foreground leading-none">{hint}</p>}
+            {hint && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground leading-snug">{hint}</p>
+            )}
           </div>
-          {Icon && (
-            <div
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-md",
-                toneStyles[tone],
-              )}
-            >
-              <Icon className="h-5 w-5" />
-            </div>
-          )}
+          {Icon && <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", toneStyles[tone])} aria-hidden />}
         </div>
       </CardContent>
     </Card>

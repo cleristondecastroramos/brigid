@@ -53,7 +53,7 @@ function FieldLabel({ children, tooltip }: { children: React.ReactNode; tooltip:
           <TooltipTrigger asChild>
             <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help transition-colors flex-shrink-0" />
           </TooltipTrigger>
-          <TooltipContent className="max-w-[260px] text-justify bg-slate-900 border border-slate-800 text-white p-2 rounded-md shadow-md text-[11px] leading-relaxed">
+          <TooltipContent className="max-w-[260px] text-justify bg-slate-900 border border-slate-800 text-white p-2 rounded-md shadow-sm text-[11px] leading-relaxed">
             {tooltip}
           </TooltipContent>
         </Tooltip>
@@ -265,7 +265,7 @@ function GestaoBaseMunicipal() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between border-b border-border/50 pb-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             Gestão da Base Municipal
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -304,10 +304,10 @@ function GestaoBaseMunicipal() {
         <CardContent className="p-0">
           <div className="overflow-auto max-h-[70vh] relative">
             <table className="w-full text-sm text-left text-muted-foreground border-collapse min-w-[800px]">
-              <thead className="sticky top-0 z-20 bg-[#2e1065] text-xs uppercase text-white/90 backdrop-blur-sm shadow-[0_1px_0_hsl(var(--border))]">
+              <thead className="sticky top-0 z-20 bg-muted text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border">
                 <tr>
                   <th
-                    className="sticky left-0 z-30 px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors bg-[#2e1065] shadow-[1px_0_0_hsl(var(--border))]"
+                    className="sticky left-0 z-30 px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors bg-muted shadow-[1px_0_0_hsl(var(--border))]"
                     onClick={() => handleSort("municipio")}
                   >
                     <div className="flex items-center gap-1.5">
@@ -315,7 +315,7 @@ function GestaoBaseMunicipal() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors"
+                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors"
                     onClick={() => handleSort("comarca")}
                   >
                     <div className="flex items-center gap-1.5">
@@ -323,7 +323,7 @@ function GestaoBaseMunicipal() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors"
+                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors"
                     onClick={() => handleSort("polo_regional")}
                   >
                     <div className="flex items-center gap-1.5">
@@ -331,7 +331,7 @@ function GestaoBaseMunicipal() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center"
+                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors text-center"
                     onClick={() => handleSort("opm_possui")}
                   >
                     <div className="flex items-center justify-center gap-1.5">
@@ -339,7 +339,7 @@ function GestaoBaseMunicipal() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center"
+                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors text-center"
                     onClick={() => handleSort("creas_possui")}
                   >
                     <div className="flex items-center justify-center gap-1.5">
@@ -347,7 +347,7 @@ function GestaoBaseMunicipal() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center"
+                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors text-center"
                     onClick={() => handleSort("feminicidios_consumados_2023_2025")}
                   >
                     <div className="flex items-center justify-center gap-1.5">
@@ -355,7 +355,7 @@ function GestaoBaseMunicipal() {
                     </div>
                   </th>
                   <th
-                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-[#3b1582] transition-colors text-center"
+                    className="px-4 py-3 font-semibold cursor-pointer hover:bg-accent transition-colors text-center"
                     onClick={() => handleSort("feminicidios_tentados_2023_2025")}
                   >
                     <div className="flex items-center justify-center gap-1.5">
@@ -379,7 +379,7 @@ function GestaoBaseMunicipal() {
                     <td className="px-4 py-3 text-center">
                       <span
                         className={cn(
-                          "inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide",
+                          "inline-flex px-2.5 py-0.5 rounded-sm text-[11px] font-bold tracking-wide",
                           m.opm_possui === "SIM"
                             ? "bg-emerald-100/60 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                             : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
@@ -391,7 +391,7 @@ function GestaoBaseMunicipal() {
                     <td className="px-4 py-3 text-center">
                       <span
                         className={cn(
-                          "inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide",
+                          "inline-flex px-2.5 py-0.5 rounded-sm text-[11px] font-bold tracking-wide",
                           m.creas_possui === "SIM"
                             ? "bg-emerald-100/60 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                             : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
@@ -429,22 +429,21 @@ function GestaoBaseMunicipal() {
                             </Tooltip>
                           </TooltipProvider>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[850px] flex flex-col h-full max-h-[95vh] p-0 border-none rounded-xl overflow-hidden bg-background shadow-2xl [&>button]:text-white [&>button]:opacity-80 hover:[&>button]:opacity-100 [&>button]:bg-black/20 hover:[&>button]:bg-black/40 [&>button]:rounded-full [&>button]:p-1.5 [&>button]:top-5 [&>button]:right-5 [&>button]:transition-all">
-                          <DialogHeader className="bg-[#2e1065] text-primary-foreground p-6 border-b border-white/10 flex flex-col text-left shrink-0 relative overflow-hidden">
+                        <DialogContent className="sm:max-w-[850px] flex flex-col h-full max-h-[95vh] p-0 border-none rounded-xl overflow-hidden bg-background shadow-sm [&>button]:text-white [&>button]:opacity-80 hover:[&>button]:opacity-100 [&>button]:bg-black/20 hover:[&>button]:bg-black/40 [&>button]:rounded-sm [&>button]:p-1.5 [&>button]:top-5 [&>button]:right-5 [&>button]:transition-all">
+                          <DialogHeader className="bg-[var(--color-sidebar)] text-primary-foreground p-6 border-b border-white/10 flex flex-col text-left shrink-0 relative overflow-hidden">
                             {/* Efeito visual sutil de fundo */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
                             <div className="flex items-center gap-2 mb-1.5 relative z-10">
-                              <span className="text-[10px] uppercase font-bold tracking-widest text-primary-foreground/70 bg-black/20 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] uppercase font-bold tracking-widest text-primary-foreground/70 bg-black/20 px-2 py-0.5 rounded-sm">
                                 Edição Administrativa
                               </span>
                               {isDirty && (
-                                <span className="text-[10px] uppercase font-bold tracking-widest text-amber-200 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30 animate-in fade-in zoom-in duration-300">
+                                <span className="text-[10px] uppercase font-bold tracking-widest text-amber-200 bg-amber-500/20 px-2 py-0.5 rounded-sm border border-amber-500/30 animate-in fade-in zoom-in duration-300">
                                   Alterações Pendentes
                                 </span>
                               )}
                             </div>
-                            <DialogTitle className="text-white text-[28px] font-extrabold mt-1 leading-tight tracking-tight relative z-10">
+                            <DialogTitle className="text-white text-[28px] font-semibold mt-1 leading-tight tracking-tight relative z-10">
                               {m.municipio}
                             </DialogTitle>
 
@@ -470,46 +469,43 @@ function GestaoBaseMunicipal() {
                               <TabsList className="flex flex-wrap md:grid md:grid-cols-6 mb-6 bg-muted/50 p-1.5 rounded-xl border border-border/50 shadow-sm h-auto">
                                 <TabsTrigger
                                   value="infra"
-                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-[#2e1065] data-[state=active]:shadow-md data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[#2e1065]"
+                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:shadow-sm data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[var(--color-sidebar)]"
                                 >
                                   Infraestrutura
                                 </TabsTrigger>
                                 <TabsTrigger
                                   value="fluxos"
-                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-[#2e1065] data-[state=active]:shadow-md data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[#2e1065]"
+                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:shadow-sm data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[var(--color-sidebar)]"
                                 >
                                   Fluxos
                                 </TabsTrigger>
                                 <TabsTrigger
                                   value="seguranca"
-                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-[#2e1065] data-[state=active]:shadow-md data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[#2e1065]"
+                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:shadow-sm data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[var(--color-sidebar)]"
                                 >
                                   Segurança
                                 </TabsTrigger>
                                 <TabsTrigger
                                   value="assistencia"
-                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-[#2e1065] data-[state=active]:shadow-md data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[#2e1065]"
+                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:shadow-sm data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[var(--color-sidebar)]"
                                 >
                                   Socioassistencial
                                 </TabsTrigger>
                                 <TabsTrigger
                                   value="violencia"
-                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-[#2e1065] data-[state=active]:shadow-md data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[#2e1065]"
+                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:shadow-sm data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[var(--color-sidebar)]"
                                 >
                                   Violência
                                 </TabsTrigger>
                                 <TabsTrigger
                                   value="alertas"
-                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-[#2e1065] data-[state=active]:shadow-md data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[#2e1065]"
+                                  className="text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:shadow-sm data-[state=active]:text-white transition-all py-2.5 hover:bg-muted/80 data-[state=active]:hover:bg-[var(--color-sidebar)]"
                                 >
                                   Alertas
                                 </TabsTrigger>
                               </TabsList>
 
-                              <TabsContent
-                                value="infra"
-                                className="space-y-6 animate-in fade-in duration-300"
-                              >
+                              <TabsContent value="infra" className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                   {/* Destaque OPM */}
                                   <div className="grid gap-2 p-4 bg-primary/[0.03] border border-primary/10 rounded-xl shadow-sm">
@@ -858,7 +854,7 @@ function GestaoBaseMunicipal() {
                                       <FieldLabel tooltip="Problemas práticos que dificultam o fluxo de investigação, perícia ou acolhimento.">
                                         Gargalos Identificados
                                       </FieldLabel>
-                                      <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-sm">
                                         {editData.gargalos_identificados
                                           ? editData.gargalos_identificados
                                               .split(";")
@@ -1023,10 +1019,7 @@ function GestaoBaseMunicipal() {
                                 </div>
                               </TabsContent>
 
-                              <TabsContent
-                                value="violencia"
-                                className="space-y-6 animate-in fade-in duration-300"
-                              >
+                              <TabsContent value="violencia" className="space-y-6">
                                 {/* Bloco Oficial */}
                                 <div className="border border-primary/20 rounded-xl p-5 bg-primary/[0.02] shadow-sm relative overflow-hidden">
                                   <div className="absolute top-0 left-0 w-1 h-full bg-primary/60"></div>
@@ -1233,10 +1226,7 @@ function GestaoBaseMunicipal() {
                                 </div>
                               </TabsContent>
 
-                              <TabsContent
-                                value="alertas"
-                                className="space-y-6 animate-in fade-in duration-300"
-                              >
+                              <TabsContent value="alertas" className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                   {/* Destaque Alerta e Prioridade */}
                                   <div className="grid gap-2 p-4 bg-rose-500/[0.03] border border-rose-500/10 rounded-xl shadow-sm">

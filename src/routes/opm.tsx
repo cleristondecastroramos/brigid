@@ -46,15 +46,17 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 
 export const Route = createFileRoute("/opm")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
   component: OpmPanel,
 });
 
-const COLOR_WITH = "oklch(0.55 0.13 175)";
-const COLOR_WITHOUT = "var(--color-primary)";
-const COLOR_NA = "oklch(0.92 0.01 230)";
+const COLOR_WITH = "var(--mapa-positivo)";
+const COLOR_WITHOUT = "var(--mapa-critico)";
+const COLOR_NA = "var(--mapa-neutro)";
 
 function OpmPanel() {
   const { data: municipios } = useMunicipios();
@@ -274,18 +276,23 @@ function OpmPanel() {
 
   return (
     <div className="space-y-6">
+      <PageTitle
+        secao="Monitoramento"
+        titulo="Cobertura de OPMs"
+        descricao="Presença, tipologia e efetividade dos Organismos de Políticas para Mulheres nos municípios piauienses."
+      />
       <Card>
         <CardContent className="p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
             {hasFilter && (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              <span className="inline-flex items-center rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 Filtros ativos
               </span>
             )}
           </div>
           <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative w-full md:w-[500px] shrink-0">
+            <div className="relative w-full self-start md:w-[500px] shrink-0">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar município…"
@@ -451,7 +458,7 @@ function OpmPanel() {
               ]}
             />
 
-            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-sm backdrop-blur-sm pointer-events-auto flex flex-col">
               <p className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Distribuição por cobertura
               </p>
@@ -669,7 +676,7 @@ function OpmPanel() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                  className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-sm hover:bg-muted/50"
                   title="Exportar Tabela"
                 >
                   <Download className="h-5 w-5" />
@@ -814,6 +821,12 @@ function OpmPanel() {
           </p>
         </CardContent>
       </Card>
+      <NotasRodape
+        fontes={["SEMPI/OPM 2026", "diagnósticos validados pelo CAOCRIM, quando houver"]}
+        notas={[
+          "A ausência de OPM é um dos agravantes estruturais do score de risco (peso padrão 2).",
+        ]}
+      />
     </div>
   );
 }

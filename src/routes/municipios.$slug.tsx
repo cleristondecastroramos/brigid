@@ -50,6 +50,8 @@ import {
   LabelList,
 } from "recharts";
 import type { Municipio } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { NotasRodape } from "@/components/rodape-institucional";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -101,10 +103,10 @@ function flagStatus(val: string | undefined): "ok" | "warn" | "critical" | "neut
 }
 
 const FLAG_COLORS: Record<string, string> = {
-  ok: "#16a34a",
-  warn: "#7c3aed",
-  critical: "#b91c1c",
-  neutral: "#94a3b8",
+  ok: "var(--success)",
+  warn: "var(--warning)",
+  critical: "var(--destructive)",
+  neutral: "var(--chart-5)",
 };
 
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
@@ -344,286 +346,101 @@ interface HeaderProps {
   onExport: () => void;
 }
 
-function MunicipioTechnicalHeader({
-  m,
-  stateRank,
-  poloRank,
-  totalMunicipios,
-  poloTotal,
-  onExport,
-}: HeaderProps) {
+function MunicipioTechnicalHeader({ m, onExport }: HeaderProps) {
   return (
-    <div
-      style={{
-        background: "linear-gradient(135deg, #15052c 0%, #2e0854 45%, #100224 100%)",
-        borderRadius: "0",
-        marginLeft: "-1.5rem",
-        marginRight: "-1.5rem",
-        marginTop: "-1.5rem",
-        padding: "2rem 2.5rem 2rem",
-      }}
-    >
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-4">
-        <Link
-          to="/municipios"
-          style={{
-            color: "rgba(255,255,255,0.6)",
-            fontSize: "13px",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            textDecoration: "none",
-          }}
-          className="hover:text-white transition-colors"
-        >
-          <ArrowLeft style={{ width: "14px", height: "14px" }} />
+    <header className="border-b border-border pb-5">
+      <nav
+        className="mb-3 flex items-center gap-2 text-[13px] text-muted-foreground"
+        aria-label="Navegação"
+      >
+        <Link to="/municipios" className="flex items-center gap-1.5 hover:text-foreground">
+          <ArrowLeft className="h-3.5 w-3.5" />
           Municípios
         </Link>
-        <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>/</span>
-        <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "13px", fontWeight: 500 }}>
-          {m.municipio}
-        </span>
-      </div>
+        <span>/</span>
+        <span className="text-foreground">{m.municipio}</span>
+      </nav>
 
-      {/* Conteúdo principal */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
         <div>
-          {/* Label superior */}
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "6px",
-              padding: "4px 10px",
-              marginBottom: "12px",
-            }}
-          >
-            <MapPin style={{ width: "14px", height: "14px", color: "rgba(255,255,255,0.7)" }} />
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                color: "rgba(255,255,255,0.85)",
-                textTransform: "uppercase",
-              }}
-            >
-              Ficha Técnica Municipal
-            </span>
-          </div>
-
-          {/* Nome do município */}
-          <h1
-            style={{
-              fontSize: "clamp(2rem, 5vw, 3rem)",
-              fontWeight: 900,
-              color: "#ffffff",
-              lineHeight: 1.1,
-              letterSpacing: "-0.02em",
-              margin: "0 0 10px",
-            }}
-          >
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Ficha técnica municipal
+          </p>
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
             {m.municipio}
           </h1>
-
-          {/* Linha secundária */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", alignItems: "center" }}>
+          <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
             <MetaChip label="IBGE" value={m.codigo_ibge} />
-            <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
             <MetaChip label="Comarca" value={m.comarca} />
-            <span style={{ color: "rgba(255,255,255,0.2)" }}>·</span>
-            <MetaChip label="Polo Regional" value={m.polo_regional} />
-          </div>
+            <MetaChip label="Polo regional" value={m.polo_regional} />
+          </dl>
         </div>
 
-        {/* Direita: badges + ações */}
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-end" }}
-        >
-          {/* Badges de risco e alerta */}
-          <div
-            style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "flex-end" }}
-          >
+        <div className="flex flex-col gap-3 lg:items-end">
+          <div className="flex flex-wrap gap-2 lg:justify-end">
             <HeaderBadge
               label="Risco"
               value={m.risco_feminicidio_nivel}
               level={m.risco_feminicidio_nivel}
             />
             <HeaderBadge
-              label="Alerta da Rede"
+              label="Alerta da rede"
               value={m.painel_alerta_rede}
               level={m.painel_alerta_rede}
             />
             {m.necessita_atuacao_prioritaria === "SIM" && (
-              <div
-                style={{
-                  background: "rgba(239,68,68,0.25)",
-                  border: "1px solid rgba(239,68,68,0.5)",
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                }}
-              >
-                <AlertTriangle style={{ width: "12px", height: "12px", color: "#fca5a5" }} />
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    color: "#fca5a5",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  ATUAÇÃO PRIORITÁRIA
-                </span>
+              <div className="flex items-center gap-1.5 rounded-sm border border-destructive/40 px-2.5 py-1 text-[11px] font-medium text-destructive">
+                <AlertTriangle className="h-3 w-3" />
+                Atuação prioritária
               </div>
             )}
           </div>
-
-          {/* Botões de ação */}
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={onExport}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                width: "150px",
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "white",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: 600,
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.2)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.12)")}
-            >
-              <Download style={{ width: "14px", height: "14px" }} />
-              Exportar Ficha
-            </button>
-            <button
-              onClick={() => window.print()}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                width: "150px",
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "rgba(255,255,255,0.8)",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: 600,
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.14)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-            >
-              <Printer style={{ width: "14px", height: "14px" }} />
+          <div className="no-print flex gap-2">
+            <Button variant="outline" size="sm" onClick={onExport}>
+              <Download className="h-3.5 w-3.5" />
+              Exportar ficha
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer className="h-3.5 w-3.5" />
               Imprimir
-            </button>
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+    </header>
   );
 }
 
 function MetaChip({ label, value }: { label: string; value: string }) {
   return (
-    <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.65)" }}>
-      <span style={{ color: "rgba(255,255,255,0.4)", marginRight: "4px" }}>{label}:</span>
-      <span style={{ color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>{value}</span>
-    </span>
+    <div className="flex gap-1">
+      <dt className="text-muted-foreground">{label}:</dt>
+      <dd className="font-medium text-foreground">{value}</dd>
+    </div>
   );
 }
 
+const NIVEL_CLASSES: Record<string, string> = {
+  CRITICO: "border-destructive/40 text-destructive",
+  ALTO: "border-[color:var(--mapa-alto)]/50 text-[color:var(--mapa-alto)]",
+  ATENCAO: "border-[color:var(--color-warning)]/50 text-[color:var(--color-warning)]",
+  MEDIO: "border-[color:var(--color-warning)]/50 text-[color:var(--color-warning)]",
+  BAIXO: "border-[color:var(--color-success)]/40 text-[color:var(--color-success)]",
+  ADEQUADO: "border-[color:var(--color-success)]/40 text-[color:var(--color-success)]",
+};
+
 function HeaderBadge({ label, value, level }: { label: string; value: string; level: string }) {
-  const isCritical = level === "CRITICO";
-  const isHigh = level === "ALTO";
-  const isAtencao = level === "ATENCAO";
-  const isOk = level === "BAIXO" || level === "ADEQUADO";
-
-  const bg = isCritical
-    ? "rgba(239,68,68,0.2)"
-    : isHigh
-      ? "rgba(124,58,237,0.3)"
-      : isAtencao
-        ? "rgba(245,158,11,0.2)"
-        : isOk
-          ? "rgba(22,163,74,0.2)"
-          : "rgba(255,255,255,0.1)";
-
-  const border = isCritical
-    ? "rgba(239,68,68,0.4)"
-    : isHigh
-      ? "rgba(167,139,250,0.4)"
-      : isAtencao
-        ? "rgba(245,158,11,0.4)"
-        : isOk
-          ? "rgba(74,222,128,0.4)"
-          : "rgba(255,255,255,0.15)";
-
-  const color = isCritical
-    ? "#fca5a5"
-    : isHigh
-      ? "#c4b5fd"
-      : isAtencao
-        ? "#fcd34d"
-        : isOk
-          ? "#86efac"
-          : "rgba(255,255,255,0.75)";
-
   return (
     <div
-      style={{
-        background: bg,
-        border: `1px solid ${border}`,
-        borderRadius: "6px",
-        padding: "4px 10px",
-        width: "130px",
-      }}
+      className={cn(
+        "min-w-[120px] rounded-sm border px-2.5 py-1",
+        NIVEL_CLASSES[level] ?? "border-border",
+      )}
     >
-      <div
-        style={{
-          fontSize: "9px",
-          fontWeight: 600,
-          color: "rgba(255,255,255,0.4)",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
+      <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
-      <div
-        style={{
-          fontSize: "12px",
-          fontWeight: 700,
-          color,
-          letterSpacing: "0.05em",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {value || "—"}
-      </div>
+      <div className="text-[13px] font-semibold">{value || "—"}</div>
     </div>
   );
 }
@@ -639,127 +456,64 @@ interface KpisProps {
 }
 
 function MunicipioExecutiveKpis({ m, stateRank, poloRank, totalMunicipios, poloTotal }: KpisProps) {
-  const isCritical =
-    m.risco_feminicidio_nivel === "CRITICO" || m.risco_feminicidio_nivel === "ALTO";
+  const elevado = m.risco_feminicidio_nivel === "CRITICO" || m.risco_feminicidio_nivel === "ALTO";
 
   return (
     <section>
-      <h2 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-        Métricas Executivas
+      <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        Métricas executivas
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        {/* Score de Risco — destaque maior */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         <div
-          className="col-span-2 sm:col-span-2"
-          style={{
-            background: isCritical
-              ? "linear-gradient(135deg, #f5f3ff, #ede9fe)"
-              : "linear-gradient(135deg, #fafafa, #f4f4f5)",
-            border: isCritical ? "1.5px solid #7c3aed" : "1px solid rgba(0, 0, 0, 0.15)",
-            borderRadius: "12px",
-            padding: "14px 16px",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          {isCritical && (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: "3px",
-                background: "linear-gradient(90deg, #7c3aed, #a855f7)",
-              }}
-            />
+          className={cn(
+            "col-span-2 rounded-md border bg-card px-4 py-3",
+            elevado ? "border-destructive/40" : "border-border",
           )}
-          <p
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              color: isCritical ? "#7c3aed" : "#6b7280",
-              marginBottom: "6px",
-            }}
-          >
-            Score de Risco
+        >
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Score de risco
           </p>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-            <span
-              style={{
-                fontSize: "2.25rem",
-                fontWeight: 900,
-                fontVariantNumeric: "tabular-nums",
-                color: isCritical ? "#5b21b6" : "#111827",
-                lineHeight: 1,
-              }}
-            >
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-3xl font-semibold tabular-nums text-foreground">
               {m.risco_feminicidio_score.toFixed(1)}
             </span>
-            <span
-              style={{
-                fontSize: "13.5px",
-                fontWeight: 600,
-                color: isCritical ? "#7c3aed" : "#9ca3af",
-              }}
-            >
-              {m.risco_feminicidio_nivel}
-            </span>
+            <RiskBadge level={m.risco_feminicidio_nivel} />
           </div>
-          <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>
+          <p className="mt-1 text-xs text-muted-foreground">
             {stateRank}º de {totalMunicipios} no estado
           </p>
         </div>
 
-        {/* Pop Total */}
         <ExecKpiCard
-          label="Pop. Total"
+          label="População total"
           value={m.populacao.toLocaleString("pt-BR")}
           hint="habitantes"
-          icon={<Users style={{ width: "16px", height: "16px" }} />}
         />
-
-        {/* Pop Feminina */}
         <ExecKpiCard
-          label="Pop. Feminina"
-          value={(m.populacao_feminina || 0).toLocaleString("pt-BR")}
+          label="População feminina"
+          value={m.populacao_feminina ? m.populacao_feminina.toLocaleString("pt-BR") : "—"}
           hint="mulheres"
         />
-
-        {/* Feminicídios */}
         <ExecKpiCard
           label="Consumados"
           value={m.feminicidios_consumados_2023_2025}
           hint="2023–2025"
-          accentColor="#dc2626"
         />
-
-        {/* Tentativas */}
         <ExecKpiCard
           label="Tentativas"
           value={m.feminicidios_tentados_2023_2025}
           hint="2023–2025"
-          accentColor="#7c3aed"
         />
-
-        {/* Posição Polo */}
-        <ExecKpiCard label="No Polo" value={`${poloRank}º`} hint={`de ${poloTotal} municípios`} />
-
-        {/* Status Rede */}
         <ExecKpiCard
-          label="Alerta da Rede"
-          value={m.painel_alerta_rede}
+          label="Posição no polo"
+          value={`${poloRank}º`}
+          hint={`de ${poloTotal} municípios`}
+        />
+        <ExecKpiCard
+          label="Alerta da rede"
+          value={<AlertBadge level={m.painel_alerta_rede} />}
           hint={
             m.necessita_atuacao_prioritaria === "SIM" ? "Atuação prioritária" : "Em monitoramento"
-          }
-          accentColor={
-            m.painel_alerta_rede === "CRITICO"
-              ? "#dc2626"
-              : m.painel_alerta_rede === "ATENCAO"
-                ? "#7c3aed"
-                : "#16a34a"
           }
         />
       </div>
@@ -771,48 +525,20 @@ function ExecKpiCard({
   label,
   value,
   hint,
-  icon,
-  accentColor,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   hint?: string;
-  icon?: React.ReactNode;
-  accentColor?: string;
 }) {
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        border: "1px solid rgba(0, 0, 0, 0.15)",
-        borderRadius: "10px",
-        padding: "12px 14px",
-      }}
-    >
-      <p
-        style={{
-          fontSize: "12px",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: "#9ca3af",
-          marginBottom: "4px",
-        }}
-      >
+    <div className="rounded-md border border-border bg-card px-3.5 py-3">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p
-        style={{
-          fontSize: "1.7rem",
-          fontWeight: 800,
-          fontVariantNumeric: "tabular-nums",
-          color: accentColor || "#111827",
-          lineHeight: 1.1,
-        }}
-      >
+      <div className="mt-1 text-2xl font-semibold tabular-nums leading-tight text-foreground">
         {value}
-      </p>
-      {hint && <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "3px" }}>{hint}</p>}
+      </div>
+      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -828,40 +554,50 @@ function MunicipioRadarChartCard({ radarData }: { radarData: any[] }) {
       <div style={{ height: "350px" }}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="72%" data={radarData}>
-            <PolarGrid stroke="#e5e7eb" />
+            <PolarGrid stroke="var(--border)" />
             <PolarAngleAxis
               dataKey="dim"
-              tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 500 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12, fontWeight: 500 }}
             />
             <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
             <Radar
               name="Município"
               dataKey="Mun"
-              stroke="#6d28d9"
-              fill="#7c3aed"
+              stroke="var(--primary)"
+              fill="var(--primary)"
               fillOpacity={0.25}
               strokeWidth={2}
             />
             <Radar
               name="Polo Regional"
               dataKey="Polo"
-              stroke="#94a3b8"
-              fill="#94a3b8"
+              stroke="var(--chart-5)"
+              fill="var(--chart-5)"
               fillOpacity={0.1}
               strokeWidth={1.5}
               strokeDasharray="4 3"
             />
-            <Radar name="Estado" dataKey="Estado" stroke="#d1d5db" fill="none" strokeWidth={1} />
+            <Radar
+              name="Estado"
+              dataKey="Estado"
+              stroke="var(--border)"
+              fill="none"
+              strokeWidth={1}
+            />
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: "11px", color: "#6b7280", paddingTop: "8px" }}
+              wrapperStyle={{
+                fontSize: "11px",
+                color: "var(--muted-foreground)",
+                paddingTop: "8px",
+              }}
             />
             <RechartsTooltip
               formatter={(value: number, name: string) => [`${value.toFixed(1)} pts`, name]}
               contentStyle={{
-                borderRadius: "8px",
-                border: "1px solid #e5e7eb",
+                borderRadius: "6px",
+                border: "1px solid var(--border)",
                 fontSize: "12px",
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
               }}
@@ -885,19 +621,19 @@ function MunicipioHistoricalSeriesCard({ chartData }: { chartData: any[] }) {
       <div style={{ height: "350px" }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 20, right: 4, left: -24, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--muted)" />
             <XAxis
               dataKey="year"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 13, fill: "#9ca3af" }}
+              tick={{ fontSize: 13, fill: "var(--muted-foreground)" }}
             />
             <YAxis axisLine={false} tickLine={false} tick={false} allowDecimals={false} />
             <RechartsTooltip
-              cursor={{ fill: "#f8fafc" }}
+              cursor={{ fill: "var(--muted)" }}
               contentStyle={{
-                borderRadius: "8px",
-                border: "1px solid #e5e7eb",
+                borderRadius: "6px",
+                border: "1px solid var(--border)",
                 fontSize: "13px",
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
               }}
@@ -909,13 +645,17 @@ function MunicipioHistoricalSeriesCard({ chartData }: { chartData: any[] }) {
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: "12px", color: "#6b7280", paddingTop: "8px" }}
+              wrapperStyle={{
+                fontSize: "12px",
+                color: "var(--muted-foreground)",
+                paddingTop: "8px",
+              }}
               formatter={(v) => (v === "consumados" ? "Consumados" : "Tentativas")}
             />
             <Bar
               name="consumados"
               dataKey="consumados"
-              fill="#dc2626"
+              fill="var(--destructive)"
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
               fillOpacity={0.85}
@@ -923,13 +663,13 @@ function MunicipioHistoricalSeriesCard({ chartData }: { chartData: any[] }) {
               <LabelList
                 dataKey="consumados"
                 position="top"
-                style={{ fontSize: "12px", fill: "#4b5563", fontWeight: 700 }}
+                style={{ fontSize: "12px", fill: "var(--muted-foreground)", fontWeight: 700 }}
               />
             </Bar>
             <Bar
               name="tentados"
               dataKey="tentados"
-              fill="#7c3aed"
+              fill="var(--primary)"
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
               fillOpacity={0.7}
@@ -937,7 +677,7 @@ function MunicipioHistoricalSeriesCard({ chartData }: { chartData: any[] }) {
               <LabelList
                 dataKey="tentados"
                 position="top"
-                style={{ fontSize: "12px", fill: "#4b5563", fontWeight: 700 }}
+                style={{ fontSize: "12px", fill: "var(--muted-foreground)", fontWeight: 700 }}
               />
             </Bar>
           </BarChart>
@@ -972,19 +712,23 @@ function MunicipioSystemFlagsCard({ m }: { m: Municipio }) {
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
         {flags.map((flag) => {
-          let color = "#94a3b8";
+          let color = "var(--chart-5)";
           const label = flag.val || "—";
           let barFill = 0.3;
 
           if (flag.type === "simnao") {
-            color = flag.val === "SIM" ? "#16a34a" : "#7c3aed";
+            color = flag.val === "SIM" ? "var(--success)" : "var(--warning)";
             barFill = flag.val === "SIM" ? 1 : 0.3;
           } else if (flag.type === "simnao_inv") {
-            color = flag.val === "SIM" ? "#dc2626" : "#16a34a";
+            color = flag.val === "SIM" ? "var(--destructive)" : "var(--success)";
             barFill = flag.val === "SIM" ? 0.85 : 0.2;
           } else if (flag.type === "alerta") {
             color =
-              flag.val === "CRITICO" ? "#dc2626" : flag.val === "ATENCAO" ? "#7c3aed" : "#16a34a";
+              flag.val === "CRITICO"
+                ? "var(--destructive)"
+                : flag.val === "ATENCAO"
+                  ? "var(--warning)"
+                  : "var(--success)";
             barFill = flag.val === "CRITICO" ? 1 : flag.val === "ATENCAO" ? 0.6 : 0.25;
           }
 
@@ -993,7 +737,7 @@ function MunicipioSystemFlagsCard({ m }: { m: Municipio }) {
               <span
                 style={{
                   fontSize: "12px",
-                  color: "#6b7280",
+                  color: "var(--muted-foreground)",
                   width: "130px",
                   flexShrink: 0,
                   fontWeight: 500,
@@ -1005,8 +749,8 @@ function MunicipioSystemFlagsCard({ m }: { m: Municipio }) {
                 style={{
                   flex: 1,
                   height: "6px",
-                  background: "#f1f5f9",
-                  borderRadius: "3px",
+                  background: "var(--muted)",
+                  borderRadius: "2px",
                   overflow: "hidden",
                 }}
               >
@@ -1015,7 +759,7 @@ function MunicipioSystemFlagsCard({ m }: { m: Municipio }) {
                     height: "100%",
                     width: `${barFill * 100}%`,
                     background: color,
-                    borderRadius: "3px",
+                    borderRadius: "2px",
                     transition: "width 0.6s ease",
                   }}
                 />
@@ -1056,10 +800,10 @@ function AnalyticsCard({
   return (
     <div
       style={{
-        background: "#ffffff",
+        background: "var(--card)",
         border: "1px solid rgba(0, 0, 0, 0.15)",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        borderRadius: "14px",
+        borderRadius: "6px",
         padding: "18px 18px 14px",
         display: "flex",
         flexDirection: "column",
@@ -1079,7 +823,7 @@ function AnalyticsCard({
             style={{
               fontSize: "16px",
               fontWeight: 700,
-              color: "#111827",
+              color: "var(--foreground)",
               letterSpacing: "-0.01em",
               margin: 0,
             }}
@@ -1091,10 +835,10 @@ function AnalyticsCard({
               style={{
                 fontSize: "11px",
                 fontWeight: 600,
-                color: "#9ca3af",
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: "5px",
+                color: "var(--muted-foreground)",
+                background: "var(--muted)",
+                border: "1px solid var(--border)",
+                borderRadius: "2px",
                 padding: "2px 7px",
               }}
             >
@@ -1102,7 +846,14 @@ function AnalyticsCard({
             </span>
           )}
         </div>
-        <p style={{ fontSize: "12.5px", color: "#9ca3af", marginTop: "3px", lineHeight: 1.4 }}>
+        <p
+          style={{
+            fontSize: "12.5px",
+            color: "var(--muted-foreground)",
+            marginTop: "3px",
+            lineHeight: 1.4,
+          }}
+        >
           {subtitle}
         </p>
       </div>
@@ -1158,10 +909,10 @@ function MunicipioIntegratedAnalysis({
     <section>
       <div
         style={{
-          background: "#ffffff",
+          background: "var(--card)",
           border: "1px solid rgba(0, 0, 0, 0.15)",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-          borderRadius: "14px",
+          borderRadius: "6px",
           overflow: "hidden",
         }}
       >
@@ -1173,7 +924,7 @@ function MunicipioIntegratedAnalysis({
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            background: "#f9fafb",
+            background: "var(--muted)",
           }}
         >
           <div
@@ -1184,24 +935,24 @@ function MunicipioIntegratedAnalysis({
               width: "36px",
               height: "36px",
               background: "rgba(109,40,217,0.08)",
-              borderRadius: "9px",
+              borderRadius: "6px",
             }}
           >
-            <BarChart3 style={{ width: "18px", height: "18px", color: "#6d28d9" }} />
+            <BarChart3 style={{ width: "18px", height: "18px", color: "var(--primary)" }} />
           </div>
           <div>
             <h2
               style={{
                 fontSize: "17px",
                 fontWeight: 800,
-                color: "#111827",
+                color: "var(--foreground)",
                 margin: 0,
                 letterSpacing: "-0.01em",
               }}
             >
               Análise Técnica Integrada
             </h2>
-            <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
+            <p style={{ fontSize: "13px", color: "var(--muted-foreground)", margin: 0 }}>
               Diagnóstico consolidado · Comparação territorial · Encaminhamento institucional
             </p>
           </div>
@@ -1223,23 +974,23 @@ function MunicipioIntegratedAnalysis({
               icon={<TrendingUp style={{ width: "14px", height: "14px" }} />}
               label="Principal Vantagem"
               value={vantagem}
-              color="#6b7280"
-              bg="#f9fafb"
+              color="var(--muted-foreground)"
+              bg="var(--muted)"
               border="rgba(0,0,0,0.08)"
             />
             <Callout
               icon={<AlertTriangle style={{ width: "14px", height: "14px" }} />}
               label="Principal Fragilidade"
               value={fragilidade}
-              color="#6b7280"
-              bg="#f9fafb"
+              color="var(--muted-foreground)"
+              bg="var(--muted)"
               border="rgba(0,0,0,0.08)"
             />
             <Callout
               icon={<Target style={{ width: "14px", height: "14px" }} />}
               label="Recomendação"
               value={recomendacao}
-              color="#6d28d9"
+              color="var(--primary)"
               bg="rgba(109,40,217,0.04)"
               border="rgba(109,40,217,0.15)"
             />
@@ -1328,7 +1079,7 @@ function Callout({
       style={{
         background: bg,
         border: `1px solid ${border}`,
-        borderRadius: "10px",
+        borderRadius: "6px",
         padding: "12px 14px",
       }}
     >
@@ -1350,7 +1101,7 @@ function Callout({
       <p
         style={{
           fontSize: "13.5px",
-          color: "#374151",
+          color: "var(--foreground)",
           lineHeight: 1.4,
           margin: 0,
           fontWeight: 500,
@@ -1371,14 +1122,16 @@ function AnalysisParagraph({ title, children }: { title: string; children: React
           fontWeight: 700,
           textTransform: "uppercase",
           letterSpacing: "0.1em",
-          color: "#6b7280",
+          color: "var(--muted-foreground)",
           display: "inline-block",
           marginBottom: "4px",
         }}
       >
         {title}
       </span>
-      <p style={{ fontSize: "15px", color: "#1f2937", lineHeight: 1.65, margin: 0 }}>{children}</p>
+      <p style={{ fontSize: "15px", color: "var(--foreground)", lineHeight: 1.65, margin: 0 }}>
+        {children}
+      </p>
     </div>
   );
 }
@@ -1389,21 +1142,21 @@ function MunicipioNetworkSection({ m }: { m: Municipio }) {
   return (
     <section>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-        <Shield style={{ width: "16px", height: "16px", color: "#7c3aed" }} />
+        <Shield style={{ width: "16px", height: "16px", color: "var(--primary)" }} />
         <h2
           style={{
             fontSize: "11px",
             fontWeight: 800,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
-            color: "#9ca3af",
+            color: "var(--muted-foreground)",
             margin: 0,
           }}
         >
           Estrutura Local da Rede de Proteção
         </h2>
         <div style={{ flex: 1, height: "1px", background: "hsl(var(--border) / 0.4)" }} />
-        <span style={{ fontSize: "11px", color: "#9ca3af" }}>
+        <span style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>
           Evidência de Apoio ao Diagnóstico
         </span>
       </div>
@@ -1544,10 +1297,12 @@ function DiagnosticoPublicadoCard({ m }: { m: Municipio }) {
   return (
     <Card className="shadow-sm border-border/60">
       <CardHeader className="pb-3 border-b border-border/50">
-        <CardTitle className="text-base">Diagnóstico BRIGID — dados validados pelo CAOCRIM</CardTitle>
+        <CardTitle className="text-base">
+          Diagnóstico BRIGID — dados validados pelo CAOCRIM
+        </CardTitle>
         <span className="text-xs text-muted-foreground">
-          Informações prestadas pelas Promotorias de Justiça e aprovadas para publicação. Dados de ciclo aberto
-          permanecem preliminares; contagens informadas não entram no score de risco.
+          Informações prestadas pelas Promotorias de Justiça e aprovadas para publicação. Dados de
+          ciclo aberto permanecem preliminares; contagens informadas não entram no score de risco.
         </span>
       </CardHeader>
       <CardContent className="pt-4 space-y-3">
@@ -1560,7 +1315,9 @@ function DiagnosticoPublicadoCard({ m }: { m: Municipio }) {
                 <span className="font-medium">{d.valor ?? "—"}</span>
                 <span className="block text-[11px] text-muted-foreground">
                   {d.periodo_referencia} · {d.carater}
-                  {d.confiabilidade ? ` · ${ROTULOS_CONFIABILIDADE[d.confiabilidade] ?? d.confiabilidade}` : ""}
+                  {d.confiabilidade
+                    ? ` · ${ROTULOS_CONFIABILIDADE[d.confiabilidade] ?? d.confiabilidade}`
+                    : ""}
                 </span>
               </span>
             }
@@ -1573,49 +1330,21 @@ function DiagnosticoPublicadoCard({ m }: { m: Municipio }) {
 
 // ─── 6. Metadados e Fontes ────────────────────────────────────────────────────
 
+// Notas de rodapé da ficha: fontes registradas para o próprio município
 function MunicipioMetadataFooter({ m }: { m: Municipio }) {
+  const fontes = [
+    m.fonte_base_risco && `ocorrências — ${m.fonte_base_risco}`,
+    m.fonte_base_opm && `OPM — ${m.fonte_base_opm}`,
+    m.fonte_base_creas && `CREAS — ${m.fonte_base_creas}`,
+    "população total e feminina da base municipal do BRIGID",
+  ].filter(Boolean) as string[];
   return (
-    <footer
-      style={{
-        background: "#f9fafb",
-        border: "1px solid hsl(var(--border) / 0.5)",
-        borderRadius: "12px",
-        padding: "14px 20px",
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "6px 24px",
-        alignItems: "center",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#9ca3af" }}>
-        <FileText style={{ width: "14px", height: "14px" }} />
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-          }}
-        >
-          Metadados
-        </span>
-      </div>
-      <MetaItem label="Fontes" value="SSP-PI · MDS · IBGE" />
-      <span style={{ color: "#e5e7eb" }}>·</span>
-      <MetaItem label="Metodologia Score" value="v1.2 — Risco Feminicídio" />
-      <span style={{ color: "#e5e7eb" }}>·</span>
-      <MetaItem label="Recorte Temporal" value="2023–2026 (jan. oficial + parcial corrente)" />
-      <span style={{ color: "#e5e7eb" }}>·</span>
-      <MetaItem label="Última Referência" value={formatDateStr(m.ultima_atualizacao_referencia)} />
-    </footer>
-  );
-}
-
-function MetaItem({ label, value }: { label: string; value: string }) {
-  return (
-    <span style={{ fontSize: "12.5px", color: "#9ca3af" }}>
-      <span style={{ fontWeight: 600, color: "#6b7280" }}>{label}: </span>
-      {value}
-    </span>
+    <NotasRodape
+      fontes={fontes}
+      notas={[
+        "Score de risco calculado na janela oficial 2023–2025; os registros de 2026 são preliminares e não compõem o score.",
+        `Base de referência atualizada em ${formatDateStr(m.ultima_atualizacao_referencia)}.`,
+      ]}
+    />
   );
 }

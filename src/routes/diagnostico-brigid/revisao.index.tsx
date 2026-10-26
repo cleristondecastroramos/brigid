@@ -132,7 +132,9 @@ function FilaRevisaoPage() {
               Voltar
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Revisão CAOCRIM</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
+            Revisão CAOCRIM
+          </h1>
         </div>
         <p className="text-muted-foreground">
           Fila de análise dos diagnósticos enviados. Cada aprovação corresponde a uma versão
@@ -183,7 +185,7 @@ function FilaRevisaoPage() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-none [&_th]:bg-primary [&_th]:font-semibold [&_th]:text-primary-foreground">
+                  <TableRow className="">
                     <TableHead>Município</TableHead>
                     <TableHead className="min-w-[200px]">Promotoria respondente</TableHead>
                     <TableHead>Responsável</TableHead>

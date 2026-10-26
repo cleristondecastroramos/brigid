@@ -63,7 +63,7 @@ export function AcessoDiagnostico() {
       </Button>
       <Card>
         <CardHeader>
-          <div className="mb-2 w-fit rounded-xl bg-primary/10 p-3 text-primary">
+          <div className="mb-1 w-fit text-muted-foreground">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <CardTitle>Diagnóstico BRIGID</CardTitle>

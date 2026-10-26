@@ -42,14 +42,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { PageTitle } from "@/components/page-title";
+import { NotasRodape } from "@/components/rodape-institucional";
 export const Route = createFileRoute("/creas")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
   component: CreasPanel,
 });
 
-const COLOR_WITH = "oklch(0.55 0.13 175)";
-const COLOR_WITHOUT = "var(--color-primary)";
-const COLOR_NA = "oklch(0.92 0.01 230)";
+const COLOR_WITH = "var(--mapa-positivo)";
+const COLOR_WITHOUT = "var(--mapa-critico)";
+const COLOR_NA = "var(--mapa-neutro)";
 
 function CreasPanel() {
   const { data: municipios } = useMunicipios();
@@ -176,19 +178,24 @@ function CreasPanel() {
 
   return (
     <div className="space-y-6">
+      <PageTitle
+        secao="Monitoramento"
+        titulo="Cobertura de CREAS"
+        descricao="Presença dos Centros de Referência Especializados de Assistência Social e prioridade de implantação por município."
+      />
       {/* Barra de Filtros */}
       <Card>
         <CardContent className="p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-foreground">Filtros de Análise:</span>
             {hasFilter && (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              <span className="inline-flex items-center rounded-sm bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                 Filtros ativos
               </span>
             )}
           </div>
           <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative w-full md:w-[500px] shrink-0">
+            <div className="relative w-full self-start md:w-[500px] shrink-0">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Buscar município…"
@@ -415,7 +422,7 @@ function CreasPanel() {
                   {semList.map((m) => (
                     <span
                       key={m.codigo_ibge}
-                      className="inline-flex items-center rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium"
+                      className="inline-flex items-center rounded-sm border border-border bg-background px-2.5 py-0.5 text-xs font-medium"
                     >
                       {m.municipio}{" "}
                       <span className="ml-1 text-[10px] text-muted-foreground">
@@ -469,7 +476,7 @@ function CreasPanel() {
               ]}
             />
 
-            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-lg backdrop-blur-sm pointer-events-auto flex flex-col">
+            <div className="absolute bottom-8 right-8 w-[270px] h-[250px] rounded-lg border border-border/60 bg-background/95 p-4 shadow-sm backdrop-blur-sm pointer-events-auto flex flex-col">
               <p className="text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                 Distribuição por cobertura
               </p>
@@ -564,7 +571,7 @@ function CreasPanel() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-full hover:bg-muted/50"
+                    className="text-muted-foreground hover:text-primary transition-colors focus:outline-none p-1 rounded-sm hover:bg-muted/50"
                     title={`Exportar Tabela (${filtroKpi === "com" ? "Com CREAS" : filtroKpi === "sem" ? "Sem CREAS" : filtroKpi === "altaPrio" ? "Prioridade ALTA" : "Filtro atual"})`}
                   >
                     <Download className="h-5 w-5" />
@@ -712,6 +719,12 @@ function CreasPanel() {
           </CardContent>
         </Card>
       </div>
+      <NotasRodape
+        fontes={["SASC/SUAS 2025", "diagnósticos validados pelo CAOCRIM, quando houver"]}
+        notas={[
+          "A ausência de CREAS é um dos agravantes estruturais do score de risco (peso padrão 2).",
+        ]}
+      />
     </div>
   );
 }

@@ -1,145 +1,137 @@
+import type { ElementType } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PlusCircle, History, List, ArrowLeft, ClipboardCheck, Settings } from "lucide-react";
+import {
+  PlusCircle,
+  History,
+  List,
+  ArrowLeft,
+  ClipboardCheck,
+  Settings,
+  ChevronRight,
+} from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageTitle } from "@/components/page-title";
 
 export const Route = createFileRoute("/diagnostico-brigid/")({
   component: DiagnosticoBrigidPage,
 });
 
+function CartaoAcao({
+  to,
+  titulo,
+  descricao,
+  icon: Icon,
+}: {
+  to: string;
+  titulo: string;
+  descricao: string;
+  icon: ElementType;
+}) {
+  return (
+    <Link to={to} className="group block h-full">
+      <Card className="flex h-full flex-col transition-colors group-hover:border-foreground/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden />
+            {titulo}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-1 flex-col justify-between">
+          <CardDescription className="mb-4 leading-relaxed">{descricao}</CardDescription>
+          <span className="mt-auto inline-flex items-center text-sm font-medium text-primary group-hover:underline">
+            Abrir
+            <ChevronRight className="ml-0.5 h-4 w-4" />
+          </span>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 function DiagnosticoBrigidPage() {
   const { userRole } = useApp();
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col gap-2 mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Link>
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Formulário de Diagnóstico BRIGID
-          </h1>
-        </div>
-        <p className="text-muted-foreground mt-1">
-          Coleta padronizada e rastreável de informações sobre a rede de proteção, políticas
-          públicas, segurança e violência de gênero nos municípios piauienses.
-        </p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-4">
-        <Link to="/diagnostico-brigid/novo" className="block group">
-          <Card className="h-full border-primary/30 bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <div className="flex flex-col gap-3">
-                <div className="p-3.5 rounded-xl bg-primary/10 text-primary w-fit group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
-                  <PlusCircle className="w-7 h-7" />
-                </div>
-                <CardTitle className="text-xl font-bold mt-2">Iniciar Diagnóstico</CardTitle>
-              </div>
-              <CardDescription className="text-sm leading-relaxed mt-2">
-                Iniciar o preenchimento de um novo diagnóstico territorial ou institucional.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <Button variant="ghost" size="sm" asChild className="-ml-2">
+        <Link to="/">
+          <ArrowLeft className="h-4 w-4" />
+          Página inicial
         </Link>
+      </Button>
 
-        <Link to="/diagnostico-brigid/meus-diagnosticos" className="block group">
-          <Card className="h-full border-border bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <div className="flex flex-col gap-3">
-                <div className="p-3.5 rounded-xl bg-blue-500/10 text-blue-600 w-fit group-hover:scale-110 group-hover:bg-blue-500/20 transition-all duration-300">
-                  <List className="w-7 h-7" />
-                </div>
-                <CardTitle className="text-xl font-bold mt-2">Meus Diagnósticos</CardTitle>
-              </div>
-              <CardDescription className="text-sm leading-relaxed mt-2">
-                Continuar preenchimentos em andamento, revisar rascunhos e acompanhar envios.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+      <PageTitle
+        secao="Diagnóstico BRIGID"
+        titulo="Formulário de diagnóstico da rede de proteção"
+        descricao="Coleta padronizada e rastreável de informações sobre a rede de proteção, políticas públicas, segurança e violência de gênero nos municípios piauienses."
+      />
 
-        <Link to="/diagnostico-brigid/acompanhamento" className="block group">
-          <Card className="h-full border-border bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <div className="flex flex-col gap-3">
-                <div className="p-3.5 rounded-xl bg-emerald-500/10 text-emerald-600 w-fit group-hover:scale-110 group-hover:bg-emerald-500/20 transition-all duration-300">
-                  <History className="w-7 h-7" />
-                </div>
-                <CardTitle className="text-xl font-bold mt-2">Acompanhamento</CardTitle>
-              </div>
-              <CardDescription className="text-sm leading-relaxed mt-2">
-                Acompanhar o painel gerencial, mapa estadual e métricas gerais de preenchimento.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </Link>
+      <div className="grid gap-4 md:grid-cols-3">
+        <CartaoAcao
+          to="/diagnostico-brigid/novo"
+          titulo="Iniciar diagnóstico"
+          descricao="Começar o preenchimento de um novo diagnóstico para um município da Promotoria."
+          icon={PlusCircle}
+        />
+        <CartaoAcao
+          to="/diagnostico-brigid/meus-diagnosticos"
+          titulo="Meus diagnósticos"
+          descricao="Continuar rascunhos, corrigir devoluções e acompanhar os envios."
+          icon={List}
+        />
+        <CartaoAcao
+          to="/diagnostico-brigid/acompanhamento"
+          titulo="Acompanhamento"
+          descricao="Mapa e situação da cobertura municipal, separando os blocos cível e criminal."
+          icon={History}
+        />
       </div>
 
       {userRole === "admin" && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Link to="/diagnostico-brigid/revisao" className="block group">
-            <Card className="h-full border-amber-500/40 bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex flex-col gap-3">
-                  <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-600 w-fit group-hover:scale-110 transition-all duration-300">
-                    <ClipboardCheck className="w-7 h-7" />
-                  </div>
-                  <CardTitle className="text-xl font-bold mt-2">Revisão CAOCRIM</CardTitle>
-                </div>
-                <CardDescription className="text-sm leading-relaxed mt-2">
-                  Analisar diagnósticos enviados, devolver para correção ou validar e publicar.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-          <Link to="/diagnostico-brigid/administracao" className="block group">
-            <Card className="h-full border-border bg-card hover:bg-accent/40 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-              <CardHeader>
-                <div className="flex flex-col gap-3">
-                  <div className="p-3.5 rounded-xl bg-violet-500/10 text-violet-600 w-fit group-hover:scale-110 transition-all duration-300">
-                    <Settings className="w-7 h-7" />
-                  </div>
-                  <CardTitle className="text-xl font-bold mt-2">Promotorias e usuários</CardTitle>
-                </div>
-                <CardDescription className="text-sm leading-relaxed mt-2">
-                  Configurar atribuições funcionais e vincular Promotores às suas Promotorias.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-        </div>
+        <section className="space-y-3">
+          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Área do CAOCRIM
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            <CartaoAcao
+              to="/diagnostico-brigid/revisao"
+              titulo="Revisão CAOCRIM"
+              descricao="Analisar diagnósticos enviados, devolver para correção ou validar e publicar."
+              icon={ClipboardCheck}
+            />
+            <CartaoAcao
+              to="/diagnostico-brigid/administracao"
+              titulo="Promotorias e contas"
+              descricao="Configurar atribuições funcionais, e-mails institucionais e o vínculo das contas."
+              icon={Settings}
+            />
+          </div>
+        </section>
       )}
 
-      <Card className="border-border/60 bg-muted/20">
-        <CardHeader>
-          <CardTitle className="text-sm uppercase tracking-widest text-muted-foreground">
-            Avisos Importantes
-          </CardTitle>
+      <Card>
+        <CardHeader className="border-b border-border pb-3">
+          <CardTitle className="text-sm">Orientações</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>
-            • Salvar, concluir ou enviar o diagnóstico <strong>não publica dados</strong>. As
-            respostas só passam a integrar a base consolidada e o painel público após análise e{" "}
-            <strong>validação expressa do CAOCRIM</strong>.
-          </p>
-          <p>
-            • Os blocos do formulário são disponibilizados automaticamente com base na{" "}
-            <strong>atribuição da sua Promotoria</strong> (Cível/Cidadania, Criminal, Cumulativa ou
-            Única).
-          </p>
-          <p>
-            • Observações, contatos, descrições livres e anexos são de uso interno e não são
-            publicados.
-          </p>
-          <p>
-            • Dados referentes ao ciclo de 2026 são considerados <strong>preliminares</strong> até a
-            validação oficial do CAOCRIM.
-          </p>
+        <CardContent className="pt-4">
+          <ol className="list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground">
+            <li>
+              Salvar, concluir ou enviar o diagnóstico{" "}
+              <strong className="text-foreground">não publica dados</strong>. As respostas só passam
+              a integrar a base consolidada e o painel público após análise e validação expressa do
+              CAOCRIM.
+            </li>
+            <li>
+              Os blocos do formulário são definidos pela atribuição da Promotoria (cível/cidadania,
+              criminal, cumulativa ou única).
+            </li>
+            <li>
+              Observações, contatos, descrições livres e anexos são de uso interno e não são
+              publicados.
+            </li>
+            <li>Dados referentes ao ciclo de 2026 são preliminares, mesmo após a validação.</li>
+          </ol>
         </CardContent>
       </Card>
     </div>
