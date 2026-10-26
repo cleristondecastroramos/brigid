@@ -180,7 +180,7 @@ function LandingPage() {
 
       <main className="flex-1">
         <section className="border-b border-border bg-card">
-          <div className="mx-auto max-w-7xl px-6 py-14 md:py-20">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-14 md:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
             <div className="max-w-3xl">
               <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 Projeto Feminicídio Zero
@@ -203,6 +203,8 @@ function LandingPage() {
                 e de diagnósticos das Promotorias de Justiça para orientar a atuação ministerial.
               </p>
             </div>
+
+            <GaleriaIlustrativa />
           </div>
         </section>
 
@@ -275,6 +277,50 @@ function LandingPage() {
       </main>
 
       <RodapeInstitucional />
+    </div>
+  );
+}
+
+// Mosaico de imagens ilustrativas do hero (oculto em telas pequenas)
+const IMAGENS_GALERIA = [
+  {
+    src: "https://i.postimg.cc/qMjyCWB5/intimus-ilustracao-juntas-06.jpg",
+    alt: "Ilustração de mulheres unidas em apoio mútuo",
+    area: "col-start-2 row-start-1 row-end-3",
+  },
+  {
+    src: "https://i.postimg.cc/wv2TG8rj/pilar-05-tema-01-arte-txt.jpg",
+    alt: "Arte sobre justiça e direitos das mulheres",
+    area: "col-start-1 row-start-2 row-end-4",
+  },
+  {
+    src: "https://i.postimg.cc/MT5KF2Lz/55182445-2728-40df-921e-bad7f458a394-93463115-m-e1566591750748-810x569-1.jpg",
+    alt: "Mãos erguidas pedindo o fim da violência",
+    area: "col-start-1 row-start-4 row-end-6",
+  },
+  {
+    src: "https://i.postimg.cc/26G8KRtm/20210720093526475380u.webp",
+    alt: "Imagem de esperança e recomeço",
+    area: "col-start-2 row-start-3 row-end-5",
+  },
+];
+
+function GaleriaIlustrativa() {
+  return (
+    <div className="hidden grid-cols-2 grid-rows-[50px_150px_50px_150px_50px] gap-4 sm:grid">
+      {IMAGENS_GALERIA.map((img) => (
+        <div
+          key={img.src}
+          className={`overflow-hidden rounded-md border border-border bg-muted ${img.area}`}
+        >
+          <img
+            src={img.src}
+            alt={img.alt}
+            loading="lazy"
+            className="size-full object-cover object-center"
+          />
+        </div>
+      ))}
     </div>
   );
 }
