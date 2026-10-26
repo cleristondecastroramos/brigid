@@ -1,8 +1,13 @@
 import React, { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft, KeyRound, Lock, LogOut, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
+import { destinoAutorizado, ROTA_INICIAL_DIAGNOSTICO } from "@/lib/rotas-diagnostico";
+import {
+  TAMANHO_MINIMO_SENHA,
+  validarNovaSenha,
+} from "../../../supabase/functions/_shared/politica-senha";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +16,8 @@ import { Input } from "@/components/ui/input";
 // Promotoria (ou o próprio CAOCRIM). O vínculo é conferido no banco a cada ação.
 export function AcessoDiagnostico() {
   const { loginRespondente } = useApp();
+  const navigate = useNavigate();
+  const caminho = useRouterState({ select: (r) => r.location.pathname });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState("");
@@ -24,13 +31,17 @@ export function AcessoDiagnostico() {
       return;
     }
     setEnviando(true);
-    const { error } = await loginRespondente(email, password);
+    const { error, admin } = await loginRespondente(email, password);
     setEnviando(false);
     if (error) {
       setErro(error);
       return;
     }
     toast.success("Acesso ao módulo de diagnóstico autorizado.");
+    // Se a tela de login apareceu numa página exclusiva do CAOCRIM, a Promotoria vai para a
+    // página inicial do módulo (sem voltar à página negada pelo histórico)
+    const destino = destinoAutorizado(caminho, admin === true);
+    if (destino !== caminho) navigate({ to: destino, replace: true });
   };
 
   return (
@@ -109,6 +120,7 @@ export function AcessoDiagnostico() {
 // a função de borda confere a credencial, a validade e a conta antes de liberar.
 export function TrocaSenhaObrigatoria() {
   const { userEmail, definirSenhaDefinitiva, logout } = useApp();
+  const navigate = useNavigate();
   const [credencial, setCredencial] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
@@ -122,12 +134,10 @@ export function TrocaSenhaObrigatoria() {
       setErro("Informe a credencial provisória recebida do CAOCRIM.");
       return;
     }
-    if (senha.length < 8) {
-      setErro("A nova senha deve ter pelo menos 8 caracteres.");
-      return;
-    }
-    if (senha !== confirmacao) {
-      setErro("As senhas não conferem.");
+    // Mesma regra da função de borda (o servidor confere de novo)
+    const problema = validarNovaSenha(senha, confirmacao);
+    if (problema) {
+      setErro(problema);
       return;
     }
     setSalvando(true);
@@ -139,6 +149,9 @@ export function TrocaSenhaObrigatoria() {
     }
     setCredencial("");
     toast.success("Senha definida. Use a nova senha nos próximos acessos.");
+    // Página inicial do módulo, substituindo o histórico: "Voltar" não reabre o primeiro acesso
+    // nem a página em que o login apareceu (que pode ser exclusiva do CAOCRIM)
+    navigate({ to: ROTA_INICIAL_DIAGNOSTICO, replace: true });
   };
 
   return (
@@ -183,7 +196,8 @@ export function TrocaSenhaObrigatoria() {
                 id="nova_senha"
                 type="password"
                 autoComplete="new-password"
-                placeholder="Mínimo de 8 caracteres"
+                placeholder={`Mínimo de ${TAMANHO_MINIMO_SENHA} caracteres`}
+                minLength={TAMANHO_MINIMO_SENHA}
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
               />

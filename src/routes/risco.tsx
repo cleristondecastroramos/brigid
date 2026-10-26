@@ -46,6 +46,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { PageTitle } from "@/components/page-title";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/risco")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -96,14 +97,14 @@ function RiscoPanel() {
   const comarcas = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
   const polos = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
@@ -146,7 +147,7 @@ function RiscoPanel() {
           if (valA === valB) return 0;
           const modifier = sortDirection === "asc" ? 1 : -1;
           if (typeof valA === "string" && typeof valB === "string") {
-            return valA.localeCompare(valB, "pt-BR") * modifier;
+            return compararTexto(valA, valB) * modifier;
           }
           return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
         }),

@@ -23,6 +23,7 @@ import {
 import {
   calcularCompletude,
   campoVisivel,
+  etapaInicial,
   sanitizarRespostas,
   secoesAplicaveis,
   MOTIVO_PENDENCIA,
@@ -82,12 +83,32 @@ interface FormularioDiagnosticoProps {
   diagnosticoId?: string;
 }
 
+// Última etapa aberta de cada diagnóstico, só neste navegador (conveniência de navegação; as
+// respostas ficam no banco). Falhas de armazenamento são ignoradas.
+const chaveEtapa = (id: string) => `brigid_etapa_${id}`;
+function lerEtapa(id: string): string | null {
+  try {
+    return localStorage.getItem(chaveEtapa(id));
+  } catch {
+    return null;
+  }
+}
+function gravarEtapa(id: string, etapa: string) {
+  try {
+    localStorage.setItem(chaveEtapa(id), etapa);
+  } catch {
+    // sem armazenamento local: reabre pela primeira pendência
+  }
+}
+
 export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoProps) {
   const navigate = useNavigate();
   const { userRole } = useApp();
   const isNew = !diagnosticoId;
 
   const [carregando, setCarregando] = useState(true);
+  const [erroCarregamento, setErroCarregamento] = useState<string | null>(null);
+  const [tentativa, setTentativa] = useState(0);
   const [salvando, setSalvando] = useState(false);
   const [confirmarEnvio, setConfirmarEnvio] = useState(false);
   const [activeTab, setActiveTab] = useState<SecaoId>("identificacao");
@@ -114,8 +135,9 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
   const vinculo = vinculos.find((v) => v.promotoria_id === (diag?.promotoria_id ?? promotoriaId));
   const atribuicaoPendente = vinculo?.tipo_atribuicao === "pendente_configuracao";
 
+  // posicionar: só na abertura do diagnóstico; depois de salvar, a etapa atual é mantida
   const carregarDiagnostico = useCallback(
-    async (id: string) => {
+    async (id: string, posicionar = false) => {
       const [d, vs, obs, ax] = await Promise.all([
         diagnosticoService.obter(id),
         diagnosticoService.versoes(id),
@@ -136,24 +158,41 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
       setRespostas(atual?.respostas ?? {});
       setRespNome(d.responsavel_nome ?? "");
       setRespCondicao(d.responsavel_condicao ?? "");
+      if (posicionar) {
+        setActiveTab(
+          etapaInicial(
+            atual?.respostas ?? {},
+            {
+              promotoria_id: d.promotoria_id,
+              codigo_ibge: d.codigo_ibge,
+              atribuicao: d.atribuicao,
+              periodo_referencia: d.periodo_referencia,
+            },
+            lerEtapa(id),
+          ),
+        );
+      }
     },
     [navigate],
   );
 
   useEffect(() => {
     let ativo = true;
+    setCarregando(true);
+    setErroCarregamento(null);
     (async () => {
       try {
         const vs = await promotoriasService.meusVinculos();
         if (!ativo) return;
         setVinculos(vs);
         if (diagnosticoId) {
-          await carregarDiagnostico(diagnosticoId);
+          await carregarDiagnostico(diagnosticoId, true);
         } else if (vs.length === 1) {
           await selecionarPromotoria(vs[0].promotoria_id, vs);
         }
       } catch (e) {
-        toast.error((e as Error).message);
+        // Sem os dados completos, o formulário não é exibido (evita editar sobre uma tela vazia)
+        if (ativo) setErroCarregamento((e as Error).message);
       } finally {
         if (ativo) setCarregando(false);
       }
@@ -162,7 +201,12 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
       ativo = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diagnosticoId]);
+  }, [diagnosticoId, tentativa]);
+
+  // Guarda a etapa aberta para retomar dela
+  useEffect(() => {
+    if (diag?.id) gravarEtapa(diag.id, activeTab);
+  }, [diag?.id, activeTab]);
 
   const selecionarPromotoria = async (pid: string, lista = vinculos) => {
     const v = lista.find((x) => x.promotoria_id === pid);
@@ -345,6 +389,26 @@ export function FormularioDiagnostico({ diagnosticoId }: FormularioDiagnosticoPr
 
   if (carregando) {
     return <div className="p-8 text-center text-muted-foreground">Carregando formulário...</div>;
+  }
+
+  if (erroCarregamento) {
+    return (
+      <Card>
+        <CardContent className="space-y-4 py-10 text-center text-sm">
+          <p className="font-medium text-foreground">Não foi possível abrir o diagnóstico.</p>
+          <p className="text-muted-foreground">{erroCarregamento}</p>
+          <div className="flex justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate({ to: "/diagnostico-brigid/meus-diagnosticos" })}
+            >
+              Voltar a Meus Diagnósticos
+            </Button>
+            <Button onClick={() => setTentativa((n) => n + 1)}>Tentar novamente</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (vinculos.length === 0 && userRole !== "admin") {

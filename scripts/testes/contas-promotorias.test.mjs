@@ -19,15 +19,20 @@ const HORA = 3600 * 1000;
 const CAOCRIM = { id: "caocrim", email: "caocrim@mppi.mp.br", app_metadata: {} };
 
 before(async () => {
-  const fonte = fs.readFileSync(
-    path.join(raiz, "supabase/functions/contas-promotorias/acoes.ts"),
-    "utf8",
-  );
   fs.mkdirSync(dir, { recursive: true });
-  const js = ts.transpileModule(fonte, {
-    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  fs.writeFileSync(path.join(dir, "acoes.mjs"), js);
+  const transpilar = (arquivo, destino, trocas = []) => {
+    let fonte = fs.readFileSync(path.join(raiz, arquivo), "utf8");
+    for (const [de, para] of trocas) fonte = fonte.replace(de, para);
+    const js = ts.transpileModule(fonte, {
+      compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    fs.writeFileSync(path.join(dir, destino), js);
+  };
+  // Regra de senha compartilhada com a tela (supabase/functions/_shared)
+  transpilar("supabase/functions/_shared/politica-senha.ts", "politica-senha.mjs");
+  transpilar("supabase/functions/contas-promotorias/acoes.ts", "acoes.mjs", [
+    ['"../_shared/politica-senha.ts"', '"./politica-senha.mjs"'],
+  ]);
   m = await import(pathToFileURL(path.join(dir, "acoes.mjs")).href);
 });
 
@@ -269,6 +274,33 @@ test("primeiro acesso: mínimo de 8 caracteres (7 recusados, 8 aceitos)", async 
   await m.executarAcao(definir(credencial, "Abc-1234"), usuario, deps);
   assert.equal(estado.contas.pa.senha, "Abc-1234");
   assert.equal(estado.contas.pa.app_metadata.senha_provisoria, false);
+});
+
+test("primeiro acesso: aceita 8, 9 a 11 e 12 ou mais caracteres, sem alterar espaços", async () => {
+  for (const nova of [
+    "Abc-1234",
+    "Abc-12345",
+    "Abc-1234567",
+    "Senha-Definitiva-2026",
+    " Abc 1234 ",
+  ]) {
+    const { estado, deps, credencial, usuario } = await contaProvisoria();
+    assert.deepEqual(await m.executarAcao(definir(credencial, nova), usuario, deps), { ok: true });
+    assert.equal(estado.contas.pa.senha, nova, "gravada exatamente como digitada");
+  }
+});
+
+test("primeiro acesso: recusa da política de senhas do Supabase chega ao usuário, sem sucesso falso", async () => {
+  const { estado, deps, credencial, usuario } = await contaProvisoria();
+  estado.falhas.atualizarConta = new m.ErroSolicitacao(
+    "Não foi possível atualizar a conta: Password should be at least 12 characters. A senha não atende à política de senhas do Supabase (Authentication).",
+  );
+  await assert.rejects(
+    m.executarAcao(definir(credencial, "Abc-1234"), usuario, deps),
+    (e) => e.status === 400 && /política de senhas do Supabase/.test(e.message),
+  );
+  assert.equal(estado.contas.pa.app_metadata.senha_provisoria, true, "continua bloqueada");
+  assert.ok(estado.credenciais.pa, "a credencial continua válida para nova tentativa");
 });
 
 test("primeiro acesso: recusa senha curta ou igual à credencial", async () => {

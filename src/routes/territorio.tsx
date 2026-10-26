@@ -49,6 +49,7 @@ import {
 import { ChartHelper } from "@/components/chart-helper";
 import { PageTitle } from "@/components/page-title";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/territorio")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -170,14 +171,14 @@ function TerritorialIntelligence() {
   const comarcas = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
   const polos = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );

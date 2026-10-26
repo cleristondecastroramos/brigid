@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:diagnostico": "node --test scripts/testes/fluxo-diagnostico.test.mjs scripts/testes/contas-promotorias.test.mjs",
+    "test:diagnostico": "node --test scripts/testes/fluxo-diagnostico.test.mjs scripts/testes/contas-promotorias.test.mjs scripts/testes/regras-interface.test.mjs",
     "gerar:regras": "node scripts/diagnostico/gerar-regras-diagnostico.mjs"
   },
   "dependencies": {

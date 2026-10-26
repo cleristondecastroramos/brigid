@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { compararTexto, ordenarPorTexto } from "@/lib/ordenacao";
 
 export interface Promotoria {
   id: string;
@@ -96,10 +97,9 @@ class PromotoriasService {
     const { data, error } = await supabase
       .from("promotorias_justica")
       .select("id, nome, nome_normalizado, comarca_sede, tipo_atribuicao, email_institucional")
-      .eq("ativa", true)
-      .order("nome");
+      .eq("ativa", true);
     erro(error);
-    return data as Promotoria[];
+    return ordenarPorTexto(data as Promotoria[], (p) => p.nome);
   }
 
   async listarMunicipiosDaPromotoria(promotoriaId: string): Promise<PromotoriaMunicipio[]> {
@@ -107,21 +107,22 @@ class PromotoriasService {
       .from("promotoria_municipios")
       .select("promotoria_id, codigo_ibge, municipio, comarca, municipios(polo_regional)")
       .eq("promotoria_id", promotoriaId)
-      .eq("ativo", true)
-      .order("municipio");
+      .eq("ativo", true);
     erro(error);
     // Relação muitos-para-um: o PostgREST devolve objeto (a inferência sem tipos gerados supõe lista)
     return (
       data as unknown as (Omit<PromotoriaMunicipio, "polo_regional"> & {
         municipios: { polo_regional: string } | null;
       })[]
-    ).map(({ municipios, ...m }) => ({ ...m, polo_regional: municipios?.polo_regional ?? "" }));
+    )
+      .map(({ municipios, ...m }) => ({ ...m, polo_regional: municipios?.polo_regional ?? "" }))
+      .sort((a, b) => compararTexto(a.municipio, b.municipio));
   }
 
   async meusVinculos(): Promise<Vinculo[]> {
     const { data, error } = await supabase.rpc("meus_vinculos");
     erro(error);
-    return data as Vinculo[];
+    return ordenarPorTexto(data as Vinculo[], (v) => v.nome);
   }
 
   // --- CAOCRIM ---

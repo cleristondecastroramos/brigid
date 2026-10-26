@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/diagnostico-brigid/revisao/")({
   component: () => (
@@ -64,7 +65,7 @@ function FilaRevisaoPage() {
 
   const opcoes = useMemo(() => {
     const uniq = (xs: string[]) =>
-      [...new Set(xs.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+      [...new Set(xs.filter(Boolean))].sort((a, b) => compararTexto(a, b));
     return {
       municipio: uniq(diags.map((d) => d.municipio)),
       comarca: uniq(diags.map((d) => d.comarca)),

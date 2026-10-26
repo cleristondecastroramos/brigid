@@ -32,13 +32,20 @@ interface AppContextProps {
   enterPublic: () => void;
   loginAdmin: (email: string, password: string) => Promise<{ error?: string }>;
   // Login do módulo de coleta (Promotores vinculados e CAOCRIM)
-  loginRespondente: (email: string, password: string) => Promise<{ error?: string }>;
+  // admin: perfil conferido no banco, para decidir a página de destino após o login
+  loginRespondente: (
+    email: string,
+    password: string,
+  ) => Promise<{ error?: string; admin?: boolean }>;
   // Usuário autenticado no Supabase (qualquer perfil)
   userEmail: string | null;
   isAuthenticated: boolean;
   // Conta sem senha definitiva: o primeiro acesso é obrigatório antes de usar o Diagnóstico
   senhaProvisoria: boolean;
-  definirSenhaDefinitiva: (credencial: string, novaSenha: string) => Promise<{ error?: string }>;
+  definirSenhaDefinitiva: (
+    credencial: string,
+    novaSenha: string,
+  ) => Promise<{ error?: string; admin?: boolean }>;
   logout: () => Promise<void>;
   weights: Weights;
   thresholds: Thresholds;
@@ -156,7 +163,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return {};
   };
 
-  const loginRespondente = async (email: string, password: string): Promise<{ error?: string }> => {
+  const loginRespondente = async (
+    email: string,
+    password: string,
+  ): Promise<{ error?: string; admin?: boolean }> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
@@ -171,7 +181,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsAdmin(admin === true);
     setSenhaProvisoria(provisoria);
     setUserEmail(data.user?.email ?? null);
-    return {};
+    return { admin: admin === true };
   };
 
   // Primeiro acesso pela função de borda, que confere a conta, a credencial e a validade no
@@ -179,7 +189,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const definirSenhaDefinitiva = async (
     credencial: string,
     novaSenha: string,
-  ): Promise<{ error?: string }> => {
+  ): Promise<{ error?: string; admin?: boolean }> => {
     try {
       await chamarContasPromotorias({
         acao: "definir_senha_definitiva",
@@ -189,9 +199,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       return { error: (e as Error).message };
     }
+    // Só depois da confirmação do servidor: renova a sessão e relê do banco o perfil e a
+    // marca provisória antes de liberar a navegação
     await supabase.auth.refreshSession();
-    setSenhaProvisoria(await verificarSenhaProvisoria());
-    return {};
+    const [{ data: admin }, provisoria] = await Promise.all([
+      supabase.rpc("is_admin"),
+      verificarSenhaProvisoria(),
+    ]);
+    setIsAdmin(admin === true);
+    setSenhaProvisoria(provisoria);
+    if (provisoria) {
+      return {
+        error: "A senha foi registrada, mas a conta ainda consta como provisória. Entre novamente.",
+      };
+    }
+    return { admin: admin === true };
   };
 
   const logout = async () => {

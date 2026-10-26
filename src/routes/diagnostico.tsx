@@ -78,6 +78,7 @@ import {
 } from "recharts";
 import { PageTitle } from "@/components/page-title";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/diagnostico")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -216,13 +217,13 @@ function DiagnosticoPanel() {
       list = list.filter((m) => m.polo_regional === selectedPolo);
     }
     return Array.from(new Set(list.map((m) => m.comarca).filter(Boolean))).sort((a, b) =>
-      String(a).localeCompare(String(b), "pt-BR"),
+      compararTexto(String(a), String(b)),
     );
   }, [municipios, selectedPolo]);
   const polos = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
@@ -232,7 +233,7 @@ function DiagnosticoPanel() {
     if (selectedComarca !== "__all") list = list.filter((m) => m.comarca === selectedComarca);
     return list
       .map((m) => ({ label: m.municipio, value: m.codigo_ibge }))
-      .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+      .sort((a, b) => compararTexto(a.label, b.label));
   }, [municipios, selectedPolo, selectedComarca]);
 
   // Hierarquia ativa determinada dinamicamente
@@ -259,7 +260,7 @@ function DiagnosticoPanel() {
         if (valA === valB) return 0;
         const modifier = sortDirection === "asc" ? 1 : -1;
         if (typeof valA === "string" && typeof valB === "string")
-          return valA.localeCompare(valB, "pt-BR") * modifier;
+          return compararTexto(valA, valB) * modifier;
         return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
       });
   }, [municipios, selectedMunicipio, selectedComarca, selectedPolo, q, sortColumn, sortDirection]);
@@ -458,6 +459,10 @@ function DiagnosticoPanel() {
           valB = Number(valB);
         }
 
+        if (typeof valA === "string" && typeof valB === "string") {
+          const c = compararTexto(valA, valB);
+          return poloSortDirection === "asc" ? c : -c;
+        }
         if (valA < valB) return poloSortDirection === "asc" ? -1 : 1;
         if (valA > valB) return poloSortDirection === "asc" ? 1 : -1;
         return 0;

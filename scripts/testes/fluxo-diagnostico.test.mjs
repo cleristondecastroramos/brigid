@@ -1361,6 +1361,149 @@ test("09: encerramento de sessões só pela chave de serviço", async () => {
   await q("super", "DELETE FROM auth.sessions");
 });
 
+test("retomada: rascunho reabre igual, é concluído no mesmo ID e enviado sem publicar", async () => {
+  const antes = await retratoPublico();
+  // 1. Criar
+  const id = await rpc(
+    PROMOTOR_B,
+    "diagnostico_criar",
+    ctx.pB,
+    ctx.ibge,
+    "2025",
+    null,
+    "Dr. Bruno Titular",
+    "titular",
+  );
+  // Atribuição atual da Promotoria B (testes anteriores podem tê-la alterado)
+  const [{ tipo_atribuicao: tipoB }] = await q(
+    "super",
+    "SELECT tipo_atribuicao FROM public.promotorias_justica WHERE id = $1",
+    [ctx.pB],
+  );
+  const completas = respostasCompletas({
+    criminal: true,
+    civel: ["cumulativa", "unica"].includes(tipoB),
+    ano: "2025",
+  });
+  // 2-3. Preencher parcialmente (zero, "Não soube" com justificativa, lista, texto, data) e salvar
+  const parcial = {
+    DGN_SITUACAO: completas.DGN_SITUACAO,
+    VIO_CONSUMADOS: 0,
+    VIO_TENTADOS: 2,
+    SEG_PROTO_PER: "nao_sabe",
+    SEG_PROTO_PER_JUSTIFICATIVA: "Delegacia não respondeu ao ofício",
+    GAR_LISTA: ["demora_pericial", "ausencia_opm"],
+    GAR_DETALHES: "Texto interno",
+    SEG_DATA_REF: "2026-03-10",
+  };
+  const r1 = await rpc(
+    PROMOTOR_B,
+    "diagnostico_salvar_rascunho",
+    id,
+    JSON.stringify(parcial),
+    null,
+  );
+  assert.ok(r1.percentual < 100);
+
+  // 4-5. "Sair e voltar": Meus Diagnósticos lista o rascunho (mesma leitura do app)
+  const lista = await q(
+    PROMOTOR_B,
+    "SELECT id, status, versao_atual, atribuicao, periodo_referencia FROM public.diagnostico_brigid WHERE promotoria_id = $1 AND codigo_ibge = $2 AND periodo_referencia = '2025'",
+    [ctx.pB, ctx.ibge],
+  );
+  assert.equal(lista.length, 1);
+  assert.equal(lista[0].id, id);
+  assert.equal(lista[0].status, "em_preenchimento");
+  assert.deepEqual(lista[0].atribuicao, [tipoB]);
+
+  // 6-7. "Continuar preenchimento": a versão atual traz exatamente o que foi salvo
+  const [v1] = await q(
+    PROMOTOR_B,
+    "SELECT respostas FROM public.diagnostico_versoes WHERE diagnostico_id = $1 AND numero = $2",
+    [id, lista[0].versao_atual],
+  );
+  for (const [k, val] of Object.entries(parcial)) {
+    assert.deepEqual(v1.respostas[k], val, `${k} restaurado`);
+  }
+  assert.strictEqual(v1.respostas.VIO_CONSUMADOS, 0, "zero não vira vazio");
+  // Outra Promotoria não lê o rascunho
+  assert.equal(
+    (await q(PROMOTOR_A, "SELECT id FROM public.diagnostico_brigid WHERE id = $1", [id])).length,
+    0,
+  );
+  assert.equal(
+    (
+      await q(
+        PROMOTOR_A,
+        "SELECT respostas FROM public.diagnostico_versoes WHERE diagnostico_id = $1",
+        [id],
+      )
+    ).length,
+    0,
+  );
+  await falha(
+    PROMOTOR_A,
+    "SELECT public.diagnostico_salvar_rascunho($1, '{}'::jsonb, NULL)",
+    [id],
+    /vinculad|permiss|não encontrado/i,
+  );
+
+  // 8-9. Completar e salvar de novo no mesmo ID
+  const r2 = await rpc(
+    PROMOTOR_B,
+    "diagnostico_salvar_rascunho",
+    id,
+    JSON.stringify({ ...v1.respostas, ...completas, VIO_CONSUMADOS: 0 }),
+    null,
+  );
+  assert.equal(r2.percentual, 100);
+  const [{ n: diagnosticos }] = await q(
+    "super",
+    "SELECT count(*)::int AS n FROM public.diagnostico_brigid WHERE promotoria_id = $1 AND codigo_ibge = $2 AND periodo_referencia = '2025'",
+    [ctx.pB, ctx.ibge],
+  );
+  assert.equal(diagnosticos, 1, "retomar e salvar não duplica o diagnóstico");
+  const [{ n: versoes }] = await q(
+    "super",
+    "SELECT count(*)::int AS n FROM public.diagnostico_versoes WHERE diagnostico_id = $1",
+    [id],
+  );
+  assert.equal(versoes, 1, "salvar rascunho atualiza a mesma versão");
+  const [v2] = await q(
+    PROMOTOR_B,
+    "SELECT respostas FROM public.diagnostico_versoes WHERE diagnostico_id = $1",
+    [id],
+  );
+  assert.strictEqual(v2.respostas.VIO_CONSUMADOS, 0);
+  assert.equal(v2.respostas.SEG_PROTO_PER, "nao_sabe");
+
+  // 10. Enviar para análise
+  await q(PROMOTOR_B, "SELECT public.diagnostico_enviar($1, 'Dr. Bruno Titular', 'titular')", [id]);
+  const [d] = await q(
+    "super",
+    "SELECT status, versao_publicada FROM public.diagnostico_brigid WHERE id = $1",
+    [id],
+  );
+  assert.equal(d.status, "enviado");
+  assert.equal(d.versao_publicada, null);
+  // Enviado: não é mais editável pela Promotoria
+  await falha(
+    PROMOTOR_B,
+    "SELECT public.diagnostico_salvar_rascunho($1, '{}'::jsonb, NULL)",
+    [id],
+    /.+/,
+  );
+
+  // 11. Sem duplicação e sem publicação automática
+  assert.deepEqual(await retratoPublico(), antes, "enviar não publica");
+  const [{ n: publicacoes }] = await q(
+    "super",
+    "SELECT count(*)::int AS n FROM public.diagnostico_publicacoes WHERE diagnostico_id = $1",
+    [id],
+  );
+  assert.equal(publicacoes, 0);
+});
+
 test("conta da Promotoria: cada envio registra quem assinou, mesmo após troca de titular", async () => {
   await falha(
     PROMOTOR_B,

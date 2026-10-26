@@ -38,6 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Municipio } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/base")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -135,7 +136,7 @@ function GestaoBaseMunicipal() {
     const modifier = sortDirection === "asc" ? 1 : -1;
 
     if (typeof aVal === "string" && typeof bVal === "string") {
-      return aVal.localeCompare(bVal) * modifier;
+      return compararTexto(aVal, bVal) * modifier;
     }
 
     return ((aVal as any) < (bVal as any) ? -1 : 1) * modifier;

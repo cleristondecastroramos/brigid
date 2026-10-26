@@ -179,3 +179,18 @@ export const MOTIVO_PENDENCIA: Record<Pendencia["motivo"], string> = {
   sem_justificativa: "Justificativa obrigatória para 'Não soube informar'",
   valor_invalido: "Informe um número inteiro maior ou igual a zero",
 };
+
+// Etapa em que um diagnóstico salvo reabre: a última acessada, se ainda for aplicável à
+// atribuição; senão a primeira etapa aplicável com pendência obrigatória; senão a primeira.
+export function etapaInicial(
+  respostas: Respostas,
+  identificacao: IdentificacaoDiagnostico,
+  ultimaAcessada?: string | null,
+): SecaoId {
+  const visiveis = secoesAplicaveis(identificacao.atribuicao);
+  if (ultimaAcessada && visiveis.includes(ultimaAcessada as SecaoId)) {
+    return ultimaAcessada as SecaoId;
+  }
+  const { pendencias } = calcularCompletude(respostas, identificacao);
+  return visiveis.find((s) => pendencias.some((p) => p.secao === s)) ?? visiveis[0];
+}

@@ -1,4 +1,4 @@
-import type { ElementType } from "react";
+import { useEffect, useState, type ElementType } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   PlusCircle,
@@ -8,11 +8,13 @@ import {
   ClipboardCheck,
   Settings,
   ChevronRight,
+  Info,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/page-title";
+import { promotoriasService } from "@/services/promotorias-service";
 
 export const Route = createFileRoute("/diagnostico-brigid/")({
   component: DiagnosticoBrigidPage,
@@ -52,6 +54,23 @@ function CartaoAcao({
 
 function DiagnosticoBrigidPage() {
   const { userRole } = useApp();
+  // Conta de Promotoria sem vínculo ativo: orienta em vez de deixar a pessoa esbarrar em
+  // telas negadas. O banco continua recusando qualquer ação sem vínculo.
+  const [semVinculo, setSemVinculo] = useState(false);
+  useEffect(() => {
+    if (userRole === "admin") {
+      setSemVinculo(false);
+      return;
+    }
+    let ativo = true;
+    promotoriasService
+      .meusVinculos()
+      .then((v) => ativo && setSemVinculo(v.length === 0))
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, [userRole]);
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <Button variant="ghost" size="sm" asChild className="-ml-2">
@@ -66,6 +85,24 @@ function DiagnosticoBrigidPage() {
         titulo="Formulário de diagnóstico da rede de proteção"
         descricao="Coleta padronizada e rastreável de informações sobre a rede de proteção, políticas públicas, segurança e violência de gênero nos municípios piauienses."
       />
+
+      {semVinculo && (
+        <div
+          role="status"
+          className="flex gap-3 rounded-md border border-warning/50 bg-warning/10 p-4 text-sm"
+        >
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">
+              Esta conta não está vinculada a nenhuma Promotoria ativa.
+            </p>
+            <p className="text-muted-foreground">
+              Sem vínculo, não é possível iniciar nem consultar diagnósticos. Solicite ao CAOCRIM a
+              aprovação ou a reativação do vínculo da conta institucional da sua Promotoria.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <CartaoAcao

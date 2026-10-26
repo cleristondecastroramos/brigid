@@ -50,10 +50,9 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { compararTexto } from "@/lib/ordenacao";
 
 const TODAS_COMARCAS = "__todas__";
-const compararTexto = (a: string, b: string) =>
-  a.localeCompare(b, "pt-BR", { sensitivity: "base", numeric: true });
 
 const dataHora = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—";

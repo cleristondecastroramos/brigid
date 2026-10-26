@@ -11,8 +11,11 @@
 // Aprovar ou vincular nunca altera a senha de uma conta existente: isso só ocorre em
 // "Redefinir senha".
 
+import { TAMANHO_MINIMO_SENHA, validarNovaSenha } from "../_shared/politica-senha.ts";
+
 export const VALIDADE_PROVISORIA_HORAS = 72;
-export const TAMANHO_MINIMO = 8;
+// Mantido para quem já importa daqui; a regra fica em _shared/politica-senha.ts
+export const TAMANHO_MINIMO = TAMANHO_MINIMO_SENHA;
 
 export class ErroSolicitacao extends Error {
   constructor(
@@ -262,9 +265,8 @@ export async function executarAcao(
         throw new ErroSolicitacao("A credencial provisória informada não confere.", 403);
       }
       const nova = String(corpo.nova_senha ?? "");
-      if (nova.length < TAMANHO_MINIMO) {
-        throw new ErroSolicitacao(`A nova senha deve ter pelo menos ${TAMANHO_MINIMO} caracteres.`);
-      }
+      const problema = validarNovaSenha(nova);
+      if (problema) throw new ErroSolicitacao(problema);
       if (nova.trim() === informada.trim()) {
         throw new ErroSolicitacao("A nova senha não pode ser a credencial provisória.");
       }

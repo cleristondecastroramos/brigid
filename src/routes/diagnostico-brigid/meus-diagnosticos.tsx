@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/diagnostico-brigid/meus-diagnosticos")({
   component: MeusDiagnosticosPage,
@@ -54,10 +55,10 @@ function MeusDiagnosticosPage() {
     return {
       filteredDiagnosticos: result,
       uniqueMunicipios: [...new Set(diagnosticos.map((d) => d.municipio))].sort((a, b) =>
-        a.localeCompare(b),
+        compararTexto(a, b),
       ),
       uniqueComarcas: [...new Set(diagnosticos.map((d) => d.comarca).filter(Boolean))].sort(
-        (a, b) => a.localeCompare(b),
+        (a, b) => compararTexto(a, b),
       ),
     };
   }, [diagnosticos, filterMunicipio, filterComarca]);
@@ -158,7 +159,10 @@ function MeusDiagnosticosPage() {
                     <TableHead className="min-w-[140px]">Publicação</TableHead>
                     <TableHead className="text-center">Versão</TableHead>
                     <TableHead className="w-[140px]">Atualização</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    {/* Fixa à direita: a ação fica visível mesmo com a tabela rolada */}
+                    <TableHead className="sticky right-0 bg-card text-right shadow-[-1px_0_0_var(--border)]">
+                      Ações
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -189,23 +193,33 @@ function MeusDiagnosticosPage() {
                         <TableCell className="text-xs text-muted-foreground">
                           {new Date(dgn.data_atualizacao).toLocaleString("pt-BR")}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Link
-                            to="/diagnostico-brigid/formulario/$diagnosticoId"
-                            params={{ diagnosticoId: dgn.id }}
+                        <TableCell className="sticky right-0 bg-card text-right shadow-[-1px_0_0_var(--border)]">
+                          {/* Abre o mesmo diagnóstico (mesmo ID) com as respostas salvas */}
+                          <Button
+                            variant={editavel ? "default" : "outline"}
+                            size="sm"
+                            className="whitespace-nowrap"
+                            asChild
                           >
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              title={editavel ? "Continuar/Editar" : "Visualizar"}
+                            <Link
+                              to="/diagnostico-brigid/formulario/$diagnosticoId"
+                              params={{ diagnosticoId: dgn.id }}
                             >
                               {editavel ? (
-                                <Pencil className="h-4 w-4" />
+                                <>
+                                  <Pencil className="h-4 w-4" />
+                                  {dgn.status === "devolvido"
+                                    ? "Corrigir e continuar"
+                                    : "Continuar preenchimento"}
+                                </>
                               ) : (
-                                <Eye className="h-4 w-4" />
+                                <>
+                                  <Eye className="h-4 w-4" />
+                                  Visualizar
+                                </>
                               )}
-                            </Button>
-                          </Link>
+                            </Link>
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );

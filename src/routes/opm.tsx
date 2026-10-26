@@ -48,6 +48,7 @@ import {
 } from "recharts";
 import { PageTitle } from "@/components/page-title";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/opm")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -95,14 +96,14 @@ function OpmPanel() {
   const comarcas = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
   const polos = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
@@ -123,7 +124,7 @@ function OpmPanel() {
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
       if (indexA !== -1) return -1;
       if (indexB !== -1) return 1;
-      return String(a).localeCompare(String(b), "pt-BR");
+      return compararTexto(String(a), String(b));
     });
   }, [municipios]);
 
@@ -169,7 +170,7 @@ function OpmPanel() {
       if (valA === valB) return 0;
       const modifier = sortDirection === "asc" ? 1 : -1;
       if (typeof valA === "string" && typeof valB === "string")
-        return valA.localeCompare(valB, "pt-BR") * modifier;
+        return compararTexto(valA, valB) * modifier;
       return ((valA ?? 0) > (valB ?? 0) ? 1 : -1) * modifier;
     });
   }, [filteredByKpi, selectedTipologia, sortColumn, sortDirection]);

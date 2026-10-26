@@ -37,6 +37,7 @@ import {
 import { ArrowUpDown, ArrowLeft } from "lucide-react";
 import * as d3Geo from "d3-geo";
 import piauiMapFixed from "@/data/piaui-map-fixed.json";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/diagnostico-brigid/acompanhamento")({
   component: AcompanhamentoPage,
@@ -276,6 +277,10 @@ function AcompanhamentoPage() {
           break;
       }
 
+      if (typeof valA === "string" && typeof valB === "string") {
+        const c = compararTexto(valA, valB);
+        return sortOrder === "asc" ? c : -c;
+      }
       if (valA < valB) return sortOrder === "asc" ? -1 : 1;
       if (valA > valB) return sortOrder === "asc" ? 1 : -1;
       return 0;

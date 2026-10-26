@@ -44,6 +44,7 @@ import { getFaixaPopulacional, type FaixaPop } from "@/lib/utils";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { PageTitle } from "@/components/page-title";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 export const Route = createFileRoute("/creas")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
   component: CreasPanel,
@@ -88,11 +89,14 @@ function CreasPanel() {
   };
 
   const comarcas = useMemo(
-    () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort(),
+    () => Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort(compararTexto),
     [municipios],
   );
   const polos = useMemo(
-    () => Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort(
+        compararTexto,
+      ),
     [municipios],
   );
 
@@ -139,8 +143,9 @@ function CreasPanel() {
         valA = Number(valA) || 0;
         valB = Number(valB) || 0;
       } else {
-        valA = String(valA).toLowerCase();
-        valB = String(valB).toLowerCase();
+        // Texto: ordem do português, sem distinguir acentos ("Água Branca" no grupo do A)
+        const c = compararTexto(String(valA), String(valB));
+        return sortDir === "asc" ? c : -c;
       }
 
       if (valA < valB) return sortDir === "asc" ? -1 : 1;

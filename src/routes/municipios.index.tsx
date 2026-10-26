@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/municipios/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -59,14 +60,14 @@ function MunicipiosList() {
   const polos = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.polo_regional).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
   const comarcas = useMemo(
     () =>
       Array.from(new Set(municipios.map((m) => m.comarca).filter(Boolean))).sort((a, b) =>
-        String(a).localeCompare(String(b), "pt-BR"),
+        compararTexto(String(a), String(b)),
       ),
     [municipios],
   );
@@ -89,7 +90,7 @@ function MunicipiosList() {
       const modifier = sortDirection === "asc" ? 1 : -1;
 
       if (typeof aVal === "string" && typeof bVal === "string") {
-        return aVal.localeCompare(bVal, "pt-BR") * modifier;
+        return compararTexto(aVal, bVal) * modifier;
       }
 
       return ((aVal as any) < (bVal as any) ? -1 : 1) * modifier;

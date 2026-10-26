@@ -422,6 +422,8 @@ Executa os **scripts SQL reais do projeto** num PostgreSQL embutido (PGlite), si
 - **Regras de conversão:** recursos mínimos, suficiência e capacitações.
 - **Contas:** só o CAOCRIM aprova e redefine; a credencial é individual a cada emissão e nunca aparece em consultas ou logs; a marca provisória bloqueia diagnósticos e anexos e não pode ser alterada pelo cliente; reaprovar ou vincular não altera senha nem credencial; a definição de senha recusa conta definitiva, conta do CAOCRIM, outro usuário, credencial errada ou expirada e falhas parciais; não há senha fixa no código do navegador; cada envio registra quem assinou.
 - **Completude:** o cálculo do navegador e o do banco coincidem em 400 casos aleatórios.
+- **Retomada de rascunho:** o diagnóstico salvo reabre com as mesmas respostas (inclusive zero, "Não soube informar" e listas), é concluído e enviado no mesmo ID, sem duplicar nem publicar.
+- **Regras das telas** (`scripts/testes/regras-interface.test.mjs`): ordem alfabética em português sem distinção de acentos, senha com no mínimo 8 caracteres, destino após o primeiro acesso e etapa em que o rascunho reabre.
 
 Também é recomendável rodar antes de publicar alterações:
 

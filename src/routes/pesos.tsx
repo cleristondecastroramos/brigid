@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { PageTitle } from "@/components/page-title";
 import { NotasRodape } from "@/components/rodape-institucional";
+import { compararTexto } from "@/lib/ordenacao";
 
 export const Route = createFileRoute("/pesos")({
   loader: ({ context }) => context.queryClient.ensureQueryData(municipiosQueryOptions),
@@ -102,7 +103,7 @@ function PesosConfigPanel() {
       if (valA === valB) return 0;
       const modifier = sortDirection === "asc" ? 1 : -1;
       if (typeof valA === "string" && typeof valB === "string")
-        return valA.localeCompare(valB) * modifier;
+        return compararTexto(valA, valB) * modifier;
       return ((valA as number) > (valB as number) ? 1 : -1) * modifier;
     });
 
