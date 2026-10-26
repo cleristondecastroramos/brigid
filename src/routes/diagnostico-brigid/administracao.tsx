@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   promotoriasService,
@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,8 +39,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, CheckCircle2, Database, KeyRound, Search, UserCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Database,
+  KeyRound,
+  Search,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
+
+const TODAS_COMARCAS = "__todas__";
+const compararTexto = (a: string, b: string) =>
+  a.localeCompare(b, "pt-BR", { sensitivity: "base", numeric: true });
 
 const dataHora = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "—";
@@ -56,6 +70,7 @@ function AdministracaoPage() {
   const [promotorias, setPromotorias] = useState<Promotoria[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
+  const [comarca, setComarca] = useState(TODAS_COMARCAS);
 
   useEffect(() => {
     carregarPromotorias();
@@ -104,10 +119,28 @@ function AdministracaoPage() {
     URL.revokeObjectURL(url);
   };
 
-  const promotoriasFiltradas = promotorias.filter(
+  // Ordem por comarca e, dentro dela, pelo nome da Promotoria
+  const ordenadas = useMemo(
+    () =>
+      [...promotorias].sort(
+        (a, b) => compararTexto(a.comarca_sede, b.comarca_sede) || compararTexto(a.nome, b.nome),
+      ),
+    [promotorias],
+  );
+  const comarcas = useMemo(() => {
+    const contagem = new Map<string, number>();
+    for (const p of ordenadas)
+      contagem.set(p.comarca_sede, (contagem.get(p.comarca_sede) ?? 0) + 1);
+    return [...contagem];
+  }, [ordenadas]);
+
+  const termo = busca.trim().toLowerCase();
+  const promotoriasFiltradas = ordenadas.filter(
     (p) =>
-      p.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      p.comarca_sede.toLowerCase().includes(busca.toLowerCase()),
+      (comarca === TODAS_COMARCAS || p.comarca_sede === comarca) &&
+      (!termo ||
+        p.nome.toLowerCase().includes(termo) ||
+        p.comarca_sede.toLowerCase().includes(termo)),
   );
 
   const pendentes = promotorias.filter((p) => p.tipo_atribuicao === "pendente_configuracao").length;
@@ -128,8 +161,8 @@ function AdministracaoPage() {
             </h1>
           </div>
           <p className="text-muted-foreground mt-1">
-            Defina a atribuição funcional de cada Promotoria e aprove a conta institucional que
-            responde por ela. As alterações são gravadas diretamente na base.
+            Gerencie o cadastro e a atribuição funcional das Promotorias e as contas institucionais
+            que respondem por elas. As alterações são gravadas diretamente na base.
           </p>
         </div>
         <div className="flex gap-2">
@@ -140,142 +173,187 @@ function AdministracaoPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="py-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total de Promotorias
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{promotorias.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="py-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Configuradas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{promotorias.length - pendentes}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="py-4">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pendentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{pendentes}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="cadastro" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="cadastro" className="gap-2">
+            <Building2 className="h-4 w-4" />
+            Cadastro e atribuições
+          </TabsTrigger>
+          <TabsTrigger value="contas" className="gap-2">
+            <Users className="h-4 w-4" />
+            Contas e senhas
+          </TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader className="pb-3 border-b">
-          <div className="flex items-center space-x-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou comarca..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="max-w-sm"
-            />
+        <TabsContent value="cadastro" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total de Promotorias
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{promotorias.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Configuradas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  {promotorias.length - pendentes}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Pendentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-destructive">{pendentes}</div>
+              </CardContent>
+            </Card>
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-8 text-center text-muted-foreground">Carregando lista...</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[100px]">ID</TableHead>
-                    <TableHead>Promotoria de Justiça</TableHead>
-                    <TableHead>Comarca Sede</TableHead>
-                    <TableHead className="min-w-[240px]">E-mail institucional</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[250px]">Atribuição Funcional</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {promotoriasFiltradas.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        Nenhuma promotoria encontrada na busca.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    promotoriasFiltradas.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {p.id}
-                        </TableCell>
-                        <TableCell className="font-medium">{p.nome}</TableCell>
-                        <TableCell>{p.comarca_sede}</TableCell>
-                        <TableCell>
-                          <EmailInstitucional
-                            promotoria={p}
-                            onSalvo={(email) =>
-                              setPromotorias((prev) =>
-                                prev.map((x) =>
-                                  x.id === p.id ? { ...x, email_institucional: email } : x,
-                                ),
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {p.tipo_atribuicao === "pendente_configuracao" ? (
-                            <Badge variant="destructive">Pendente</Badge>
-                          ) : (
-                            <Badge variant="default" className="bg-success text-success-foreground">
-                              Configurada
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={p.tipo_atribuicao}
-                            onValueChange={(val) => handleAtualizarAtribuicao(p.id, val)}
-                          >
-                            <SelectTrigger
-                              className={
-                                p.tipo_atribuicao === "pendente_configuracao"
-                                  ? "border-destructive"
-                                  : ""
-                              }
-                            >
-                              <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pendente_configuracao">Pendente</SelectItem>
-                              {ATRIBUICOES.map((a) => (
-                                <SelectItem key={a.value} value={a.value}>
-                                  {a.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
+
+          <Card>
+            <CardHeader className="pb-3 border-b">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                <Select value={comarca} onValueChange={setComarca}>
+                  <SelectTrigger className="md:w-72" aria-label="Filtrar por comarca">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODAS_COMARCAS}>
+                      Todas as comarcas ({promotorias.length} Promotorias)
+                    </SelectItem>
+                    {comarcas.map(([nome, n]) => (
+                      <SelectItem key={nome} value={nome}>
+                        {nome} ({n})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-1 items-center gap-2">
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou comarca..."
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                <span className="text-sm text-muted-foreground md:ml-auto">
+                  {promotoriasFiltradas.length} de {promotorias.length} Promotorias, por comarca
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="p-8 text-center text-muted-foreground">Carregando lista...</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Comarca Sede</TableHead>
+                        <TableHead>Promotoria de Justiça</TableHead>
+                        <TableHead className="w-[100px]">ID</TableHead>
+                        <TableHead className="min-w-[240px]">E-mail institucional</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-[250px]">Atribuição Funcional</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      <VinculosUsuarios
-        promotorias={promotorias}
-        onEmailRegistrado={(id, email) =>
-          setPromotorias((prev) =>
-            prev.map((x) => (x.id === id ? { ...x, email_institucional: email } : x)),
-          )
-        }
-      />
+                    </TableHeader>
+                    <TableBody>
+                      {promotoriasFiltradas.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            Nenhuma Promotoria encontrada com os filtros aplicados.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        promotoriasFiltradas.map((p) => (
+                          <TableRow key={p.id}>
+                            <TableCell>{p.comarca_sede}</TableCell>
+                            <TableCell className="font-medium">{p.nome}</TableCell>
+                            <TableCell className="font-mono text-xs text-muted-foreground">
+                              {p.id}
+                            </TableCell>
+                            <TableCell>
+                              <EmailInstitucional
+                                promotoria={p}
+                                onSalvo={(email) =>
+                                  setPromotorias((prev) =>
+                                    prev.map((x) =>
+                                      x.id === p.id ? { ...x, email_institucional: email } : x,
+                                    ),
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {p.tipo_atribuicao === "pendente_configuracao" ? (
+                                <Badge variant="destructive">Pendente</Badge>
+                              ) : (
+                                <Badge
+                                  variant="default"
+                                  className="bg-success text-success-foreground"
+                                >
+                                  Configurada
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={p.tipo_atribuicao}
+                                onValueChange={(val) => handleAtualizarAtribuicao(p.id, val)}
+                              >
+                                <SelectTrigger
+                                  className={
+                                    p.tipo_atribuicao === "pendente_configuracao"
+                                      ? "border-destructive"
+                                      : ""
+                                  }
+                                >
+                                  <SelectValue placeholder="Selecione..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pendente_configuracao">Pendente</SelectItem>
+                                  {ATRIBUICOES.map((a) => (
+                                    <SelectItem key={a.value} value={a.value}>
+                                      {a.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="contas">
+          <VinculosUsuarios
+            promotorias={promotorias}
+            onEmailRegistrado={(id, email) =>
+              setPromotorias((prev) =>
+                prev.map((x) => (x.id === id ? { ...x, email_institucional: email } : x)),
+              )
+            }
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
