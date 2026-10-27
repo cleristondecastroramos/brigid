@@ -227,7 +227,7 @@ brigid/
 
 ## Metodologia de risco e índices
 
-A metodologia completa está na página `/metodologia`. Em resumo:
+A metodologia completa está na página `/metodologia` e detalhada no documento técnico [`docs/metodologia-analise-risco-indices.md`](docs/metodologia-analise-risco-indices.md). Em resumo:
 
 **Janela oficial.** O score usa os eventos de **2023 a 2025** com `considera_no_score = true` (`src/lib/config.ts`). 2026 é tratado como **ciclo aberto, preliminar**, e não entra no score.
 
